@@ -2,18 +2,21 @@ from django.db import models
 from logic.models.abstract import BasePoint
 from logic.utils import (AerodromeFlightType, AerodromeType, NavAidStatus,
                          NavAidType, NavAidUsecase, YesNo,)
-from logic.utils.validators import navid_name_validator, point_name_validator
+from logic.utils.validators import navaid_name_validator, point_name_validator
 
 
 class Point(BasePoint):
     name = models.CharField("Name", max_length=5, unique=True,
                             validators=[point_name_validator, ])
+    fir = models.ForeignKey("logic.FIR", verbose_name="Located FIR", 
+                            on_delete=models.CASCADE, related_name="points"
+                            null=True, blank=True)
     is_fir_boundary = models.BooleanField("Is FIR Boundary",
                                           choices=YesNo.choices,
                                           default=YesNo.NO)
-    fir_boundaries = models.ManyToManyField(
-        "self", limit_choices_to={'is_fir_boundary': True},
-        verbose_name="Connected FIR Boundaries", null=True, blank=True,)
+    fir_boundaries = models.ManyToManyField("self", 
+                                            limit_choices_to={'is_fir_boundary': True},
+                                            verbose_name="Connected FIR Boundaries", null=True, blank=True,)
 
     class Meta(BasePoint.Meta):
         verbose_name = "Point"
@@ -22,7 +25,7 @@ class Point(BasePoint):
 
 class NavAid(Point):
     name = models.CharField("Name", max_length=3,
-                            validators=[navid_name_validator, ])
+                            validators=[navaid_name_validator, ])
     name_pl = models.CharField("Name PL", max_length=50,
                                help_text='NAV-Aid name in plain language')
     type = models.CharField("Type", max_length=7,

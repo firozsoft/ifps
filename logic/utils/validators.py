@@ -5,7 +5,7 @@ point_name_validator = RegexValidator(
     message="ATS-Point name must be 2 to 5 Alphabetical characters",
     code="invalid_point_name")
 
-navid_name_validator = RegexValidator(
+navaid_name_validator = RegexValidator(
     regex=r"\b([A-Z]{2,3})(?<!DCT|IFR|VFR)\b",
     message="NAV-Aid name must be 2 or 3 Alphabetical characters",
     code="invalid_navaid_name")

@@ -5,7 +5,12 @@ from logic.utils.validators import sid_star_name_validator
 
 
 class Route(BaseRoute):
-    pass
+    
+    @property
+    def points(self):
+        return set(
+            point for section in self.sections for point in section.point1
+        )
 
 
 class SidStar(BaseRoute):
