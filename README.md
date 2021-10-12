@@ -1,6 +1,6 @@
 # IFPS
 
-## ! This program only borrows its name from the Eurocontrol system and is unaware of its codes
+## ! This program only borrows its name(also the following text) from the Eurocontrol system and is unaware of its codes
 
 The Integrated Initial Flight Plan Processing System (IFPS) is a centralized service
 of the Network Manager operations centre (NMOC) designed to rationalize the reception,
