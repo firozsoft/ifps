@@ -1,6 +1,6 @@
+from base.utils import YesNo
+from base.utils.validators import coordinate_validator, route_name_validator
 from django.db import models
-from logic.utils import YesNo
-from logic.utils.validators import coordinate_validator, route_name_validator
 
 
 class BaseModel(models.Model):

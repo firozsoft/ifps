@@ -23,12 +23,6 @@ class NavAidStatus(models.TextChoices):
     US = False, 'Unserviceable(U/S)'
 
 
-class NavAidUsecase(models.TextChoices):
-    IN_ROUTE = "in_route", "In Route"
-    IN_AIRPORT = "in_airport", "In Airport"
-    BOTH = "both", "Both"
-
-
 class NavAidType(models.TextChoices):
     VOR = "vor", "VOR"
     NDB = "ndb", "NDB"
@@ -41,8 +35,16 @@ class NavAidType(models.TextChoices):
     VOR_TAC = "vor_tac", "VOR/TAC"
 
 
+class NavAidUsecase(models.TextChoices):
+    IN_ROUTE = "in_route", "In Route"
+    IN_AIRPORT = "in_airport", "In Airport"
+    BOTH = "both", "Both"
+
+
 class RouteSchemeFlightNature(models.TextChoices):
-    LANDING = "landing",
+    LANDING = "landing"
+    DEPARTURE = "departure"
+    DOMESTIC = "domestic"
     TRANSITION = "transition"
     BOTH = "both"
     OTHER = "other"
