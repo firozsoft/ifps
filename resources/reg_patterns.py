@@ -1,6 +1,6 @@
 REG_PATTERNS = (
     r"(?P<call_sign>[A-Z\d]{2,7})"
-    r"(?P<flt_rule_and_type>(?P<flt_rule>[I,V,Y,Z])(?P<flt_type>[S,N,G,M,X]?))"
+    r"(?P<flt_rule_type>(?P<flt_rule>[I,V,Y,Z])(?P<flt_type>[S,N,G,M,X]?))"
     r"(?P<ac_num_an_type_and_wake>(?P<number_of_ac>[\d]{0,2})(?P<ac_type>[A-Z\d]{2,4})\/(?P<ac_weak>[H,M,L,J]))"
     r"(?P<equipments_and_capacities>(?P<equipments>(N|S|A|B|C|D|E1|E2|E3|F|G|H|I|J1|J2|J3|J4|J5|J6|J7|K|L|M1|M2|M3|O|P1|P2|P3|P4|P5|P6|P7|P8|P9|R|T|U|V|W|X|Y|Z)+)\/(?P<capacities>(A|C|E|H|I|L|P|S|X|B1|B2|U1|U2|V1|V2|D1|G1)+))"
     r"(?P<dep_ad_and_dep_time>((?P<dep_ad>[A-Z]{4})|AFIL|ZZZZ)(?P<eobt>((0|1)[0-9]|2[0-3])[0-5][0-9]))"
@@ -26,8 +26,11 @@ REG_PATTERNS = (
     r"(?P<sur>SUR\/(RSP[\d]{3})(\sRSP[\d]{3})?)",
     r"(?P<dep>DEP\/(?P=aerodrome)|(?P=degrees_and_minutes)|(?P=bearing_and_distance)|(?P=ats_point))")
 
-SAMPLE_FPL = ("ACF402-IN-EA30/H-S/C-EHAM0940-"
-              "K0830F290 LEK2B LEK UA6 XMM/MO78F330 UA6 PON URION "
-              "CHW UA5 NTS DCT 4611N00412W DCT STG UA5 FTM FATIM1A-"
-              "LPPT0230 LPPR -REG/FBVGA SEL/EJFL EET/LPPCO158-E/0345 "
-              "P/300 R/UVE S/PDJ J/UV D/11 330 C YELLOW A/WHITE C/DENKE")
+SAMPLE_FPL = ("""
+(FPL-ACF402-IN-EA30/H-S/C-EHAM0940-
+K0830F290 LEK2B LEK UA6 XMM/MO78F330 UA6 PON URION
+CHW UA5 NTS DCT 4611N00412W DCT STG UA5 FTM FATIM1A-
+LPPT0230 LPPR -REG/FBVGA SEL/EJFL EET/LPPCO158-E/0345
+P/300 R/UVE S/PDJ J/UV D/11 330 C YELLOW A/WHITE C/DENKE)
+"""
+              )

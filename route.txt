@@ -1,3 +1,8 @@
+(FPL-ACF402-IN-EA30/H-S/C-EHAM0940-K0830F290 LEK2B LEK UA6 XMM/MO78F330 UA6 PON URION CHW UA5 NTS DCT 4611N00412W DCT STG UA5 FTM FATIM1A-LPPT0230 LPPR -REG/FBVGA SEL/EJFL EET/LPPCO158-E/0345 P/300 R/UVE S/PDJ J/UV D/11 330 C YELLOW A/WHITE C/DENKE)
+
+['(FPL', 'ACF402', 'IN', 'EA30/H', 'S/C', 'EHAM0940', 'K0830F290 LEK2B LEK UA6 XMM/MO78F330 UA6 PON URION CHW UA5 NTS DCT 4611N00412W DCT
+STG UA5 FTM FATIM1A', 'LPPT0230 LPPR ', 'REG/FBVGA SEL/EJFL EET/LPPCO158', 'E/0345 P/300 R/UVE S/PDJ J/UV D/11 330 C YELLOW A/WHITE C/DENKE)']
+
 ITEM15: ROUTE
     first_cruising_speed_and_level +
     Route:
@@ -9,17 +14,3 @@ ITEM15: ROUTE
         Flights outside designated ATS routes:
             1: point_name or refrence_to_point
             2:  DCT between successive points unless both points are defined by geographical coordinates or by bearing and distance.
-
-    cruising speed:
-        (?P<c_speed>(K(0|1)[\d]{3})|(N0[\d]{3})|(M(0[\d]{2}|10\d)))
-    cruising level:
-        (?P<c_level>(F[\d]{2}[0,5])|(S[\d]{3}0)|(A[\d]{2}[0,5])|(M[\d]{4}))
-    point name:
-        (?P<ats_point>[A-Z]{2,5})
-    ats route:
-        (?P<ats_route>[A-Z]{1,3}[\d]{1,3})
-        (?P<sid_star>(?P=ats_point)[\d][A-Z])
-    degrees:
-        (?P<degrees>(([0-8]\d)|90)(N|S)((0[\d]{2})|(1[0-7]\d)|180)(E|W))
-    degrees_and_minutes
-        (?P<degrees_and_minutes>(([0-8]\d)|90)[0-5]\d(N|S)((0[\d]{2})|(1[0-7]\d)|180)[0-5]\d(E|W))

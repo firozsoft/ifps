@@ -1,14 +1,15 @@
-from base.utils import YesNo
-from base.utils.validators import coordinate_validator, route_name_validator
 from django.db import models
+
+from ..utils.choices import YesNo
+from ..utils.validators import coordinate_validator, route_name_validator
 
 
 class BaseModel(models.Model):
     """Abstract BaseModel"""
     created = models.DateTimeField("Created", auto_now_add=True)
     updated = models.DateTimeField("Updated", auto_now=True)
-    is_active = models.BooleanField("Is Active", choices=YesNo.choices,
-                                    default=YesNo.YES)
+    is_active = models.BooleanField("Active", choices=YesNo,
+                                    default=True)
 
     class Meta:
         abstract = True
@@ -24,9 +25,8 @@ class BasePoint(BaseModel):
     class Meta:
         abstract = True
         ordering = ('name',)
-        indexes = [models.Index(fields=['name', ])]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.name}'
 
 
@@ -40,5 +40,5 @@ class BaseRoute(BaseModel):
         ordering = ('name',)
         indexes = [models.Index(fields=['name', ])]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.name}'

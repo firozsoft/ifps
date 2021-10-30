@@ -1,4 +1,5 @@
 from django.db import models
+from psycopg2.extras import NumericRange
 
 
 class AerodromeFlightType(models.TextChoices):
@@ -16,11 +17,6 @@ class Direction(models.TextChoices):
     TO = 'to'
     FROM = 'from'
     TO_FROM = 'to_from', 'TO/FROM'
-
-
-class NavAidStatus(models.TextChoices):
-    OK = True, 'Available'
-    US = False, 'Unserviceable(U/S)'
 
 
 class NavAidType(models.TextChoices):
@@ -46,7 +42,6 @@ class RouteSchemeFlightNature(models.TextChoices):
     DEPARTURE = "departure"
     DOMESTIC = "domestic"
     TRANSITION = "transition"
-    BOTH = "both"
     OTHER = "other"
 
 
@@ -56,6 +51,9 @@ class SidStarType(models.TextChoices):
     SID_STAR = 'sid_star', 'SID/STAR'
 
 
-class YesNo(models.TextChoices):
-    YES = True, 'Yes'
-    NO = False, 'No'
+def LevelRange() -> NumericRange:
+    return NumericRange(0, 650)
+
+
+YesNo = [(True, 'Yes'),
+         (False, 'No')]
