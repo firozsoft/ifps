@@ -24,8 +24,6 @@ class Point(BasePoint):
 
 
 class NavAid(Point):
-    name = models.CharField("Name", max_length=3,
-                            validators=[navaid_name_validator, ])
     name_pl = models.CharField("Name PL", max_length=50,
                                help_text='NAV-Aid name in plain language')
     type = models.CharField("Type", max_length=7,
