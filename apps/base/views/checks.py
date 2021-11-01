@@ -5,10 +5,10 @@ from typing import Union
 from django.core.exceptions import ValidationError
 
 from ..utils import regex_patterns as rgx_pat
+from ..utils.patterns import OTHER_INFO_SWITCHES
 
 
-def regex_check(data: dict
-                ) -> tuple[dict[str, str], Union[ValidationError, None]]:
+def regex_check(data: dict) -> tuple[dict[str, str], Union[ValidationError, None]]:
     """
     data = {
         'callsign': parts[1],
@@ -38,7 +38,7 @@ def regex_check(data: dict
         res['flight_type'] = flt_rule_type.group('flight_type')
 
     if not (numbers_type_weak := re.match(rgx_pat.NUMBER_TYPE_WAKE,
-            data['numbers_type_weak'])):
+                                          data['numbers_type_weak'])):
         err['syntax_error'] += f"numbers/type/weak({data['numbers_type_weak']}) is not valid. "
     else:
         res['ac_numbers'] = numbers_type_weak.group('numbers') or "1"
@@ -46,14 +46,14 @@ def regex_check(data: dict
         res['ac_weak'] = numbers_type_weak.group('weak')
 
     if not (equp_cpct := re.match(rgx_pat.EQUIPMENTS_CAPACITIES,
-            data['equipments_and_capacities'])):
+                                  data['equipments_and_capacities'])):
         err['syntax_error'] += f"equipments/capacities({data['equipments_and_capacities']}) is not valid. "
     else:
         res['equipments'] = equp_cpct.group('equipments')
         res['capacities'] = equp_cpct.group('capacities')
 
     if not (dep_ad_time := re.match(rgx_pat.DEPARTURE_AD_TIME,
-            data['dep_ad_time'])):
+                                    data['dep_ad_time'])):
         err['syntax_error'] += f"departure aerodrome or time({data['dep_ad_time']})is not valid. "
     else:
         res['departure_ad'] = dep_ad_time.group('dep_ad')
@@ -77,123 +77,21 @@ def regex_check(data: dict
         else:
             last_switch_index = other_info.index(item)
     for item in other_info[:]:
-        if item.startswith("STS/"):
-            if not (sts := re.search(rgx_pat.STS, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['sts'] = sts.group('sts')
-        elif item.startswith("PBN/"):
-            if not (pbn := re.search(rgx_pat.PBN, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['pbn'] = pbn.group('pbn')
-                res['pbn_rnav_spc'] = pbn.group('rnav_spc')
-                res['pbn_rnp_spc'] = pbn.group('rnp_spc')
-        elif item.startswith("NAV/"):
-            if not (nav := re.search(rgx_pat.NAV, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['nav'] = nav.group('nav')
-        elif item.startswith("COM/"):
-            if not (com := re.search(rgx_pat.COM, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['com'] = com.group('com')
-        elif item.startswith("DAT/"):
-            if not (dat := re.search(rgx_pat.DAT, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['dat'] = dat.group('dat')
-        elif item.startswith("SUR/"):
-            if not (sur := re.search(rgx_pat.SUR, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['sur'] = sur.group('sur')
-        elif item.startswith("DOF/"):
-            if (dof := re.search(rgx_pat.DOF, item)):
-                try:
-                    _dof = dof.group('dof')
-                    datetime.strptime(_dof, '%y%m%d')
-                    res['dof'] = _dof
-                except ValueError:
-                    err['syntax_error'] += f"date of flight({dof.group('dof')}) is not in valid format(YYMMDD). "
-            else:
-                err['syntax_error'] += f"{item} is not valid. "
-        elif item.startswith("REG/"):
-            if not (reg := re.search(rgx_pat.REG, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['reg'] = reg.group('reg')
-        elif item.startswith("EET/"):
-            if not (eet := re.search(rgx_pat.EET, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['eet'] = eet.group('eet')
-        elif item.startswith("SEL/"):
-            if not (sel := re.search(rgx_pat.SEL, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['sel'] = sel.group('sel')
-        elif item.startswith("TYP/"):
-            if not (typ := re.search(rgx_pat.TYP, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['typ'] = typ.group('typ')
-        elif item.startswith("CODE/"):
-            if not (code := re.search(rgx_pat.CODE, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['code'] = code.group('code')
-        elif item.startswith("DLE/"):
-            if not (dle := re.search(rgx_pat.DLE, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['dle'] = dle.group('dle')
-        elif item.startswith("OPR/"):
-            if not (opr := re.search(rgx_pat.OPR, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['opr'] = opr.group('opr')
-        elif item.startswith("ORGN/"):
-            if not (orgn := re.search(rgx_pat.ORGN, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['orgn'] = orgn.group('orgn')
-        elif item.startswith("PER/"):
-            if not (per := re.search(rgx_pat.PER, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['per'] = per.group('per')
-        elif item.startswith("DEP/"):
-            if not (dep := re.search(rgx_pat.DEP, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['dep'] = dep.group()
-        elif item.startswith("ALTN/"):
-            if not (altn := re.search(rgx_pat.ALTN, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['altn'] = altn.group()
-        elif item.startswith("RALT/"):
-            if not (ralt := re.search(rgx_pat.RALT, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['ralt'] = ralt.group()
-        elif item.startswith("TALT/"):
-            if not (talt := re.search(rgx_pat.TALT, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['talt'] = talt.group()
-        elif item.startswith("RIF/"):
-            if not (rif := re.search(rgx_pat.RIF, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['rif'] = rif.group()
-        elif item.startswith("RMK/"):
-            if not (rmk := re.search(rgx_pat.RMK, item)):
-                err['syntax_error'] += f"{item} is not valid. "
-            else:
-                res['rmk'] = rmk.group('rmk')
+        for key, pattern in OTHER_INFO_SWITCHES.items():
+            if item.startswith(f"{key}/"):
+                if matched := re.match(pattern, item):
+                    res[key.lower()] = matched.group(key)
+                    if key == 'PBN':
+                        res['pbn_rnav_spc'] = matched.group('rnav_spc')
+                        res['pbn_rnp_spc'] = matched.group('rnp_spc')
+                    elif key == 'DOF':
+                        try:
+                            datetime.strptime(res[key.lower()], '%y%m%d')
+                        except ValueError:
+                            err['syntax_error'] += f"DOF({res[key.lower()]}) is not in valid(YYMMDD). "
+                else:
+                    err['syntax_error'] += f"{item} is not valid. "
+
         else:
             err['syntax_error'] += f"{item} is not valid syntax for OTHER INFO"
 
@@ -206,15 +104,15 @@ def regex_check(data: dict
 
     # route_items[1] must be a valid (DCT or ats route or point)
     previous = dict()  # previous scrutinized item
-    if (item := re.match(rgx_pat.ROUTE, route_items[1])):
+    if item := re.match(rgx_pat.ROUTE, route_items[1]):
         previous = {'type': 'route', 'item': item.group('route')}
-    elif (item := re.match(rgx_pat.SID_STAR, route_items[1])):
+    elif item := re.match(rgx_pat.SID_STAR, route_items[1]):
         previous = {'type': 'route', 'item': item.group('sid_star')}
     elif route_items[1] == "DCT":
         previous = {'type': 'dct', 'item': "DCT"}
-    elif (item := re.match(rgx_pat.POINT, route_items[1])):
+    elif item := re.match(rgx_pat.POINT, route_items[1]):
         previous = {'type': 'point', 'item': item.group('point')}
-    elif (item := re.match(rgx_pat.BEARING_DIST, route_items[1])):
+    elif item := re.match(rgx_pat.BEARING_DIST, route_items[1]):
         previous = {'type': 'point', 'item': item.group('ref_point')}
     else:
         err['syntax_error'] += f"{route_items[1]} must be a valid ATS Route or DCT or an ATS Point"
@@ -238,7 +136,7 @@ def regex_check(data: dict
                         rgx_pat.POINT,
                         rgx_pat.CHANGE_SPEED_LEVEL,
                         rgx_pat.CRUISECLIMB):
-                    if (it := re.match(pat, item)):
+                    if it := re.match(pat, item):
                         previous = {'type': 'point', 'item': it.group('point')}
                         segments[-1]['to'] = previous['item']
                         segments.append(

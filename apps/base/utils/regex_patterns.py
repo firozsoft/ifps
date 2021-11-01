@@ -62,78 +62,77 @@ def _other_switches(switch: str) -> list[str]:
     return res
 
 
-RNAV_SPC = r"\b(?P<rnav_spc>(A1|B[1-6]|C[1-4]|D[1-4]){1,4})\b"
+RNAV_SPC = r"\b(?P<RNAV_SPC>(A1|B[1-6]|C[1-4]|D[1-4]){1,4})\b"
 
-RNP_SPC = r"\b(?P<rnp_spc>(L1|O[1-4]|S[1-2]|T[1-2]){1,4})\b"
+RNP_SPC = r"\b(?P<RNP_SPC>(L1|O[1-4]|S[1-2]|T[1-2]){1,4})\b"
 
-STS = r"\bSTS\/(?P<sts>(ALTRV|ATFMX|FFR|FLTCK|HAZMAT|HEAD|HOSP|HUM|MARSA|MEDEVAC|NONRVSM|SAR|STATE))" + \
+STS = r"\bSTS\/(?P<STS>(ALTRV|ATFMX|FFR|FLTCK|HAZMAT|HEAD|HOSP|HUM|MARSA|MEDEVAC|NONRVSM|SAR|STATE))" + \
     r"(?!(" + r'|'.join(_other_switches('STS')) + r"))\b"
 
-PBN = r"\bPBN\/(?P<pbn>({0})({1}))".format(
+PBN = r"\bPBN\/(?P<PBN>({0})({1}))".format(
     RNAV_SPC.replace('\b', ''),
     RNP_SPC.replace('\b', '')
 ) + r"(?!(" + r'|'.join(_other_switches('PBN')) + r"))\b"
 
-NAV = r"\bNAV\/(?P<nav>(?P<nav_key>SBAS|GBAS|ABAS|DGNSS|RTK|WARTK|PPP)(\s(?P=nav_key))?)" + \
+NAV = r"\bNAV\/(?P<NAV>(?P<nav_key>SBAS|GBAS|ABAS|DGNSS|RTK|WARTK|PPP)(\s(?P=nav_key))?)" + \
     r"(?!(" + r'|'.join(_other_switches('NAV')) + r"))\b"
 
-COM = r"\bCOM\/(?P<com>[A-Z\d]+)" + \
+COM = r"\bCOM\/(?P<COM>[A-Z\d]+)" + \
     r"(?!(" + r'|'.join(_other_switches('COM')) + r"))\b"
 
-DAT = r"\bDAT\/(?P<dat>[A-Z\d]+)" + \
+DAT = r"\bDAT\/(?P<DAT>[A-Z\d]+)" + \
     r"(?!(" + r'|'.join(_other_switches('DAT')) + r"))\b"
 
-SUR = r"\bSUR\/(?P<dur>(RSP[\d]{3})(\sRSP[\d]{3})?)" + \
+SUR = r"\bSUR\/(?P<SUR>(RSP[\d]{3})(\sRSP[\d]{3})?)" + \
     r"(?!(" + r'|'.join(_other_switches('SUR')) + r"))\b"
 
-DOF = r"\bDOF\/(?P<dof>\d{2}((0\d)|1[0-2])(([0-2]\d)|3[0-1]))" + \
+DOF = r"\bDOF\/(?P<DOF>\d{2}((0\d)|1[0-2])(([0-2]\d)|3[0-1]))" + \
     r"(?!(" + r'|'.join(_other_switches('DOF')) + r"))\b"
 
-REG = r"\bREG\/(?P<reg>[A-Z\d]+)" + \
+REG = r"\bREG\/(?P<REG>[A-Z\d]+)" + \
     r"(?!(" + r'|'.join(_other_switches('REG')) + r"))\b"
 
-EET = r"\bEET\/(?P<eet>([A-Z]{4}\d{4})(\s[A-Z]{4}\d{4})*)" + \
+EET = r"\bEET\/(?P<EET>([A-Z]{4}\d{4})(\s[A-Z]{4}\d{4})*)" + \
     r"(?!(" + r'|'.join(_other_switches('EET')) + r"))\b"
 
-SEL = r"\bSEL\/(?P<sel>[A-Z]+)" + r"(?!(" + r'|'.join(_other_switches('SEL')) + r"))\b"
+SEL = r"\bSEL\/(?P<SEL>[A-Z]+)" + r"(?!(" + r'|'.join(_other_switches('SEL')) + r"))\b"
 
-TYP = r"\bTYP\/(?P<typ>(\d)?[A-Z\d]+)" + \
+TYP = r"\bTYP\/(?P<TYP>(\d)?[A-Z\d]+)" + \
     r"(?!(" + r'|'.join(_other_switches('TYP')) + r"))\b"
 
-CODE = r"\bCODE\/(?P<code>(F[A-F\d]{5})(?<!F00000))" + r"(?!(" + r'|'.join(
+CODE = r"\bCODE\/(?P<CODE>(F[A-F\d]{5})(?<!F00000))" + r"(?!(" + r'|'.join(
     _other_switches('CODE')) + r"))\b"
 
-DLE = r"\bDLE\/(?P<dle>{0}\d\d[0-5]\d)".format(
+DLE = r"\bDLE\/(?P<DLE>{0}\d\d[0-5]\d)".format(
     POINT.replace('\b', '')
-) + r"(?!(" + r'|'.join(
-    _other_switches('DLE')) + r"))\b"
+) + r"(?!(" + r'|'.join(_other_switches('DLE')) + r"))\b"
 
-OPR = r"\bOPR\/[A-Z\d]+" + r"(?!(" + r'|'.join(_other_switches('OPR')) + r"))\b"
+OPR = r"\bOPR\/(?P<OPR>[A-Z\d]+)" + r"(?!(" + r'|'.join(_other_switches('OPR')) + r"))\b"
 
-ORGN = r"\bORGN\/[A-Z]{8}" + \
+ORGN = r"\bORGN\/(?P<ORGN>[A-Z]{8})" + \
     r"(?!(" + r'|'.join(_other_switches('ORGN')) + r"))\b"
 
-PER = r"\bPER\/[A-Z]" + r"(?!(" + r'|'.join(_other_switches('PER')) + r"))\b"
+PER = r"\bPER\/(?P<PER>[A-Z])" + r"(?!(" + r'|'.join(_other_switches('PER')) + r"))\b"
 
-DEP = r"\bDEP\/((?P<aerodrome>[A-Z]{{4}})|({0})|({1})|({2})".format(
+DEP = r"\bDEP\/(?P<DEP>((?P<aerodrome>[A-Z]{{4}})|({0})|({1})|({2}))".format(
     COR_DEG_MINS.replace('\b', ''),
     BEARING_DIST.replace('\b', ''),
     POINT.replace('\b', '')
 ) + r"(?!(" + r'|'.join(_other_switches('DEP')) + r")))\b"
 
-ALTN = DEP.replace(r'DEP\/', r'ALTN\/')
+ALTN = DEP.replace(r'DEP\/', r'ALTN\/', 2)
 
-RALT = DEP.replace(r'DEP\/', r'RALT\/')
+RALT = DEP.replace(r'DEP\/', r'RALT\/', 2)
 
-TALT = DEP.replace(r'DEP\/', r'TALT\/')
+TALT = DEP.replace(r'DEP\/', r'TALT\/', 2)
 
 ROUTESCHEME_PATH = r"(\b[A-Z]{2,5}\d[A-Z]\b)?\s(\b[A-Z]{2,5}\b)\s(\b[A-Z]{1,3}[\d]{1,3}\b)\s((\b[A-Z]{2,5}\b)?\s(\b[A-Z]{1,3}[\d]{1,3}\b)?)+\s(\b[A-Z]{2,5}\b)\s(\b[A-Z]{2,5}\d[A-Z]\b)?"
 
-RIF = r"\b{0}\s(?P<revised_dest_ad>[A-Z]{{4}})\b".format(
+RIF = r"\b(?P<RIF>{0}\s(?P<revised_dest_ad>[A-Z]{{4}}))\b".format(
     ROUTESCHEME_PATH.replace('\b', '')
 ) + r"(?!(" + r'|'.join(_other_switches('RIF')) + r"))\b"
 
-RMK = r"\bRMK\/(?P<rmk>\w+)" + \
+RMK = r"\bRMK\/(?P<RMK>\w+)" + \
     r"(?!(" + r'|'.join(_other_switches('RMK')) + r"))\b"
 
 flight_plan_route_pattern = r"speed_level ((route|(DCT point route)) (point at which: change_flt_rule/change_speed_level/change_route)+(route|DCT|(geo_coordinate if both points are geo_coordinates)))|(point|(point at which: change_flt_rule/change_speed_level/change_route) (DCT|(geo_coordinate if both points are geo_coordinates or bearing_and_distance)))"
