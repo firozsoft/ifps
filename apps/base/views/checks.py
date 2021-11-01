@@ -91,9 +91,9 @@ def regex_check(data: dict) -> tuple[dict[str, str], Union[ValidationError, None
                             err['syntax_error'] += f"DOF({res[key.lower()]}) is not in valid(YYMMDD). "
                 else:
                     err['syntax_error'] += f"{item} is not valid. "
-
+                break
         else:
-            err['syntax_error'] += f"{item} is not valid syntax for OTHER INFO"
+            err['syntax_error'] += f"{item} is not valid syntax for OTHER INFO. "
 
     route_items = data['route'].split()
     if not (init_sp_lvl := re.match(rgx_pat.SPEED_LEVEL, route_items[0])):
@@ -158,19 +158,19 @@ def regex_check(data: dict) -> tuple[dict[str, str], Union[ValidationError, None
                     break
             if previous['type'] == 'dct':
                 was_sig_point = False
-                if (it := re.match(rgx_pat.COR_DEGREES, item)):
+                if it := re.match(rgx_pat.COR_DEGREES, item):
                     was_sig_point = True
                     previous = {'type': 'sig_point',
                                 'item': it.group('degrees')}
-                elif (it := re.match(rgx_pat.COR_DEG_MINS, item)):
+                elif it := re.match(rgx_pat.COR_DEG_MINS, item):
                     was_sig_point = True
                     previous = {'type': 'sig_point',
                                 'item': it.group('deg_min')}
-                elif (it := re.match(rgx_pat.BEARING_DIST, item)):
+                elif it := re.match(rgx_pat.BEARING_DIST, item):
                     was_sig_point = True
                     previous = {'type': 'sig_point',
                                 'item': it.group('point')}
-                elif (it := re.match(rgx_pat.POINT, item)):
+                elif it := re.match(rgx_pat.POINT, item):
                     was_sig_point = True
                     previous = {'type': 'point',
                                 'item': it.group('point')}
