@@ -41,34 +41,99 @@ CHANGE_FLT_RULE = r"\b(?P<change_flt_rule>({0}|({1}))\s(VFR|IFR))\b".format(
     SIG_POINT.replace('\\b', ''), CHANGE_SPEED_LEVEL.replace('\\b', ''))
 
 CRUISECLIMB = r"\b(?P<cruiseclimb>C\/({0})\/({1})(({2})|PLUS))\b".format(
-    SIG_POINT.replace('\\b', ''), SPEED_LEVEL.replace('\\b', ''),
-    LEVEL.replace('\b', ''))
+    SIG_POINT.replace('\\b', ''),
+    LEVEL.replace('\b', '').replace('level', 'top_level'),
+    SPEED_LEVEL.replace('\\b', ''),
+)
 
 DESTAD_TEET_ALTS = r"\b(?P<dest_teet_alt>(?P<dest_ad>[A-Z]{4})(?P<teet>[\d]{4})(\s(?P<alt1>[A-Z]{4}))?(\s(?P<alt2>[A-Z]{4}))?)\b"
 
 # Other Info
+OTHER_INFO_SWITCHES = [
+    'STS', 'PBN', 'NAV', 'COM', 'DAT', 'SUR', 'DOF', 'REG',
+    'EET', 'SEL', 'TYP', 'CODE', 'DLE', 'OPR', 'ORGN',
+    'PER', 'DEP', 'ALTN', 'RALT', 'TALT', 'RIF', 'RMK',
+]
+
+
+def _other_switches(switch: str) -> list[str]:
+    res = OTHER_INFO_SWITCHES[:]
+    res.remove(switch)
+    return res
+
+
 RNAV_SPC = r"\b(?P<rnav_spc>(A1|B[1-6]|C[1-4]|D[1-4]){1,4})\b"
 
 RNP_SPC = r"\b(?P<rnp_spc>(L1|O[1-4]|S[1-2]|T[1-2]){1,4})\b"
 
-STS = r"\b(?P<sts>STS\/(ALTRV|ATFMX|FFR|FLTCK|HAZMAT|HEAD|HOSP|HUM|MARSA|MEDEVAC|NONRVSM|SAR|STATE))\b"
+STS = r"\bSTS\/(?P<sts>(ALTRV|ATFMX|FFR|FLTCK|HAZMAT|HEAD|HOSP|HUM|MARSA|MEDEVAC|NONRVSM|SAR|STATE))" + \
+    r"(?!(" + r'|'.join(_other_switches('STS')) + r"))\b"
 
-PBN = r"\b(?P<pbn>PBN\/({0})({1}))\b".format(RNAV_SPC.replace('\b', ''),
-                                             RNP_SPC.replace('\b', ''))
+PBN = r"\bPBN\/(?P<pbn>({0})({1}))".format(
+    RNAV_SPC.replace('\b', ''),
+    RNP_SPC.replace('\b', '')
+) + r"(?!(" + r'|'.join(_other_switches('PBN')) + r"))\b"
 
-NAV = r"\b(?P<nav>NAV\/(?P<nav_key>SBAS|GBAS|ABAS|DGNSS|RTK|WARTK|PPP)(\s(?P=nav_key))?)\b"
+NAV = r"\bNAV\/(?P<nav>(?P<nav_key>SBAS|GBAS|ABAS|DGNSS|RTK|WARTK|PPP)(\s(?P=nav_key))?)" + \
+    r"(?!(" + r'|'.join(_other_switches('NAV')) + r"))\b"
 
-COM = r"\b(?P<com>COM\/[A-Z\d]+)\b"
+COM = r"\bCOM\/(?P<com>[A-Z\d]+)" + \
+    r"(?!(" + r'|'.join(_other_switches('COM')) + r"))\b"
 
-DAT = r"\b(?P<dat>DAT\/[A-Z\d]+)\b"
+DAT = r"\bDAT\/(?P<dat>[A-Z\d]+)" + \
+    r"(?!(" + r'|'.join(_other_switches('DAT')) + r"))\b"
 
-SUR = r"\b(?P<sur>SUR\/(RSP[\d]{3})(\sRSP[\d]{3})?)\b"
+SUR = r"\bSUR\/(?P<dur>(RSP[\d]{3})(\sRSP[\d]{3})?)" + \
+    r"(?!(" + r'|'.join(_other_switches('SUR')) + r"))\b"
 
-DEP = r"\b(?P<dep>DEP\/(?P<aerodrome>[A-Z]{{4}})|({0})|({1})|({2}))\b".format(
+DOF = r"\bDOF\/(?P<dof>\d{2}((0\d)|1[0-2])(([0-2]\d)|3[0-1]))" + \
+    r"(?!(" + r'|'.join(_other_switches('DOF')) + r"))\b"
+
+REG = r"\bREG\/(?P<reg>[A-Z\d]+)" + \
+    r"(?!(" + r'|'.join(_other_switches('REG')) + r"))\b"
+
+EET = r"\bEET\/(?P<eet>([A-Z]{4}\d{4})(\s[A-Z]{4}\d{4})*)" + \
+    r"(?!(" + r'|'.join(_other_switches('EET')) + r"))\b"
+
+SEL = r"\bSEL\/(?P<sel>[A-Z]+)" + r"(?!(" + r'|'.join(_other_switches('SEL')) + r"))\b"
+
+TYP = r"\bTYP\/(?P<typ>(\d)?[A-Z\d]+)" + \
+    r"(?!(" + r'|'.join(_other_switches('TYP')) + r"))\b"
+
+CODE = r"\bCODE\/(?P<code>(F[A-F\d]{5})(?<!F00000))" + r"(?!(" + r'|'.join(
+    _other_switches('CODE')) + r"))\b"
+
+DLE = r"\bDLE\/(?P<dle>{0}\d\d[0-5]\d)".format(
+    POINT.replace('\b', '')
+) + r"(?!(" + r'|'.join(
+    _other_switches('DLE')) + r"))\b"
+
+OPR = r"\bOPR\/[A-Z\d]+" + r"(?!(" + r'|'.join(_other_switches('OPR')) + r"))\b"
+
+ORGN = r"\bORGN\/[A-Z]{8}" + \
+    r"(?!(" + r'|'.join(_other_switches('ORGN')) + r"))\b"
+
+PER = r"\bPER\/[A-Z]" + r"(?!(" + r'|'.join(_other_switches('PER')) + r"))\b"
+
+DEP = r"\bDEP\/((?P<aerodrome>[A-Z]{{4}})|({0})|({1})|({2})".format(
     COR_DEG_MINS.replace('\b', ''),
     BEARING_DIST.replace('\b', ''),
-    POINT.replace('\b', ''))
+    POINT.replace('\b', '')
+) + r"(?!(" + r'|'.join(_other_switches('DEP')) + r")))\b"
+
+ALTN = DEP.replace(r'DEP\/', r'ALTN\/')
+
+RALT = DEP.replace(r'DEP\/', r'RALT\/')
+
+TALT = DEP.replace(r'DEP\/', r'TALT\/')
 
 ROUTESCHEME_PATH = r"(\b[A-Z]{2,5}\d[A-Z]\b)?\s(\b[A-Z]{2,5}\b)\s(\b[A-Z]{1,3}[\d]{1,3}\b)\s((\b[A-Z]{2,5}\b)?\s(\b[A-Z]{1,3}[\d]{1,3}\b)?)+\s(\b[A-Z]{2,5}\b)\s(\b[A-Z]{2,5}\d[A-Z]\b)?"
+
+RIF = r"\b{0}\s(?P<revised_dest_ad>[A-Z]{{4}})\b".format(
+    ROUTESCHEME_PATH.replace('\b', '')
+) + r"(?!(" + r'|'.join(_other_switches('RIF')) + r"))\b"
+
+RMK = r"\bRMK\/(?P<rmk>\w+)" + \
+    r"(?!(" + r'|'.join(_other_switches('RMK')) + r"))\b"
 
 flight_plan_route_pattern = r"speed_level ((route|(DCT point route)) (point at which: change_flt_rule/change_speed_level/change_route)+(route|DCT|(geo_coordinate if both points are geo_coordinates)))|(point|(point at which: change_flt_rule/change_speed_level/change_route) (DCT|(geo_coordinate if both points are geo_coordinates or bearing_and_distance)))"
