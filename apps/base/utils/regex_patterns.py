@@ -40,13 +40,13 @@ CHANGE_SPEED_LEVEL = r"\b(?P<change_speed_level>({0})\/{1})\b".format(
 CHANGE_FLT_RULE = r"\b(?P<change_flt_rule>({0}|({1}))\s(VFR|IFR))\b".format(
     SIG_POINT.replace('\\b', ''), CHANGE_SPEED_LEVEL.replace('\\b', ''))
 
-CRUISECLIMB = r"\b(?P<cruiseclimb>C\/({0})\/({1})(({2})|PLUS))\b".format(
+CRUISE_CLIMB = r"\b(?P<cruiseclimb>C\/({0})\/({1})(({2})|PLUS))\b".format(
     SIG_POINT.replace('\\b', ''),
     LEVEL.replace('\b', '').replace('level', 'top_level'),
     SPEED_LEVEL.replace('\\b', ''),
 )
 
-DESTAD_TEET_ALTS = r"\b(?P<dest_teet_alt>(?P<dest_ad>[A-Z]{4})(?P<teet>[\d]{4})(\s(?P<alt1>[A-Z]{4}))?(\s(?P<alt2>[A-Z]{4}))?)\b"
+DEST_AD_TEET_ALTS = r"\b(?P<dest_teet_alt>(?P<dest_ad>[A-Z]{4})(?P<teet>[\d]{4})(\s(?P<alt1>[A-Z]{4}))?(\s(?P<alt2>[A-Z]{4}))?)\b"
 
 # Other Info
 OTHER_INFO_SWITCHES = [
