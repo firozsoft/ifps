@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from ..models.routes import Route, RouteScheme, RouteSection, SidStar
+from ..models.route_models import Route, RouteScheme, RouteSection, SidStar
 
 
 @admin.register(Route)

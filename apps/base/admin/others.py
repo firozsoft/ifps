@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from ..models.others import FIR, NOTAM, Aircraft
+from ..models.other_models import FIR, NOTAM, Aircraft
 
 
 @admin.register(Aircraft)

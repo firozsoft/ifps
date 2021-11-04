@@ -3,7 +3,7 @@ from django.db import models
 
 from ..utils.choices import NavAidType, NavAidUsecase, YesNo
 from ..utils.validators import point_name_validator
-from .abstract import BasePoint
+from .abstract_models import BasePoint
 
 
 class Point(BasePoint):

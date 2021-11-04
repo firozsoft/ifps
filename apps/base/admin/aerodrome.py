@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from ..models.aerodromes import (Aerodrome, Curfew, DailyOperationalHour,
-                                 TemporaryClosure,)
+from ..models.aerodrome_models import (Aerodrome, Curfew, DailyOperationalHour,
+                                       TemporaryClosure, )
 
 
 @admin.register(Aerodrome)

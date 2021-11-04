@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from ..models.points import NavAid, Point
+from ..models.point_models import NavAid, Point
 
 
 @admin.register(NavAid)

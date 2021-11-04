@@ -1,6 +1,9 @@
 from django.db import models
 from psycopg2.extras import NumericRange
 
+YesNo = [(True, 'Yes'),
+         (False, 'No')]
+
 
 class AerodromeFlightType(models.TextChoices):
     IFR = 'ifr', 'IFR'
@@ -46,14 +49,10 @@ class RouteSchemeFlightNature(models.TextChoices):
 
 
 class SidStarType(models.TextChoices):
-    SID = 'sid', 'SID'
-    STAR = 'star', 'STAR'
-    SID_STAR = 'sid_star', 'SID/STAR'
+    SID = 'SID', 'SID'
+    STAR = 'STAR', 'STAR'
+    SID_STAR = 'SID_STAR', 'SID/STAR'
 
 
 def LevelRange() -> NumericRange:
     return NumericRange(0, 650)
-
-
-YesNo = [(True, 'Yes'),
-         (False, 'No')]

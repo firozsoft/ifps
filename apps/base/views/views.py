@@ -1,9 +1,8 @@
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpRequest, JsonResponse
-from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
-from .checks import regex_check
+from .regex_checks import regex_check
 
 
 def membership_status_check(user):
@@ -14,7 +13,9 @@ def membership_status_check(user):
 # @user_passes_test(membership_status_check)
 @require_http_methods(["POST"])
 def scrutinization(request: HttpRequest) -> JsonResponse:
-    msg = request.POST['message']
+    msg = request.POST.get(key='message', default=None)
+    if not msg:
+        return JsonResponse({'error_message': "field message is missing", 'error_code': 'msg_not_found'})
     if msg.startswith('(FPL'):
         return fpl_scrutinization(msg)
     return JsonResponse({'Name': 'Scrutinization'})
@@ -35,7 +36,6 @@ def fpl_scrutinization(msg: str) -> JsonResponse:
     }
     res, err = regex_check(field_data)
     if err:
-        return JsonResponse(
-            {'error_message': err.message, 'error_code': err.code})
+        return JsonResponse({'error_message': err.message, 'error_code': err.code})
     else:
         return JsonResponse(res)
