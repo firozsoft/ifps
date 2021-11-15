@@ -9,16 +9,6 @@ class AerodromeAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(Curfew)
-class CurfewAdmin(admin.ModelAdmin):
-    pass
-
-
-@admin.register(DailyOperationalHour)
-class DailyOperationalHourAdmin(admin.ModelAdmin):
-    pass
-
-
-@admin.register(TemporaryClosure)
-class TemporaryClosureAdmin(admin.ModelAdmin):
+@admin.register(Curfew, DailyOperationalHour, TemporaryClosure)
+class AerodromePropertiesAdmin(admin.ModelAdmin):
     pass

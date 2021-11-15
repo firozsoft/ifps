@@ -8,8 +8,7 @@ class BaseModel(models.Model):
     """Abstract BaseModel"""
     created = models.DateTimeField("Created", auto_now_add=True)
     updated = models.DateTimeField("Updated", auto_now=True)
-    is_active = models.BooleanField("Active", choices=YesNo,
-                                    default=True)
+    is_active = models.BooleanField("Active", choices=YesNo, default=True)
 
     class Meta:
         abstract = True
@@ -18,8 +17,7 @@ class BaseModel(models.Model):
 class BasePoint(BaseModel):
     """Abstract Point Model"""
     name = models.CharField("Name", max_length=50)
-    coordinates = models.CharField("Coordinates", max_length=11,
-                                   blank=True, null=True,
+    coordinates = models.CharField("Coordinates", max_length=11, blank=True, null=True,
                                    validators=[coordinate_validator, ])
 
     class Meta:
@@ -32,8 +30,7 @@ class BasePoint(BaseModel):
 
 class BaseRoute(BaseModel):
     """Abstract Route Model"""
-    name = models.CharField("Name", max_length=6, unique=True,
-                            validators=[route_name_validator, ])
+    name = models.CharField("Name", max_length=6, unique=True, validators=[route_name_validator, ])
 
     class Meta:
         abstract = True

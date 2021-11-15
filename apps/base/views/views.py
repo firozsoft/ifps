@@ -1,8 +1,7 @@
-from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.http import require_http_methods
 
-from .regex_checks import regex_check
+from apps.base.views.functions.regex_checks import regex_check
 
 
 def membership_status_check(user):

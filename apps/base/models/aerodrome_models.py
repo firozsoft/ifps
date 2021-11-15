@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.core.validators import MinLengthValidator
 from django.db import models
 
 from apps.base.models.abstract_models import BaseModel, BasePoint
@@ -6,13 +7,11 @@ from apps.base.utils.choices import AerodromeFlightType, AerodromeType, YesNo
 
 
 class Aerodrome(BasePoint):
-    four_letters = models.CharField("ICAO Four Letters", max_length=4, unique=True)
+    four_letters = models.CharField("ICAO Four Letters", max_length=4, unique=True, validators=[MinLengthValidator(4)])
     iatacode = models.CharField("IATA Code", max_length=50, null=True, blank=True)
-    type = models.CharField("Aerodrome Type", max_length=8, choices=AerodromeType.choices,
-                            default=AerodromeType.AIRPORT)
+    type = models.CharField("Aerodrome Type", max_length=8, choices=AerodromeType.choices, default=AerodromeType.AIRPORT)
     ifr_vfr = models.CharField("IFR/VFR Flight Operation", max_length=7,
-                               choices=AerodromeFlightType.choices,
-                               default=AerodromeFlightType.IFR_VFR)
+                               choices=AerodromeFlightType.choices, default=AerodromeFlightType.IFR_VFR)
     is_international = models.BooleanField(verbose_name="Is International", choices=YesNo, default=True)
     nav_aids = models.ManyToManyField('base.NavAid', related_name="aerodromes")
     aur = models.BooleanField("Available Upon Request", choices=YesNo, default=True)
@@ -24,8 +23,7 @@ class Aerodrome(BasePoint):
 
 
 class AerodromeProperties(BaseModel):
-    aerodrome = models.ForeignKey("base.Aerodrome", verbose_name="Aerodrome",
-                                  related_name="%(class)s", on_delete=models.CASCADE)
+    aerodrome = models.ForeignKey("base.Aerodrome", verbose_name="Aerodrome", related_name="%(class)s", on_delete=models.CASCADE)
     date = models.DateField("Date")
     start_time = models.TimeField("Start Time")
     end_time = models.TimeField("End Time")
@@ -34,10 +32,9 @@ class AerodromeProperties(BaseModel):
         abstract = True
         ordering = ('aerodrome',)
         indexes = [models.Index(fields=['aerodrome', 'date'])]
-        constraints = [
-            models.UniqueConstraint(name='unique_%(class)s',
-                                    fields=['aerodrome', 'date', 'start_time', 'end_time'], ),
-        ]
+        constraints = [models.UniqueConstraint(name='unique_%(class)s',
+                                               fields=['aerodrome', 'date', 'start_time', 'end_time'],
+                                               ), ]
 
 
 class TemporaryClosure(AerodromeProperties):
@@ -71,7 +68,7 @@ class Curfew(AerodromeProperties):
     head = models.BooleanField("Head Flight", choices=YesNo, default=True)
     search_and_rescue = models.BooleanField("SAR(search and rescue)", choices=YesNo, default=True)
     fire_fighting = models.BooleanField("Fire-Fighting", choices=YesNo, default=True)
-    hazardous_matterial_carrier = models.BooleanField("Hazardous Materials", choices=YesNo, default=True)
+    hazardous_material_carrier = models.BooleanField("Hazardous Materials", choices=YesNo, default=True)
     medical_evacuation = models.BooleanField("Medical Evacuation", choices=YesNo, default=True)
     delayed_sch_flight = models.BooleanField("Delayed Schedule Flight", choices=YesNo, default=True)
     military_il76 = models.BooleanField("Military IL76", choices=YesNo, default=True)
