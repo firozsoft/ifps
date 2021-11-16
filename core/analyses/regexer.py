@@ -8,7 +8,8 @@ from apps.utils import regex_patterns as rgx_pat
 from apps.utils.patterns import OTHER_INFO_SWITCHES
 
 
-def regex_parse(data: dict[str, str]) -> tuple[dict[str, str], Union[ValidationError, None]]:
+def regex_parse(data: dict[str, str]) -> \
+        tuple[dict[str, Union[str, list[dict[str, str]]]], Union[ValidationError, None]]:
     """
     data = {
         'call_sign': parts[1],
@@ -93,6 +94,16 @@ def regex_parse(data: dict[str, str]) -> tuple[dict[str, str], Union[ValidationE
         else:
             err['syntax_error'] += f"{item} is not valid syntax for OTHER INFO. "
 
+        route_regex_parse(data, err)
+
+    if err['syntax_error']:
+        validation_error = ValidationError(message=err['syntax_error'], code="syntax_error")
+
+    return res, validation_error
+
+
+def route_regex_parse(data: dict[str, str],
+                      res: dict[str, Union[str, list[dict[str, str]]]], err: dict[str, str]) -> None:
     route_items: list[str] = data['route'].split()
     if not (init_sp_lvl := re.match(rgx_pat.SPEED_LEVEL, route_items[0])):
         err['syntax_error'] += f"{route_items[0]} must be a valid speed & level. "
