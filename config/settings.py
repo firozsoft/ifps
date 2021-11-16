@@ -19,39 +19,38 @@ from django.contrib import messages
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
 
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
-
 
 SITE_ID = 1
 
 # Application definition
-INSTALLED_APPS = [
-    # local
-    'apps.base.BaseAppConfig',
+LOCAL_APPS = [
+    'core.ApiConfig',
+    'apps.aerodromes.AerodromesAppConfig',
+    'apps.general.GeneralAppConfig',
+    'apps.points.PointsAppConfig',
+    'apps.routes.RoutesAppConfig',
+    ]
 
-    # 3rd parties
-
-
-    # default
+DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-]
+    ]
+
+INSTALLED_APPS = LOCAL_APPS + DJANGO_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -61,7 +60,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
+    ]
 
 TEMPLATES = [
     {
@@ -74,10 +73,10 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-            ],
+                ],
+            },
         },
-    },
-]
+    ]
 
 ROOT_URLCONF = 'config.urls'
 WSGI_APPLICATION = 'config.wsgi.application'
@@ -91,8 +90,7 @@ DATABASES = {
                       default='sqlite:///db.sqlite3',
                       cast=db_url
                       )
-}
-
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -100,22 +98,21 @@ DATABASES = {
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME':
-        'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
+            'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        },
     {
         'NAME':
-        'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
+            'django.contrib.auth.password_validation.MinimumLengthValidator',
+        },
     {
         'NAME':
-        'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
+            'django.contrib.auth.password_validation.CommonPasswordValidator',
+        },
     {
         'NAME':
-        'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
-
+            'django.contrib.auth.password_validation.NumericPasswordValidator',
+        },
+    ]
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
@@ -130,7 +127,6 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
@@ -138,15 +134,14 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
-]
+    ]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 MESSAGE_TAGS = {
     messages.DEBUG: 'info'
-}
-
+    }
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field

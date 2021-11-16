@@ -4,53 +4,53 @@
 <html lang="{{ LANGUAGE_CODE|default:'en-us' }}">
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible"
-          content="IE=edge">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible"
+        content="IE=edge">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
-    <!-- SEO MetaTags -->
-    <meta name="robots"
-          content="index, follow" />
-    <meta name="description"
-          content="{% block meta_description %}{% endblock meta_description %}" />
-    <meta name="keywords"
-          content="{% block meta_keywords %}{% endblock meta_keywords %}" />
-    <!-- /SEO MetaTags -->
+  <!-- SEO MetaTags -->
+  <meta name="robots"
+        content="index, follow"/>
+  <meta name="description"
+        content="{% block meta_description %}{% endblock meta_description %}"/>
+  <meta name="keywords"
+        content="{% block meta_keywords %}{% endblock meta_keywords %}"/>
+  <!-- /SEO MetaTags -->
 
-    <!-- FavIcon -->
-    <link rel="shortcut icon"
-          href="{% static 'img/favicon.ico' %}"
-          type="image/x-icon" />
+  <!-- FavIcon -->
+  <link rel="shortcut icon"
+        href="{% static 'img/favicon.ico' %}"
+        type="image/x-icon"/>
 
-    <!-- Style -->
-    <link rel="stylesheet"
-          href="{% static 'css/style.css' %}" />
+  <!-- Style -->
+  <link rel="stylesheet"
+        href="{% static 'css/style.css' %}"/>
 
-    {% block extra_heads %}{% endblock extra_heads %}
+  {% block extra_heads %}{% endblock extra_heads %}
 
-    <title>{% block title %}{% endblock title %}</title>
+  <title>{% block title %}{% endblock title %}</title>
 
 </head>
 
 <body>
-    <form action="/scrutinization"
-          method="post">
-        {% csrf_token %}
-        <textarea name="message"
-                  id="message"
-                  cols="130"
-                  rows="10"></textarea>
-        <button type="submit">submit</button>
-    </form>
-    {% block content %}{% endblock content %}
-    <!-- js -->
-    <script src="{% static 'js/main.js' %}"></script>
-    {% if LANGUAGE_CODE == 'fa-ir' %}
-    <script src="{% static 'js/change_numbers_to_persian_num.js' %}"></script>
-    {% endif %}
-    {% block extra_js %}{% endblock extra_js %}
+<form action="/scrutinization"
+      method="post">
+  {% csrf_token %}
+  <textarea name="message"
+            id="message"
+            cols="130"
+            rows="10"></textarea>
+  <button type="submit">submit</button>
+</form>
+{% block content %}{% endblock content %}
+<!-- js -->
+<script src="{% static 'js/main.js' %}"></script>
+{% if LANGUAGE_CODE == 'fa-ir' %}
+  <script src="{% static 'js/change_numbers_to_persian_num.js' %}"></script>
+{% endif %}
+{% block extra_js %}{% endblock extra_js %}
 </body>
 
 </html>

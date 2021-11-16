@@ -3,7 +3,7 @@ from django.urls import include, path
 from django.views.generic import TemplateView
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', TemplateView.as_view(template_name='base.html')),
-    path('scrutinization', include('apps.base.urls'))
-]
+    path("admin/", admin.site.urls),
+    path("", TemplateView.as_view(template_name="base.html")),
+    path("scrutinization", include("core.urls"))
+    ]
