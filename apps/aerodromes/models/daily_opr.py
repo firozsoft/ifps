@@ -13,9 +13,12 @@ class DailyOperationalHour(AerodromeProperties):
         verbose_name_plural = "Operational Hours"
 
     def clean(self) -> None:
-        if not any([all([self.start_time, self.end_time]),
-                    all([self.vfr_start_time, self.vfr_end_time])]):
+        if not any([self.vfr_start_time, self.vfr_end_time]):
             raise ValidationError(
-                message="At least for IFR or VFR set both start and end times",
-                code="at_least_one_start_and_end_pair_required")
+                message="VFR start and end times are mandatory",
+                code="ad_vfr_times_required")
+        if self.vfr_start_time > self.vfr_end_time:
+            raise ValidationError(
+                message="VFR start time can not be greater than VFR end time",
+                code="ad_vfr_times_start_greater_than_end")
         return super().clean()

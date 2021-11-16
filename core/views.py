@@ -28,7 +28,7 @@ def fpl_scrutinization(msg: str) -> JsonResponse:
         'numbers_type_weak': parts[3],
         'equipments_and_capacities': parts[4],
         'dep_ad_time': parts[5],
-        'routes': parts[6],
+        'route': parts[6],
         'dest_teet_alts': parts[7],
         'others': parts[8].replace(')', ''),
         # 'extra': parts[9]

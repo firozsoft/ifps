@@ -67,6 +67,7 @@ def regex_parse(data: dict[str, str]) -> \
         res['alt_ad_1'] = dest_teet_alt.group('alt1')
         res['alt_ad_2'] = dest_teet_alt.group('alt2')
 
+    # Parse Other Information
     other_info: list[str] = data['others'].split()
     last_switch_index = 0
     for item in other_info[:]:
@@ -94,7 +95,8 @@ def regex_parse(data: dict[str, str]) -> \
         else:
             err['syntax_error'] += f"{item} is not valid syntax for OTHER INFO. "
 
-        route_regex_parse(data, err)
+    # Parse Route
+    route_regex_parse(data, res, err)
 
     if err['syntax_error']:
         validation_error = ValidationError(message=err['syntax_error'], code="syntax_error")
@@ -107,12 +109,13 @@ def route_regex_parse(data: dict[str, str],
     route_items: list[str] = data['route'].split()
     if not (init_sp_lvl := re.match(rgx_pat.SPEED_LEVEL, route_items[0])):
         err['syntax_error'] += f"{route_items[0]} must be a valid speed & level. "
+        return
     else:
         res['initial_speed'] = init_sp_lvl.group('speed')
         res['initial_level'] = init_sp_lvl.group('level')
 
     # route_items[1] must be DCT, Route or Point
-    previous: dict[str, str] = {"type": '', "item": ''}  # previous scrutinized item
+    previous: dict[str, str] = {"type": '', "item": ''}
     if item := re.match(rgx_pat.ROUTE, route_items[1]):
         previous = {'type': 'route', 'item': item.group('route')}
     elif item := re.match(rgx_pat.SID_STAR, route_items[1]):
@@ -126,127 +129,125 @@ def route_regex_parse(data: dict[str, str],
         previous = {'type': 'point', 'item': item.group('ref_point')}
     else:
         err['syntax_error'] += f"{route_items[1]} must be a valid ATS Route or DCT or an ATS Point"
+        return
 
-    if previous['type']:
-        # route segments
-        segments: list[dict[str, str]] = [{
-            'from': res['departure_ad'],
-            'to': previous['item'] if previous['type'] == 'point' else '',
-            'via': previous['item'] if previous['type'] in ('route', 'dct', 'sid') else '',
-            'speed': res['initial_speed'],
-            'level': res['initial_level'],
-            'top_level': res['initial_level'],
-            'flight_rule': 'I' if res['flight_rule'] in ('I', 'Y') else 'V',
-            }]
+    # route segments
+    segments: list[dict[str, str]] = [{
+        'from': res['departure_ad'],
+        'to': previous['item'] if previous['type'] == 'point' else '',
+        'via': previous['item'] if previous['type'] in ('route', 'dct', 'sid') else '',
+        'speed': res['initial_speed'],
+        'level': res['initial_level'],
+        'top_level': res['initial_level'],
+        'flight_rule': 'I' if res['flight_rule'] in ('I', 'Y') else 'V',
+        }]
 
-        def _update_segments(segment_list: list[dict[str, str]], to: str):
-            segment_list[-1]['to'] = to
-            segment_list.append({'from': to,
-                                 'to': '',
-                                 'via': '',
-                                 'speed': segment_list[-1]['speed'],
-                                 'level': segment_list[-1]['level'],
-                                 'top_level': segment_list[-1]['top_level'],
-                                 'flight_rule': segment_list[-1]['flight_rule'], })
+    def _update_segments(segment_list: list[dict[str, str]], to: str):
+        segment_list[-1]['to'] = to
+        segment_list.append({'from': to,
+                             'to': '',
+                             'via': '',
+                             'speed': segment_list[-1]['speed'],
+                             'level': segment_list[-1]['level'],
+                             'top_level': segment_list[-1]['top_level'],
+                             'flight_rule': segment_list[-1]['flight_rule'], })
 
-        # previous['type'] == 'route' | 'dct' | 'point' | 'sig_point'
-        for item in route_items[2:]:
-            if previous['type'] in ('route', 'sid'):
-                for pat in (rgx_pat.POINT,
-                            rgx_pat.CHANGE_SPEED_LEVEL,
-                            rgx_pat.CRUISE_CLIMB):
-                    if it := re.match(pat, item):
-                        if pat == rgx_pat.POINT and previous['type'] == 'sid' \
-                                and previous['item'][:-2] != it.group('point'):
-                            err['syntax_error'] += f"Point {item} is not connected to SID {previous['item']}. "
-                        else:
-                            previous = {'type': 'point', 'item': it.group('point')}
-                            _update_segments(segments, previous['item'])
-                            if pat != rgx_pat.POINT:
-                                segments[-1]['speed'] = it.group('speed')
-                                segments[-1]['level'] = it.group('level')
-                                if pat == rgx_pat.CRUISE_CLIMB:
-                                    segments[-1]['top_level'] = it.group('top_level')
-                        break
-                else:
-                    err['syntax_error'] += f"{item} must be a valid ATS Point. "
-                    # break
-                continue
-            elif previous['type'] == 'dct':
-                was_sig_point = False
-                if it := re.match(rgx_pat.COR_DEGREES, item):
-                    was_sig_point = True
-                    previous = {'type': 'sig_point',
-                                'item': it.group('degrees')}
-                elif it := re.match(rgx_pat.COR_DEG_MINS, item):
-                    was_sig_point = True
-                    previous = {'type': 'sig_point',
-                                'item': it.group('deg_min')}
-                elif it := re.match(rgx_pat.BEARING_DIST, item):
-                    was_sig_point = True
-                    previous = {'type': 'sig_point',
-                                'item': it.group('point')}
-                elif it := re.match(rgx_pat.POINT, item):
-                    was_sig_point = True
-                    previous = {'type': 'point',
-                                'item': it.group('point')}
-                if was_sig_point:
-                    _update_segments(segments, previous['item'])
-                else:
-                    err['syntax_error'] += f"{item} must be a valid Significant Point. "
-                    # break
-                continue
-            elif previous['type'] == 'point':
-                if pat := re.match(rgx_pat.SID_STAR, item):
-                    if pat.group('point') != previous['item']:
-                        err['syntax_error'] += (f"STAR {item} connected point is not "
-                                                f"correct {previous['item']}. ")
-                        # break
+    # previous['type'] == 'route' | 'dct' | 'point' | 'sig_point'
+    for item in route_items[2:]:
+        if previous['type'] in ('route', 'sid'):
+            for pat in (rgx_pat.POINT, rgx_pat.CHANGE_SPEED_LEVEL, rgx_pat.CRUISE_CLIMB):
+                if it := re.match(pat, item):
+                    if pat == rgx_pat.POINT and previous['type'] == 'sid' \
+                            and previous['item'][:-2] != it.group('point'):
+                        err['syntax_error'] += f"Point {item} is not connected to SID {previous['item']}. "
                     else:
-                        previous = {'type': 'route', 'item': (star := pat.group('sid_star'))}
-                        segments[-1]['via'] = star
-                        res['star'] = star
-                elif pat := re.match(rgx_pat.ROUTE, item):
-                    previous = {'type': 'route', 'item': (route := pat.group('route'))}
-                    segments[-1]['via'] = route
-                elif item == "DCT":
-                    previous = {'type': 'dct', 'item': "DCT"}
-                    segments[-1]['via'] = "DCT"
-
-                # # """
-                # according following text from Doc4444, next elif part shall be commented.
-                # # Flights along designated ATS routes:
-                # #     DCT, if the flight to the next point will be outside a designated route,
-                # #     unless both points are defined by geographical coordinates.
-                # # Flights outside designated ATS routes:
-                # #     DCT between successive points unless both points are defined by geographical
-                # #     coordinates or by bearing and distance.
-                # """
-                elif pat := re.match(rgx_pat.SIG_POINT, item):
-                    previous = {'type': 'point', 'item': pat.group()}
-                    segments[-1]['via'] = "DCT"
-                    _update_segments(segments, previous['item'])
-                elif item in ('IFR', 'VFR'):
-                    if segments[-1]['flight_rule'] == item[0]:
-                        err['syntax_error'] += f"{item} is Incorrect change of flight rule. {item} to {item}. "
-                    elif res['flight_rule'] not in ('Y', 'Z'):
-                        err['syntax_error'] += f"Illegal change of flight rule initial one was not 'Y' or 'Z'. "
-                    else:
-                        segments[-1]['flight_rule'] = item[0]
-                else:
-                    err['syntax_error'] += f"{item} must be a valid Route, Point or word DCT. "
+                        previous = {'type': 'point', 'item': it.group('point')}
+                        _update_segments(segments, previous['item'])
+                        if pat != rgx_pat.POINT:
+                            segments[-1]['speed'] = it.group('speed')
+                            segments[-1]['level'] = it.group('level')
+                            if pat == rgx_pat.CRUISE_CLIMB:
+                                segments[-1]['top_level'] = it.group('top_level')
+                    break
+            else:
+                err['syntax_error'] += f"{item} must be a valid ATS Point. "
+                # break
+            continue
+        elif previous['type'] == 'dct':
+            was_sig_point = False
+            if it := re.match(rgx_pat.COR_DEGREES, item):
+                was_sig_point = True
+                previous = {'type': 'sig_point',
+                            'item': it.group('degrees')}
+            elif it := re.match(rgx_pat.COR_DEG_MINS, item):
+                was_sig_point = True
+                previous = {'type': 'sig_point',
+                            'item': it.group('deg_min')}
+            elif it := re.match(rgx_pat.BEARING_DIST, item):
+                was_sig_point = True
+                previous = {'type': 'sig_point',
+                            'item': it.group('point')}
+            elif it := re.match(rgx_pat.POINT, item):
+                was_sig_point = True
+                previous = {'type': 'point',
+                            'item': it.group('point')}
+            if was_sig_point:
+                _update_segments(segments, previous['item'])
+            else:
+                err['syntax_error'] += f"{item} must be a valid Significant Point. "
+                # break
+            continue
+        elif previous['type'] == 'point':
+            if pat := re.match(rgx_pat.SID_STAR, item):
+                if pat.group('point') != previous['item']:
+                    err['syntax_error'] += (f"STAR {item} connected point is not "
+                                            f"correct {previous['item']}. ")
                     # break
-                continue
-            elif previous['type'] == 'sig_point':
-                if item == "DCT":
-                    previous = {'type': 'dct', 'item': "DCT"}
-                    segments[-1]['via'] = "DCT"
-                elif pat := re.match(rgx_pat.SIG_POINT, item):
-                    previous = {'type': 'point', 'item': pat.group()}
                 else:
-                    err['syntax_error'] += f"{item} must be a valid Sig.Point or word DCT. "
-                continue
-        else:
-            segments[-1]['to'] = res['destination_ad']
+                    previous = {'type': 'route', 'item': (star := pat.group('sid_star'))}
+                    segments[-1]['via'] = star
+                    res['star'] = star
+            elif pat := re.match(rgx_pat.ROUTE, item):
+                previous = {'type': 'route', 'item': (route := pat.group('route'))}
+                segments[-1]['via'] = route
+            elif item == "DCT":
+                previous = {'type': 'dct', 'item': "DCT"}
+                segments[-1]['via'] = "DCT"
 
-        res['route'] = segments
+            # # """
+            # according following text from Doc4444, next elif part shall be commented.
+            # # Flights along designated ATS routes:
+            # #     DCT, if the flight to the next point will be outside a designated route,
+            # #     unless both points are defined by geographical coordinates.
+            # # Flights outside designated ATS routes:
+            # #     DCT between successive points unless both points are defined by geographical
+            # #     coordinates or by bearing and distance.
+            # """
+            elif pat := re.match(rgx_pat.SIG_POINT, item):
+                previous = {'type': 'point', 'item': pat.group()}
+                segments[-1]['via'] = "DCT"
+                _update_segments(segments, previous['item'])
+            elif item in ('IFR', 'VFR'):
+                if segments[-1]['flight_rule'] == item[0]:
+                    err['syntax_error'] += f"{item} is Incorrect change of flight rule. {item} to {item}. "
+                elif res['flight_rule'] not in ('Y', 'Z'):
+                    err['syntax_error'] += f"Illegal change of flight rule initial one was not 'Y' or 'Z'. "
+                else:
+                    segments[-1]['flight_rule'] = item[0]
+            else:
+                err['syntax_error'] += f"{item} must be a valid Route, Point or word DCT. "
+                # break
+            continue
+        elif previous['type'] == 'sig_point':
+            if item == "DCT":
+                previous = {'type': 'dct', 'item': "DCT"}
+                segments[-1]['via'] = "DCT"
+            elif pat := re.match(rgx_pat.SIG_POINT, item):
+                previous = {'type': 'point', 'item': pat.group()}
+            else:
+                err['syntax_error'] += f"{item} must be a valid Sig.Point or word DCT. "
+            continue
+    else:
+        segments[-1]['to'] = res['destination_ad']
+
+    res['route'] = segments

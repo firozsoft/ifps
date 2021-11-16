@@ -1,3 +1,6 @@
+import datetime
+
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from apps.general.models.abstracts import BaseModel
@@ -20,3 +23,9 @@ class AerodromeProperties(BaseModel):
 
     def __str__(self):
         return f"{self.aerodrome} - {self.date}"
+
+    def clean(self):
+        if self.start_time > self.end_time:
+            raise ValidationError(
+                message="Start time can not be greater than End time",
+                code="ad_times_start_greater_than_end")
