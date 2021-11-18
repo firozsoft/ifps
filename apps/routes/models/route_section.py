@@ -1,4 +1,6 @@
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import F
 
 from apps.general.models.abstracts import BaseModel
 from apps.utils import Direction
@@ -26,10 +28,19 @@ class RouteSection(BaseModel):
     class Meta:
         ordering = ('route',)
         indexes = [models.Index(fields=['route', 'point1', 'point2'])]
-        constraints = [models.UniqueConstraint(fields=['route', 'point1', 'point2'],
-                                               name='unique_route_sections'), ]
+        constraints = [models.UniqueConstraint(fields=['route', 'point1'],
+                                               name='unique_route_and_point1'),
+                       models.UniqueConstraint(fields=['route', 'point2'],
+                                               name='unique_route_and_point2'),
+                       ]
         verbose_name = "Route Section"
         verbose_name_plural = "Route Sections"
 
     def __str__(self) -> str:
         return f"{self.route} between {self.point1} and {self.point2}"
+
+    def clean(self):
+        if RouteSection.objects.filter(F(point1=self.point1) | F(point2=self.point2)).exists():
+            raise ValidationError(message="There is another route-section which has the same "
+                                          "first point or same second point for this route",
+                                  code="unique_route_and_point1_or_point2_error")

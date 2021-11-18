@@ -10,10 +10,9 @@ class Point(BasePoint):
     fir = models.ForeignKey("general.FIR", verbose_name="Located FIR", null=True, blank=True,
                             on_delete=models.CASCADE, related_name="%(class)s")
     is_fir_boundary = models.BooleanField("Is FIR Boundary", choices=YesNo, default=False)
-    fir_boundaries = models.ManyToManyField(
-        "self", related_name="connected_points", blank=True,
-        limit_choices_to={'is_fir_boundary': True},
-        verbose_name="Connected FIR Boundaries")
+    fir_boundaries = models.ManyToManyField("self", related_name="connected_points", blank=True,
+                                            limit_choices_to={'is_fir_boundary': True},
+                                            verbose_name="Connected FIR Boundaries")
 
     class Meta(BasePoint.Meta):
         verbose_name = "Point"

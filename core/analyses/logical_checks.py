@@ -1,4 +1,4 @@
-from apps.aerodromes.analysis.aerodromes_checks import aerodromes_checks
+from apps.aerodromes.analysis import aerodromes_checks
 
 
 def logical_check(data: dict[str, str]):
