@@ -121,17 +121,22 @@ def aerodromes_checks(data: dict[str, Union[str, list[dict[str, str]]]], err: di
     if destination_ad is not None:
         _analyse(destination_ad, flight_type, last_flight_rule, est_arrival_datetime, err, data["sts"], data["rmk"])
 
-    def _sid_star_exists(sid_star: str, type_: str) -> None:
-        if not (it := SidStar.objects.filter(name=sid_star).first()):
+    def _sid_star_check(sid_star: str, type_: str) -> None:
+        if not (it := SidStar.objects.filter(name=sid_star).select_related('aerodromes', 'point').first()):
             err['logical_error'] += f"{type_} {sid_star} does not exist. "
-        elif type_ not in it.type:
-            err['logical_error'] += f"{sid_star}({it.type}) is not of type {type_}. "
-        elif type_ == 'SID' and data['departure_ad'] not in it.aerodromes:
-            err['logical_error'] += f"SID {sid_star} is not for {departure_ad}. "
-        elif type_ == 'STAR' and data['destination_ad'] not in it.aerodromes:
-            err['logical_error'] += f"STAR {sid_star} is not for {destination_ad}. "
+        else:
+            if not it.is_active:
+                err['logical_error'] += f"{type_} {sid_star} is not active. "
+            if not it.point.is_active:
+                err['logical_error'] += f"Point {it.point} is not active. "
+            if type_ not in it.type:
+                err['logical_error'] += f"{sid_star}({it.type}) is not of type {type_}. "
+            if type_ == 'SID' and data['departure_ad'] not in it.aerodromes:
+                err['logical_error'] += f"SID {sid_star} is not for {departure_ad}. "
+            elif type_ == 'STAR' and data['destination_ad'] not in it.aerodromes:
+                err['logical_error'] += f"STAR {sid_star} is not for {destination_ad}. "
 
     if data['sid'] is not None:
-        _sid_star_exists(data['sid'], 'SID')
+        _sid_star_check(data['sid'], 'SID')
     if data['star'] is not None:
-        _sid_star_exists(data['star'], 'STAR')
+        _sid_star_check(data['star'], 'STAR')
