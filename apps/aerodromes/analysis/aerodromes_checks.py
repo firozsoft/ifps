@@ -91,7 +91,7 @@ def aerodromes_checks(data: dict[str, Union[str, list[dict[str, str]]]], err: di
 
     def _get_ad(four_letters: str) -> Union[Aerodrome, None]:
         """getting dep, dest and first alt aerodromes"""
-        if four_letters == "ZZZZ":
+        if four_letters in ("ZZZZ", "AFIL"):
             return None
         try:
             ad_model = Aerodrome.objects.get(four_letters=four_letters).prefetch_related(
