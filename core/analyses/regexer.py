@@ -10,6 +10,7 @@ from apps.utils.patterns import OTHER_INFO_SWITCHES
 
 def route_regex_parse(data: dict[str, str],
                       res: dict[str, Union[str, list[dict[str, str]]]], err: dict[str, str]) -> None:
+    """Checks for syntax errors just in route part"""
     route_items: list[str] = data['route'].split()
     if not (init_sp_lvl := re.match(rgx_pat.SPEED_LEVEL, route_items[0])):
         err['syntax_error'] += f"{route_items[0]} must be a valid speed & level. "
@@ -157,67 +158,54 @@ def route_regex_parse(data: dict[str, str],
     res['route'] = segments
 
 
-def regex_parse(data: dict[str, str]) -> \
+def regex_parse(row_data: dict[str, str]) -> \
         tuple[dict[str, Union[str, list[dict[str, str]]]], Union[ValidationError, None]]:
-    """
-    data = {
-        'call_sign': parts[1],
-        'flt_rule_type': parts[2],
-        'numbers_type_weak': parts[3],
-        'equipments_and_capacities': parts[4],
-        'dep_ad_time': parts[5],
-        'dest_teet_alts': parts[7],
-        'others': parts[8],
-        ----
-        'route': parts[6],
-        # 'extra': parts[9]
-    }
-    """
-    res = dict()
+    """Checks for syntax errors and prepares a new dict"""
+    regex_parsed_data = dict()
     validation_error = None
     err = {'syntax_error': ''}
 
-    if not (call_sign := re.match(rgx_pat.CALLSIGN, data['call_sign'])):
-        err['syntax_error'] += f"call_sign({data['call_sign']}) is not valid. "
+    if not (call_sign := re.match(rgx_pat.CALLSIGN, row_data['call_sign'])):
+        err['syntax_error'] += f"call_sign({row_data['call_sign']}) is not valid. "
     else:
-        res['call_sign'] = call_sign.group()
+        regex_parsed_data['call_sign'] = call_sign.group()
 
-    if not (flt_rule_type := re.match(rgx_pat.FLIGHT_RULE_TYPE, data['flt_rule_type'])):
-        err['syntax_error'] += f"flight rule/type({data['flt_rule_type']}) is not valid. "
+    if not (flt_rule_type := re.match(rgx_pat.FLIGHT_RULE_TYPE, row_data['flt_rule_type'])):
+        err['syntax_error'] += f"flight rule/type({row_data['flt_rule_type']}) is not valid. "
     else:
-        res['flight_rule'] = flt_rule_type.group('flight_rule')
-        res['flight_type'] = flt_rule_type.group('flight_type')
+        regex_parsed_data['flight_rule'] = flt_rule_type.group('flight_rule')
+        regex_parsed_data['flight_type'] = flt_rule_type.group('flight_type')
 
-    if not (numbers_type_weak := re.match(rgx_pat.NUMBER_TYPE_WAKE, data['numbers_type_weak'])):
-        err['syntax_error'] += f"numbers/type/weak({data['numbers_type_weak']}) is not valid. "
+    if not (numbers_type_weak := re.match(rgx_pat.NUMBER_TYPE_WAKE, row_data['numbers_type_weak'])):
+        err['syntax_error'] += f"numbers/type/weak({row_data['numbers_type_weak']}) is not valid. "
     else:
-        res['ac_numbers'] = numbers_type_weak.group('numbers') or "1"
-        res['ac_type'] = numbers_type_weak.group('type')
-        res['ac_weak'] = numbers_type_weak.group('weak')
+        regex_parsed_data['ac_numbers'] = numbers_type_weak.group('numbers') or "1"
+        regex_parsed_data['ac_type'] = numbers_type_weak.group('type')
+        regex_parsed_data['ac_weak'] = numbers_type_weak.group('weak')
 
-    if not (equp_cpct := re.match(rgx_pat.EQUIPMENTS_CAPACITIES, data['equipments_and_capacities'])):
-        err['syntax_error'] += f"equipments/capacities({data['equipments_and_capacities']}) is not valid. "
+    if not (equp_cpct := re.match(rgx_pat.EQUIPMENTS_CAPACITIES, row_data['equipments_and_capacities'])):
+        err['syntax_error'] += f"equipments/capacities({row_data['equipments_and_capacities']}) is not valid. "
     else:
-        res['equipments'] = equp_cpct.group('equipments')
-        res['capacities'] = equp_cpct.group('capacities')
+        regex_parsed_data['equipments'] = equp_cpct.group('equipments')
+        regex_parsed_data['capacities'] = equp_cpct.group('capacities')
 
-    if not (dep_ad_time := re.match(rgx_pat.DEPARTURE_AD_TIME, data['dep_ad_time'])):
-        err['syntax_error'] += f"departure aerodrome or time({data['dep_ad_time']})is not valid. "
+    if not (dep_ad_time := re.match(rgx_pat.DEPARTURE_AD_TIME, row_data['dep_ad_time'])):
+        err['syntax_error'] += f"departure aerodrome or time({row_data['dep_ad_time']})is not valid. "
     else:
-        res['departure_ad'] = dep_ad_time.group('dep_ad')
-        res['eobt'] = dep_ad_time.group('eobt')
+        regex_parsed_data['departure_ad'] = dep_ad_time.group('dep_ad')
+        regex_parsed_data['eobt'] = dep_ad_time.group('eobt')
 
-    if not (dest_teet_alt := re.match(rgx_pat.DEST_AD_TEET_ALTS, data['dest_teet_alts'])):
-        err['syntax_error'] += (f"destination aerodrome or time or alternates({data['dest_teet_alts']})"
+    if not (dest_teet_alt := re.match(rgx_pat.DEST_AD_TEET_ALTS, row_data['dest_teet_alts'])):
+        err['syntax_error'] += (f"destination aerodrome or time or alternates({row_data['dest_teet_alts']})"
                                 " is not valid. ")
     else:
-        res['destination_ad'] = dest_teet_alt.group('dest_ad')
-        res['teet'] = dest_teet_alt.group('teet')
-        res['alt_ad_1'] = dest_teet_alt.group('alt1')
-        res['alt_ad_2'] = dest_teet_alt.group('alt2')
+        regex_parsed_data['destination_ad'] = dest_teet_alt.group('dest_ad')
+        regex_parsed_data['teet'] = dest_teet_alt.group('teet')
+        regex_parsed_data['alt_ad_1'] = dest_teet_alt.group('alt1')
+        regex_parsed_data['alt_ad_2'] = dest_teet_alt.group('alt2')
 
     # Parse Other Information
-    other_info: list[str] = data['others'].split()
+    other_info: list[str] = row_data['others'].split()
     last_switch_index = 0
     for item in other_info[:]:
         if not item.count('/'):
@@ -229,46 +217,46 @@ def regex_parse(data: dict[str, str]) -> \
         for key, pattern in OTHER_INFO_SWITCHES.items():
             if item.startswith(f"{key}/"):
                 if matched := re.match(pattern, item):
-                    res[key.lower()] = matched.group(key)
+                    regex_parsed_data[key.lower()] = matched.group(key)
                     if key == 'PBN':
-                        res['pbn_rnav_spc'] = matched.group('rnav_spc')
-                        res['pbn_rnp_spc'] = matched.group('rnp_spc')
+                        regex_parsed_data['pbn_rnav_spc'] = matched.group('rnav_spc')
+                        regex_parsed_data['pbn_rnp_spc'] = matched.group('rnp_spc')
                     elif key == 'DOF':
                         try:
-                            datetime.strptime(res[key.lower()], '%y%m%d')
+                            datetime.strptime(regex_parsed_data[key.lower()], '%y%m%d')
                         except ValueError:
-                            err['syntax_error'] += f"DOF({res[key.lower()]}) is not in valid(YYMMDD). "
+                            err['syntax_error'] += f"DOF({regex_parsed_data[key.lower()]}) is not in valid(YYMMDD). "
                 else:
                     err['syntax_error'] += f"{item} is not valid. "
                 break
         else:
             err['syntax_error'] += f"{item} is not valid syntax for OTHER INFO. "
 
-    if data['departure_ad'] in ("ZZZZ", "AFIL"):
-        if "dep" not in data.keys():
+    if regex_parsed_data['departure_ad'] in ("ZZZZ", "AFIL"):
+        if "dep" not in regex_parsed_data.keys():
             err['syntax_error'] += "DEP is not defined. Missing DEP/ switch in ITEM18(Other information). "
-        elif not re.match(rgx_pat.SIG_POINT, data['dep']):
-            err['syntax_error'] += f"DEP/ in ITEM18({data['dep']}) is not a valid point or coordinate(11 characters) or " \
+        elif not re.match(rgx_pat.SIG_POINT, regex_parsed_data['dep']):
+            err['syntax_error'] += f"DEP/ in ITEM18({regex_parsed_data['dep']}) is not a valid point or coordinate(11 characters) or " \
                                    "bearing-distance. "
 
-    if data['departure_ad'] == "ZZZZ":
-        if "dest" not in data.keys():
+    if regex_parsed_data['departure_ad'] == "ZZZZ":
+        if "dest" not in regex_parsed_data.keys():
             err['syntax_error'] += "DEST is not defined. Missing DEST/ switch in ITEM18(Other information). "
-        elif not re.match(rgx_pat.SIG_POINT, data['dest']):
-            err['syntax_error'] += f"DEST/ in ITEM18({data['dep']}) is not a valid point or " \
+        elif not re.match(rgx_pat.SIG_POINT, regex_parsed_data['dest']):
+            err['syntax_error'] += f"DEST/ in ITEM18({regex_parsed_data['dep']}) is not a valid point or " \
                                    f"coordinate(11 characters) or bearing-distance. "
 
-    if data['alt_ad_1'] == "ZZZZ" or data['alt_ad_2'] == "ZZZZ":
-        if "altn" not in data.keys():
+    if regex_parsed_data['alt_ad_1'] == "ZZZZ" or regex_parsed_data['alt_ad_2'] == "ZZZZ":
+        if "altn" not in regex_parsed_data.keys():
             err['syntax_error'] += "ALTN is not defined. Missing ALTN/ switch in ITEM18(Other information). "
-        elif not re.match(rgx_pat.SIG_POINT, data['dest']):
-            err['syntax_error'] += f"ALTN/ in ITEM18({data['dep']}) is not a valid point or " \
+        elif not re.match(rgx_pat.SIG_POINT, regex_parsed_data['dest']):
+            err['syntax_error'] += f"ALTN/ in ITEM18({regex_parsed_data['dep']}) is not a valid point or " \
                                    f"coordinate(11 characters) or bearing-distance. "
 
     # Parse Route
-    route_regex_parse(data, res, err)
+    route_regex_parse(row_data, regex_parsed_data, err)
 
     if err['syntax_error']:
         validation_error = ValidationError(message=err['syntax_error'], code="syntax_error")
 
-    return res, validation_error
+    return regex_parsed_data, validation_error
