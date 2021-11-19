@@ -1,6 +1,6 @@
 """Points Related Checks Module
     this module contains about:
-        ✓ Points existence
+        ✓ DEP, DEST and ALTN Reference Points existence
 """
 import re
 from typing import Union
