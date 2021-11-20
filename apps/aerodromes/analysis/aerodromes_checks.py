@@ -9,6 +9,8 @@
 import datetime
 from typing import Union
 
+from django.conf import settings
+
 from apps.aerodromes.models import Aerodrome, Curfew, DailyOperationalHour, TemporaryClosure
 from apps.routes.models import SidStar
 
@@ -78,7 +80,7 @@ def _analyse(aerodrome: Aerodrome, aircraft_type: str, flight_rule: str, flight_
     _check_aerodrome_curfew(aerodrome, flight_datetime, data_sts, data_rmk, err)
 
 
-def aerodromes_checks(data: dict[str, Union[str, list[dict[str, str]]]], err: dict[str, str]):
+def aerodromes_checks(data: dict[str, Union[bool, str, list[dict[str, str]]]], err: dict[str, str]):
     """Checks Related To Aerodromes"""
 
     flight_type = data['flight_type']
@@ -92,6 +94,8 @@ def aerodromes_checks(data: dict[str, Union[str, list[dict[str, str]]]], err: di
     def _get_ad(four_letters: str) -> Union[Aerodrome, None]:
         """getting dep, dest and first alt aerodromes"""
         if four_letters in ("ZZZZ", "AFIL"):
+            return None
+        if not four_letters[:2] == settings.FIR_FOUR_LETTERS[:2]:
             return None
         try:
             ad_model = Aerodrome.objects.get(four_letters=four_letters).prefetch_related(
@@ -122,7 +126,8 @@ def aerodromes_checks(data: dict[str, Union[str, list[dict[str, str]]]], err: di
         _analyse(destination_ad, flight_type, last_flight_rule, est_arrival_datetime, err, data["sts"], data["rmk"])
 
     def _sid_star_check(sid_star: str, type_: str) -> None:
-        if not (it := SidStar.objects.filter(name=sid_star).select_related('aerodromes', 'point').first()):
+        if not (it := SidStar.objects.filter(name=sid_star).select_related(
+                'point').prefetch_related('aerodromes').first()):
             err['logical_error'] += f"{type_} {sid_star} does not exist. "
         else:
             if not it.is_active:
@@ -136,7 +141,7 @@ def aerodromes_checks(data: dict[str, Union[str, list[dict[str, str]]]], err: di
             elif type_ == 'STAR' and data['destination_ad'] not in it.aerodromes:
                 err['logical_error'] += f"STAR {sid_star} is not for {destination_ad}. "
 
-    if data['sid'] is not None:
+    if data['domestic_dep'] is True and data['sid'] is not None:
         _sid_star_check(data['sid'], 'SID')
-    if data['star'] is not None:
+    if data['domestic_dest'] is True and data['star'] is not None:
         _sid_star_check(data['star'], 'STAR')
