@@ -10,7 +10,7 @@ from apps.utils.patterns import OTHER_INFO_SWITCHES
 
 def route_regex_parse(data: dict[str, str],
                       res: dict[str, Union[str, list[dict[str, str]]]], err: dict[str, str]) -> None:
-    """Checks for syntax errors just in route part"""
+    """Checks for syntax errors Routes"""
     route_items: list[str] = data['route'].split()
     if not (init_sp_lvl := re.match(rgx_pat.SPEED_LEVEL, route_items[0])):
         err['syntax_error'] += f"{route_items[0]} must be a valid speed & level. "
@@ -20,6 +20,7 @@ def route_regex_parse(data: dict[str, str],
         res['initial_level'] = init_sp_lvl.group('level')
 
     # route_items[1] must be DCT, Route or Point
+    res['ref_points'] = []  # to create a list of reference points and logical checks on them
     previous: dict[str, str] = {"type": '', "item": ''}
     if item := re.match(rgx_pat.ROUTE, route_items[1]):
         previous = {'type': 'route', 'item': item.group('route')}
@@ -32,6 +33,7 @@ def route_regex_parse(data: dict[str, str],
         previous = {'type': 'point', 'item': item.group('point')}
     elif item := re.match(rgx_pat.BEARING_DIST, route_items[1]):
         previous = {'type': 'point', 'item': item.group('ref_point')}
+        res['ref_points'].append(item.group('ref_point'))
     else:
         err['syntax_error'] += f"{route_items[1]} must be a valid ATS Route or DCT or an ATS Point"
         return
@@ -75,23 +77,18 @@ def route_regex_parse(data: dict[str, str],
                                 segments[-1]['top_level'] = it.group('top_level')
                     break
             else:
-                err['syntax_error'] += f"{item} must be a valid ATS Point. "
+                err['syntax_error'] += f"{item} must be a valid ATS Point(or you shall use DCT). "
                 # break
             continue
         elif previous['type'] == 'dct':
             was_sig_point = False
-            if it := re.match(rgx_pat.COR_DEGREES, item):
+            if any([it := re.match(pattern, item) for pattern in (
+                    rgx_pat.COR_DEGREES, rgx_pat.COR_DEG_MINS, rgx_pat.BEARING_DIST)]):
                 was_sig_point = True
                 previous = {'type': 'sig_point',
-                            'item': it.group('degrees')}
-            elif it := re.match(rgx_pat.COR_DEG_MINS, item):
-                was_sig_point = True
-                previous = {'type': 'sig_point',
-                            'item': it.group('deg_min')}
-            elif it := re.match(rgx_pat.BEARING_DIST, item):
-                was_sig_point = True
-                previous = {'type': 'sig_point',
-                            'item': it.group('point')}
+                            'item': it.group('ref_point') or it.group()}
+                if it.group('ref_point'):
+                    res['ref_points'].append(it.group('ref_point'))
             elif it := re.match(rgx_pat.POINT, item):
                 was_sig_point = True
                 previous = {'type': 'point',
@@ -225,7 +222,8 @@ def regex_parse(row_data: dict[str, str]) -> \
                         try:
                             datetime.strptime(regex_parsed_data[key.lower()], '%y%m%d')
                         except ValueError:
-                            err['syntax_error'] += f"DOF({regex_parsed_data[key.lower()]}) is not in valid(YYMMDD). "
+                            err['syntax_error'] += f"DOF({regex_parsed_data[key.lower()]}) is not" \
+                                                   f" valid(YYMMDD format). "
                 else:
                     err['syntax_error'] += f"{item} is not valid. "
                 break
@@ -236,7 +234,8 @@ def regex_parse(row_data: dict[str, str]) -> \
         if "dep" not in regex_parsed_data.keys():
             err['syntax_error'] += "DEP is not defined. Missing DEP/ switch in ITEM18(Other information). "
         elif not re.match(rgx_pat.SIG_POINT, regex_parsed_data['dep']):
-            err['syntax_error'] += f"DEP/ in ITEM18({regex_parsed_data['dep']}) is not a valid point or coordinate(11 characters) or " \
+            err['syntax_error'] += f"DEP/ in ITEM18({regex_parsed_data['dep']}) " \
+                                   f"is not a valid point or coordinate(11 characters) or " \
                                    "bearing-distance. "
 
     if regex_parsed_data['departure_ad'] == "ZZZZ":

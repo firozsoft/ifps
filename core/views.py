@@ -1,6 +1,7 @@
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.http import require_http_methods
 
+from core.analyses.logical_checks import logical_check
 from core.analyses.regexer import regex_parse
 
 
@@ -34,6 +35,7 @@ def fpl_scrutinization(msg: str) -> JsonResponse:
         # 'extra': parts[9]
         }
     res, err = regex_parse(field_data)
+    err = logical_check(res)
     if err:
         return JsonResponse({'error_message': err.message, 'error_code': err.code})
     else:
