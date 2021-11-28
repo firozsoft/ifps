@@ -5,11 +5,11 @@ from apps.general.models import FIR
 from apps.points.models import NavAid, Point
 
 
-IATA = '../resources/YATA CODE.xlsx'
-POINTS_FIRS = '../resources/Points.xlsx'
-AERODROMES = '../resources/AIRPORTS.xlsx'
-NAVAIDS = '../resources/NAVID.xlsx'
-SIDSTAR = '../resources/SID & STAR.xlsx'
+IATA = './resources/YATA CODE.xlsx'
+POINTS_FIRS = './resources/Points.xlsx'
+AERODROMES = './resources/AIRPORTS.xlsx'
+NAVAIDS = './resources/NAVID.xlsx'
+SIDSTAR = './resources/SID & STAR.xlsx'
 
 
 def create_firs_and_points() -> None:

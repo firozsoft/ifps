@@ -1,6 +1,4 @@
-dj-database-url
-Django
-django-extensions
-psycopg2
-python-decouple
-requests
+Django~=3.2.9
+psycopg2~=2.9.1
+
+pandas~=1.3.4

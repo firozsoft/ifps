@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 
 from apps.aerodromes.analysis import aerodromes_checks
 from apps.points.analysis import points_checks
-from apps.routes.analyses.routes_chekcs import routes_checks
+from apps.routes.analyses import routes_checks
 
 
 def logical_check(data: dict[str, Union[bool, str, list[dict[str, str]]]]):
@@ -26,7 +26,7 @@ def logical_check(data: dict[str, Union[bool, str, list[dict[str, str]]]]):
     points_checks(data, err)
     routes_checks(data, err)
 
-    if err['syntax_error']:
+    if err['logical_error']:
         validation_error = ValidationError(message=err['logical_error'], code="logical_error")
 
     return validation_error

@@ -34,10 +34,10 @@ class NavAidType(models.TextChoices):
     VOR_TAC = "vor_tac", "VOR/TAC"
 
 
-class NavAidUsecase(models.TextChoices):
+class NavAidUseCase(models.TextChoices):
     IN_ROUTE = "in_route", "In Route"
     IN_AIRPORT = "in_airport", "In Airport"
-    BOTH = "both", "Both"
+    BOTH = "both", "In Route/Airport"
 
 
 class RouteSchemeFlightNature(models.TextChoices):

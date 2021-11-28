@@ -24,6 +24,8 @@ COR_DEGREES = r"\b(?P<degrees>(([0-8]\d)|90)(N|S)((0\d\d)|(1[0-7]\d)|180)(E|W))\
 
 COR_DEG_MINS = r"\b(?P<deg_min>(([0-8]\d)|90)[0-5]\d(N|S)((0\d\d)|(1[0-7]\d)|180)[0-5]\d(E|W))\b"
 
+COR_DEG_MINS_ACUR = r"\b(?P<deg_min_acur>(([0-8]\d)|90)\d\d\d\d(N|S)((0\d\d)|(1[0-7]\d)|180)\d\d\d\d(E|W))\b"
+
 BEARING_DIST = r"\b(?P<bearing_dist>({0})(([0-2]\d\d)|(3[0-5]\d))[0-2]\d\d)\b".format(
     POINT.replace('\\b', '').replace('<point>', '<ref_point>'))
 

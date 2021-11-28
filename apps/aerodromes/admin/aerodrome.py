@@ -5,4 +5,7 @@ from apps.aerodromes.models import Aerodrome
 
 @admin.register(Aerodrome)
 class AerodromeAdmin(admin.ModelAdmin):
-    pass
+    search_fields = ('name', 'four_letters', )
+    list_display = ('name', 'four_letters')
+    list_filter = ('is_active', )
+    filter_horizontal = ('nav_aids', )

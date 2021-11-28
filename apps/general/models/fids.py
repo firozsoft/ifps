@@ -12,7 +12,7 @@ class Fids(BaseModel):
     depart_time = models.DateTimeField("Depart time", null=True, blank=True)
     arrival = models.DateTimeField("Arrival", null=True, blank=True)
 
-    def __str__(self) -> str:
+    def __str__(self):
         return f'{self.call_sign} - {self.ac_type}'
 
     class Meta:

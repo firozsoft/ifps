@@ -5,4 +5,4 @@ from apps.points.models import Point
 
 @admin.register(Point)
 class PointAdmin(admin.ModelAdmin):
-    pass
+    search_fields = ('name', )

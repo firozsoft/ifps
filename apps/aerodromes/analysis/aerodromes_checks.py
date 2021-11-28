@@ -125,9 +125,12 @@ def aerodromes_checks(data: dict[str, Union[bool, str, list[dict[str, str]]]], e
     if destination_ad is not None:
         _analyse(destination_ad, flight_type, last_flight_rule, est_arrival_datetime, err, data["sts"], data["rmk"])
 
-    def _sid_star_check(sid_star: str, type_: str) -> None:
-        if not (it := SidStar.objects.filter(name=sid_star).select_related(
-                'point').prefetch_related('aerodromes').first()):
+    if alt_ad_1 is not None:
+        _analyse(alt_ad_1, flight_type, last_flight_rule, est_arrival_datetime, err, data["sts"], data["rmk"])
+
+    def _sid_star_check(sid_star: str, type_: str, ad: Aerodrome) -> None:
+        if not (it := SidStar.objects.filter(name=sid_star, aerodrome=ad
+                                             ).select_related('point').first()):
             err['logical_error'] += f"{type_} {sid_star} does not exist. "
         else:
             if not it.is_active:
@@ -136,12 +139,8 @@ def aerodromes_checks(data: dict[str, Union[bool, str, list[dict[str, str]]]], e
                 err['logical_error'] += f"Point {it.point} is not active. "
             if type_ not in it.type:
                 err['logical_error'] += f"{sid_star}({it.type}) is not of type {type_}. "
-            if type_ == 'SID' and data['departure_ad'] not in it.aerodromes:
-                err['logical_error'] += f"SID {sid_star} is not for {departure_ad}. "
-            elif type_ == 'STAR' and data['destination_ad'] not in it.aerodromes:
-                err['logical_error'] += f"STAR {sid_star} is not for {destination_ad}. "
 
     if data['domestic_dep'] is True and data['sid'] is not None:
-        _sid_star_check(data['sid'], 'SID')
+        _sid_star_check(data['sid'], 'SID', departure_ad)
     if data['domestic_dest'] is True and data['star'] is not None:
-        _sid_star_check(data['star'], 'STAR')
+        _sid_star_check(data['star'], 'STAR', destination_ad)

@@ -10,3 +10,6 @@ class FIR(BaseModel):
         ordering = ("name",)
         verbose_name = "FIR"
         verbose_name_plural = "FIRs"
+
+    def __str__(self):
+        return self.name

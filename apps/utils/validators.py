@@ -8,7 +8,7 @@ point_name_validator = RegexValidator(
     code="invalid_point_name")
 
 coordinate_validator = RegexValidator(
-    regex=fr"({regex_patterns.COR_DEGREES})|({regex_patterns.COR_DEG_MINS})",
+    regex=fr"({regex_patterns.COR_DEGREES})|({regex_patterns.COR_DEG_MINS})|({regex_patterns.COR_DEG_MINS_ACUR})",
     message="Coordinate must be either in degrees only (7 characters) or degrees and minutes (11 characters)",
     code="invalid_coordinates")
 
