@@ -15,7 +15,9 @@ def membership_status_check(user):
 def scrutinization(request: HttpRequest) -> JsonResponse:
     msg = request.POST.get(key='message', default=None)
     if not msg:
-        return JsonResponse({'error_message': "field message is missing", 'error_code': 'msg_not_found'})
+        return JsonResponse(
+            {'error_message': "field message is missing",
+             'error_code': 'msg_not_found'})
     if msg.startswith('(FPL'):
         return fpl_scrutinization(msg)
     return JsonResponse({'Name': 'Scrutinization'})
@@ -33,10 +35,13 @@ def fpl_scrutinization(msg: str) -> JsonResponse:
         'dest_teet_alts': parts[7],
         'others': parts[8].replace(')', ''),
         # 'extra': parts[9]
-        }
+    }
     res, err = regex_parse(field_data)
+    if err:
+        return JsonResponse(
+            {'error_message': err.message, 'error_code': err.code})
     err = logical_check(res)
     if err:
-        return JsonResponse({'error_message': err.message, 'error_code': err.code})
-    else:
-        return JsonResponse(res)
+        return JsonResponse(
+            {'error_message': err.message, 'error_code': err.code})
+    return JsonResponse(res)

@@ -30,6 +30,7 @@ class NavAidType(models.TextChoices):
     NDB_DME = "ndb_dme", "NDB/DME"
     VOR_DME = "vor_dme", "VOR/DME"
     DVOR = "dvor", "DVOR"
+    DVOR_DME = "dvor_dme", "DVOR/DME"
     TACAN = "tacan", "TACAN"
     VOR_TAC = "vor_tac", "VOR/TAC"
 
