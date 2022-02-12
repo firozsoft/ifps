@@ -17,7 +17,8 @@ class BaseModel(models.Model):
 class BasePoint(BaseModel):
     """Abstract Point Model"""
     name = models.CharField("Name", max_length=50)
-    coordinates = models.CharField("Coordinates", max_length=15, blank=True, null=True,
+    coordinates = models.CharField("Coordinates", max_length=15,
+                                   blank=True, null=True,
                                    validators=[coordinate_validator, ])
 
     class Meta:

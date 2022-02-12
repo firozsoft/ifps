@@ -13,7 +13,11 @@ class NotamManager(models.Manager):
 
 class Notam(BaseModel):
     number = models.CharField("Number", max_length=50)
-    aerodrome = models.CharField("Aerodrome", max_length=50, null=True, blank=True)
+
+    aerodrome = models.ForeignKey("aerodromes.Aerodrome",
+                                  verbose_name="Aerodrome",
+                                  on_delete=models.CASCADE,
+                                  null=True, blank=True)
     start_date = models.DateTimeField("Start")
     end_date = models.DateTimeField("End")
     content = models.TextField("Content")

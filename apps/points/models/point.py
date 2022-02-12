@@ -6,12 +6,15 @@ from apps.utils.validators import point_name_validator
 
 
 class Point(BasePoint):
-    name = models.CharField("Name", max_length=5, validators=[point_name_validator, ])
-    fir = models.ManyToManyField("general.FIR", verbose_name="Located FIR", related_name="%(class)s")
-    is_fir_boundary = models.BooleanField("Is FIR Boundary", choices=YesNo, default=False)
-    fir_boundaries = models.ManyToManyField("self", related_name="connected_points", blank=True,
-                                            limit_choices_to={'is_fir_boundary': True},
-                                            verbose_name="Connected FIR Boundaries")
+    name = models.CharField("Name", max_length=5,
+                            validators=[point_name_validator, ])
+    fir = models.ManyToManyField("general.FIR", verbose_name="Located FIR",
+                                 related_name="%(class)s")
+    is_fir_boundary = models.BooleanField("Is FIR Boundary", choices=YesNo,
+                                          default=False)
+    fir_boundaries = models.ManyToManyField(
+        "self", blank=True, limit_choices_to={'is_fir_boundary': True},
+        verbose_name="Connected FIR Boundaries")
 
     class Meta(BasePoint.Meta):
         verbose_name = "Point"
