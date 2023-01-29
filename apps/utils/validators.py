@@ -1,5 +1,6 @@
 from django.core.validators import RegexValidator
-from fplcheck.utils import regex_patterns
+
+from . import regex_patterns
 
 coordinate_validator = RegexValidator(
     regex=rf"({regex_patterns.COR_DEGREES})|({regex_patterns.COR_DEG_MINS})|({regex_patterns.COR_DEG_MINS_ACUR})",

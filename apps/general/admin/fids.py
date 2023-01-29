@@ -1,8 +1,8 @@
 from django.contrib import admin
 
-from apps.general.models import Fids
+from apps.general.models import FIDSData
 
 
-@admin.register(Fids)
+@admin.register(FIDSData)
 class FIDSAdmin(admin.ModelAdmin):
     pass

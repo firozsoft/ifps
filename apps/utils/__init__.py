@@ -1,2 +1,8 @@
-from .choices import (AerodromeFlightType, AerodromeType, Direction,
-                      NavAidType, NavAidUseCase, YesNo, )
+from .choices import (
+    AerodromeFlightType,
+    AerodromeType,
+    Direction,
+    NavAidType,
+    NavAidUseCase,
+    YesNo,
+)

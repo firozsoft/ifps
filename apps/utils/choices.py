@@ -4,22 +4,27 @@ from psycopg2.extras import NumericRange
 YesNo = [(True, 'Yes'),
          (False, 'No')]
 
-
 class AerodromeFlightType(models.TextChoices):
-    IFR = 'ifr', 'IFR'
-    VFR = 'vfr', 'VFR'
-    IFR_VFR = 'ifr_vfr', 'IFR/VFR'
+    IFR = "ifr", "IFR"
+    VFR = "vfr", "VFR"
+    IFR_VFR = "ifr_vfr", "IFR/VFR"
+
+    __empty__ = "Unknown"
 
 
 class AerodromeType(models.TextChoices):
-    AIRPORT = 'airport'
-    HELIPORT = 'heliport'
+    AIRPORT = "airport"
+    HELIPORT = "heliport"
+
+    __empty__ = "Unknown"
 
 
 class Direction(models.TextChoices):
-    TO = 'to'
-    FROM = 'from'
-    TO_FROM = 'to_from', 'TO/FROM'
+    TO = "to"
+    FROM = "from"
+    TO_FROM = "to_from", "TO/FROM"
+
+    __empty__ = "Unknown"
 
 
 class NavAidType(models.TextChoices):
@@ -34,11 +39,15 @@ class NavAidType(models.TextChoices):
     TACAN = "tacan", "TACAN"
     VOR_TAC = "vor_tac", "VOR/TAC"
 
+    __empty__ = "Unknown"
+
 
 class NavAidUseCase(models.TextChoices):
     IN_ROUTE = "in_route", "In Route"
     IN_AIRPORT = "in_airport", "In Airport"
     BOTH = "both", "In Route/Airport"
+
+    __empty__ = "Unknown"
 
 
 class RouteSchemeFlightNature(models.TextChoices):
@@ -48,11 +57,15 @@ class RouteSchemeFlightNature(models.TextChoices):
     TRANSITION = "transition"
     OTHER = "other"
 
+    __empty__ = "Unknown"
+
 
 class SidStarType(models.TextChoices):
-    SID = 'SID', 'SID'
-    STAR = 'STAR', 'STAR'
-    SID_STAR = 'SID_STAR', 'SID/STAR'
+    SID = "SID", "SID"
+    STAR = "STAR", "STAR"
+    SID_STAR = "SID_STAR", "SID/STAR"
+
+    __empty__ = "Unknown"
 
 
 def LevelRange() -> NumericRange:
