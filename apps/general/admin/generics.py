@@ -9,4 +9,4 @@ class FIRAdmin(admin.ModelAdmin):
 
 
 class BasePointAdmin(admin.ModelAdmin):
-    readonly_fields = ["latitude", "longitude", "location"]
+    readonly_fields = ["longitude", "latitude", "location"]

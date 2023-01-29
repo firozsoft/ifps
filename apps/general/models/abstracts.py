@@ -2,7 +2,7 @@ from django.contrib.gis.db import models
 from django.contrib.gis.geos import GEOSGeometry
 
 from apps.utils.choices import YesNo
-from apps.utils.helpers import dm2dd
+from apps.utils.helpers import dms2dd
 from apps.utils.validators import coordinate_validator
 
 
@@ -53,7 +53,7 @@ class BasePoint(BaseModel):
     location = models.PointField(
         blank=True,
         null=True,
-        editable=False,
+        # editable=False,
     )
 
     class Meta:
@@ -65,7 +65,7 @@ class BasePoint(BaseModel):
 
     def save(self, *args, **kwargs):
         """save the model."""
-        self.latitude, self.longitude = dm2dd(self.coordinates)
+        self.latitude, self.longitude = dms2dd(self.coordinates)
         self.location = GEOSGeometry(
             f"POINT({self.longitude} {self.latitude})",
             srid=4326,

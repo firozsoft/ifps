@@ -1,5 +1,3 @@
-from re import A
-
 import pandas as pd
 
 from apps.aerodromes.models import Aerodrome
@@ -40,46 +38,6 @@ def create_firs_and_points() -> None:
                     elif not isinstance(fir_name, float):
                         fir_id = FIR.objects.create(name=fir_name)
                         newp.fir.add(fir_id)
-
-
-def create_airports() -> None:
-    df = pd.read_excel(AERODROMES)
-    lst = []
-    for row in df.iterrows():
-        fl = row[1]["AIRPORT ICAO LETER"]
-        cord = row[1]["COORDINATES"]
-        adtype = row[1]["TYPE"]
-        name = row[1]["NAME OF AIRPORT"]
-        ifrvfr = row[1]["IFR/VFR"]
-        adtype = adtype.strip().lower()
-        name = name.strip().capitalize()
-        for tp in ("IFR", "VFR", "IFR/VFR"):
-            if ifrvfr == tp:
-                ifrvfr = tp.replace("/", "_").lower()
-                break
-        else:
-            ifrvfr = "VFR"
-        lst.append((fl, name, adtype, cord, ifrvfr))
-
-    for item in lst:
-        if not Aerodrome.objects.filter(four_letters=item[0]).exists():
-            Aerodrome.objects.create(
-                four_letters=item[0],
-                name=item[1],
-                type=item[2],
-                coordinates=item[3],
-                ifr_vfr=item[4],
-            )
-        else:
-            print(fl)
-
-
-def set_ad_iata_code() -> None:
-    df = pd.read_excel(IATA)
-    for row in df.iterrows():
-        if ad := Aerodrome.objects.filter(name=row[1]["Airport ICAO ID"]).first():
-            ad.iatacode = row[1]["Airport IATA ID"]
-            ad.save()
 
 
 def create_nav_aid() -> None:

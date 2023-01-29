@@ -1,8 +1,8 @@
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.http import require_http_methods
 
-from core.analyses.logical_checks import logical_check
-from core.analyses.regexer import regex_parse
+from fplcheck.analyses.logical_checks import logical_check
+from fplcheck.analyses.regexer import regex_parse
 
 
 def membership_status_check(user):

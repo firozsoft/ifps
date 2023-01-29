@@ -28,3 +28,8 @@ class Point(BasePoint):
         verbose_name = "Point"
         verbose_name_plural = "Points"
         indexes = [models.Index(fields=["name"])]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["name", "fir"], name="unique_point_name_in_fir"
+            )
+        ]

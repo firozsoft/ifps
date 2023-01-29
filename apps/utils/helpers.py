@@ -11,12 +11,12 @@ def levels_to_int(row_flight_levels):
     return int(row_flight_levels[1:])
 
 
-def dm2dd(coordinates: str) -> tuple[Decimal, Decimal]:
+def dms2dd(coordinates: str) -> tuple[Decimal, Decimal]:
     """
     Convert degrees or degrees+minutes to decimal-degrees.
     46N078W -> (46 78) or 4620N07805W -> (46.333333 78.083333)
     """
-    pattern = r"\b(?P<latitude>\d{2,4}(N|S))(?P<longitude>\d{3,5}(W|E))\b"
+    pattern = r"\b(?P<latitude>(\d{2}|\d{4}|\d{6})(N|S))(?P<longitude>(\d{3}|\d{5}|\d{7})(W|E))\b"
     try:
         lat, long = re.match(pattern, coordinates).groupdict().items()
     except AttributeError as attr_error:
@@ -27,7 +27,14 @@ def dm2dd(coordinates: str) -> tuple[Decimal, Decimal]:
         neg = string[-1] in "SW"
         string = string[:-1]
         spot = lat_or_lang == "latitude"
-        deg, minute = string[: 3 - spot], string[3 - spot :]
-        return (-1) ** neg * (int(deg) + (Decimal(minute) / 60 if minute else 0))
+        deg, minutes = string[: 3 - spot], string[3 - spot :]
+        if len(minutes) > 2:
+            minutes, seconds = minutes[:2], minutes[2:]
+            return (-1) ** neg * (
+                Decimal(deg)
+                + Decimal(minutes) / 60
+                + (Decimal(seconds) / 3600 if seconds else 0)
+            )
+        return (-1) ** neg * (Decimal(deg) + (Decimal(minutes) / 60 if minutes else 0))
 
     return convertor(*lat), convertor(*long)

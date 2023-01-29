@@ -34,7 +34,7 @@ SITE_ID = 1
 
 # Application definition
 LOCAL_APPS = [
-    "core.ApiConfig",
+    "fplcheck.ApiConfig",
     "apps.aerodromes.AerodromesAppConfig",
     "apps.general.GeneralAppConfig",
     "apps.points.PointsAppConfig",
