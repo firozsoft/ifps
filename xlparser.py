@@ -13,33 +13,6 @@ SIDSTAR = "./resources/SID & STAR.xlsx"
 ROUTES = "./resources/Routes.xlsx"
 
 
-def create_firs_and_points() -> None:
-    df = pd.read_excel(POINTS_FIRS)
-    for row in df.iterrows():
-        pname = row[1]["NAME"]
-        pcors = row[1]["COORDINATES"]
-        is_fir_bnd = (
-            True if row[1]["FIR BOUNDARY/INSIDE FIR"] == "FIR BOUNDARY" else False
-        )
-        if not Point.objects.filter(name=pname).exists():
-            newp = Point.objects.create(
-                name=pname, coordinates=pcors, is_fir_boundary=is_fir_bnd
-            )
-            pfir = None
-            if row[1]["FIR BOUNDARY/INSIDE FIR"] == "INSIDE FIR ":
-                pfir = ["OIIX"]
-            elif row[1]["FIR BOUNDARY/INSIDE FIR"] == "FIR BOUNDARY":
-                pfir = ["OIIX"] + [row[1]["COUNTRY"]]
-            if pfir:
-                for fir_name in pfir:
-                    if FIR.objects.filter(name=fir_name).exists():
-                        fir_id = FIR.objects.get(name=fir_name)
-                        newp.fir.add(fir_id)
-                    elif not isinstance(fir_name, float):
-                        fir_id = FIR.objects.create(name=fir_name)
-                        newp.fir.add(fir_id)
-
-
 def create_nav_aid() -> None:
     df = pd.read_excel(NAVAIDS)
     for row in df.iterrows():

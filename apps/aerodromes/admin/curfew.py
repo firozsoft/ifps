@@ -5,4 +5,4 @@ from apps.aerodromes.models import Curfew
 
 @admin.register(Curfew)
 class CurfewAdmin(admin.ModelAdmin):
-    pass
+    autocomplete_fields = ["aerodrome"]

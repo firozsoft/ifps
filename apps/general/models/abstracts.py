@@ -17,13 +17,10 @@ class AbstractBaseModel(models.Model):
         abstract = True
 
 
-class BaseModel(models.Model):
+class BaseModel(AbstractBaseModel):
     """Base Model"""
 
-    name = models.CharField(max_length=50, null=True, blank=True)
-    created = models.DateTimeField("Created", auto_now_add=True)
-    updated = models.DateTimeField("Updated", auto_now=True)
-    is_active = models.BooleanField("Active", choices=YesNo, default=True)
+    plain_language_name = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
         abstract = True
@@ -55,13 +52,18 @@ class BasePoint(BaseModel):
         null=True,
         # editable=False,
     )
+    fir = models.ManyToManyField(
+        "general.FIR",
+        verbose_name="Located/Boundary FIR(s)",
+        related_name="%(class)ss",
+        help_text="The location of FIR boundary points can be assumed in more than one FIR",
+    )
+    is_fir_boundary = models.BooleanField(
+        "Is FIR Boundary", choices=YesNo, default=False
+    )
 
     class Meta:
         abstract = True
-        ordering = ("name",)
-
-    def __str__(self) -> str:
-        return f"{self.name}"
 
     def save(self, *args, **kwargs):
         """save the model."""

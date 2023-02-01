@@ -7,7 +7,7 @@ from apps.utils.choices import AerodromeFlightType, AerodromeType, YesNo
 
 class Aerodrome(BasePoint):
     """
-    Aerodrome has following attrs:
+    Aerodrome is a point itself and has following attrs:
         name: Aerodrome name in plain language (from base_model)
         type: Is it a heliport or airport, etc
         ifr_vfr: Accepts ifr or vfr or both flight types
@@ -45,7 +45,8 @@ class Aerodrome(BasePoint):
     class Meta(BasePoint.Meta):
         verbose_name = "Aerodrome"
         verbose_name_plural = "Aerodromes"
-        indexes = [models.Index(fields=["name", "four_letters"])]
+        ordering = ("four_letters",)
+        indexes = [models.Index(fields=["four_letters"])]
 
     def __str__(self):
-        return f"{self.four_letters} - {self.name}"
+        return f"{self.four_letters}"

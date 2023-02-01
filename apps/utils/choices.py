@@ -1,8 +1,8 @@
 from django.db import models
 from psycopg2.extras import NumericRange
 
-YesNo = [(True, 'Yes'),
-         (False, 'No')]
+YesNo = [(True, "Yes"), (False, "No")]
+
 
 class AerodromeFlightType(models.TextChoices):
     IFR = "ifr", "IFR"
@@ -46,6 +46,14 @@ class NavAidUseCase(models.TextChoices):
     IN_ROUTE = "in_route", "In Route"
     IN_AIRPORT = "in_airport", "In Airport"
     BOTH = "both", "In Route/Airport"
+
+    __empty__ = "Unknown"
+
+
+class NotamType(models.TextChoices):
+    NEW = "new", "N"
+    CANCELING = "canceling", "C"
+    REPLACEMENT = "replacement", "R"
 
     __empty__ = "Unknown"
 

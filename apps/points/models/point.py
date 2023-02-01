@@ -1,7 +1,6 @@
 from django.db import models
 
 from apps.general.models.abstracts import BasePoint
-from apps.utils import YesNo
 from apps.utils.validators import point_name_validator
 
 
@@ -11,25 +10,12 @@ class Point(BasePoint):
         max_length=5,
         validators=[point_name_validator],
     )
-    fir = models.ManyToManyField(
-        "general.FIR", verbose_name="Located FIR", related_name="%(class)ss"
-    )
-    is_fir_boundary = models.BooleanField(
-        "Is FIR Boundary", choices=YesNo, default=False
-    )
-    fir_boundaries = models.ManyToManyField(
-        "self",
-        blank=True,
-        limit_choices_to={"is_fir_boundary": True},
-        verbose_name="Connected FIR Boundaries",
-    )
 
     class Meta(BasePoint.Meta):
         verbose_name = "Point"
         verbose_name_plural = "Points"
+        ordering = ("name",)
         indexes = [models.Index(fields=["name"])]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["name", "fir"], name="unique_point_name_in_fir"
-            )
-        ]
+
+    def __str__(self) -> str:
+        return f"{self.name}"

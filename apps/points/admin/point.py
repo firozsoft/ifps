@@ -10,7 +10,7 @@ class PointAdmin(BasePointAdmin):
     list_display = ("name", "coordinates", "is_active")
     search_fields = ("name", "coordinates")
     list_filter = ("is_active",)
-    filter_horizontal = ("fir_boundaries",)
+    # filter_horizontal = ("fir_boundaries",)
     autocomplete_fields = ("fir",)
     fields = (
         "name",
@@ -21,5 +21,5 @@ class PointAdmin(BasePointAdmin):
         "location",
         "fir",
         "is_fir_boundary",
-        "fir_boundaries",
+        # "fir_boundaries",
     )

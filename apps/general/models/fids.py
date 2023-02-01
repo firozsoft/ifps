@@ -1,9 +1,9 @@
 from django.db import models
 
-from apps.general.models.abstracts import BaseModel
+from apps.general.models.abstracts import AbstractBaseModel
 
 
-class FIDSData(BaseModel):
+class FIDSData(AbstractBaseModel):
     """To store FIDS data related to a call sign"""
 
     call_sign = models.CharField("call_sign", max_length=50)

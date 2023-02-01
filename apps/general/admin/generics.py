@@ -5,7 +5,7 @@ from apps.general.models import FIR
 
 @admin.register(FIR)
 class FIRAdmin(admin.ModelAdmin):
-    search_fields = ("name",)
+    search_fields = ("four_letters",)
 
 
 class BasePointAdmin(admin.ModelAdmin):
