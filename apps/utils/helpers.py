@@ -3,7 +3,7 @@ import re
 from decimal import Decimal, getcontext
 
 
-def levels_to_int(row_flight_levels):
+def levels_to_FL_int(row_flight_levels):
     meter = 1
     feet = 3.281 * meter
     if row_flight_levels[0] in ("S", "M"):

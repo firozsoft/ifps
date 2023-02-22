@@ -1,4 +1,5 @@
 from .aircraft import Aircraft
 from .fids import FIDSData
-from .generics import FIR
+from .frequency import Frequency
 from .notam import Notam
+from .rcag import RCAG

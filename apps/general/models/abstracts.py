@@ -53,7 +53,7 @@ class BasePoint(BaseModel):
         # editable=False,
     )
     fir = models.ManyToManyField(
-        "general.FIR",
+        "airspaces.FIR",
         verbose_name="Located/Boundary FIR(s)",
         related_name="%(class)ss",
         help_text="The location of FIR boundary points can be assumed in more than one FIR",

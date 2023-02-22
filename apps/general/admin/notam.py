@@ -5,4 +5,4 @@ from apps.general.models import Notam
 
 @admin.register(Notam)
 class NOTAMAdmin(admin.ModelAdmin):
-    autocomplete_fields = ["aerodrome"]
+    pass

@@ -10,7 +10,7 @@ from .abstract import BaseRoute
 @receiver(post_save, sender="routes.RouteSection", dispatch_uid="update_route_points")
 def update_route(**kwargs):
     instance = kwargs.pop("instance")
-    instance.route.lines.append(instance.line)
+    instance.route.lines |= instance.line
     instance.route.update_points(instance.point1, instance.point2)
 
 

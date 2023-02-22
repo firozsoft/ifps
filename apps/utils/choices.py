@@ -13,8 +13,8 @@ class AerodromeFlightType(models.TextChoices):
 
 
 class AerodromeType(models.TextChoices):
-    AIRPORT = "airport"
-    HELIPORT = "heliport"
+    AIRPORT = "airport", "Airport"
+    HELIPORT = "heliport", "Heliport"
 
     __empty__ = "Unknown"
 
@@ -28,32 +28,32 @@ class Direction(models.TextChoices):
 
 
 class NavAidType(models.TextChoices):
-    VOR = "vor", "VOR"
-    NDB = "ndb", "NDB"
-    DME = "dme", "DME"
-    ILS = "ils", "ILS"
+    VOR = "vor"
+    NDB = "ndb"
+    DME = "dme"
+    ILS = "ils"
+    DVOR = "dvor"
+    TACAN = "tacan"
     NDB_DME = "ndb_dme", "NDB/DME"
     VOR_DME = "vor_dme", "VOR/DME"
-    DVOR = "dvor", "DVOR"
     DVOR_DME = "dvor_dme", "DVOR/DME"
-    TACAN = "tacan", "TACAN"
     VOR_TAC = "vor_tac", "VOR/TAC"
 
     __empty__ = "Unknown"
 
 
 class NavAidUseCase(models.TextChoices):
-    IN_ROUTE = "in_route", "In Route"
-    IN_AIRPORT = "in_airport", "In Airport"
-    BOTH = "both", "In Route/Airport"
+    IN_ROUTE = "in_route"
+    IN_AIRPORT = "in_airport"
+    BOTH = "both"
 
     __empty__ = "Unknown"
 
 
 class NotamType(models.TextChoices):
-    NEW = "new", "N"
-    CANCELING = "canceling", "C"
-    REPLACEMENT = "replacement", "R"
+    NEW = "new"
+    CANCELING = "canceling"
+    REPLACEMENT = "replacement"
 
     __empty__ = "Unknown"
 

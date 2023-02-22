@@ -14,12 +14,11 @@ class SidStar(BaseRoute):
             sid_star_name_validator,
         ],
     )
-    name_pl = models.CharField(
-        "Name PL",
+    plain_language_name = models.CharField(
+        "Plain Language Name",
         max_length=50,
         null=True,
         blank=True,
-        help_text="SID/STAR name in plain language",
     )
     nav_aid = models.ForeignKey(
         "points.NavAid",
@@ -40,13 +39,12 @@ class SidStar(BaseRoute):
         "points.Point", verbose_name="Point", on_delete=models.CASCADE
     )
     type = models.CharField(max_length=8, choices=SidStarType.choices)
-    rwy = models.CharField(
-        max_length=10,
-        null=True,
-        blank=True,
-        verbose_name="RunWay(s)",
-        help_text="Slash separated list of runways",
+    rwy = models.ManyToManyField(
+        "aerodromes.RWY",
+        verbose_name="RWY",
+        limit_choices_to={"aerodrome": "self.aerodrome"},
     )
+    remarks = models.TextField(null=True, blank=True)
 
     class Meta(BaseRoute.Meta):
         verbose_name = "SID/STAR"

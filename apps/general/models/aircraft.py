@@ -4,7 +4,7 @@ from apps.general.models.abstracts import BaseModel
 
 
 class Aircraft(BaseModel):
-    type = models.CharField("Aircraft Type", max_length=50)
+    type = models.CharField("Aircraft Type", max_length=4)
 
     class Meta:
         ordering = ("type",)

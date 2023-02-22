@@ -38,9 +38,7 @@ class Aerodrome(BasePoint):
         verbose_name="Is International", choices=YesNo, default=True
     )
     aur = models.BooleanField("Available Upon Request", choices=YesNo, default=True)
-    nav_aids = models.ManyToManyField(
-        "points.NavAid", related_name="aerodromes", blank=True
-    )
+
 
     class Meta(BasePoint.Meta):
         verbose_name = "Aerodrome"

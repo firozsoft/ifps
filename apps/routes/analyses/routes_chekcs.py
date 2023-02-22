@@ -12,7 +12,7 @@ from typing import Union
 
 from apps.routes.models import Route
 from apps.utils import Direction
-from apps.utils.helpers import levels_to_int
+from apps.utils.helpers import levels_to_FL_int
 
 
 def routes_checks(
@@ -21,7 +21,11 @@ def routes_checks(
     """Check Route Compliance"""
     # if data["sid"] or data["star"] exists so
     # the first or last item of route is sid or star and must be ignored here
-    row_route = data["route"][bool(data["sid"]) : -1 * bool(data["star"])]
+    if data["sid"]:
+        row_route = data["route"][1:]
+    if data["star"]:
+        row_route = data["route"][:-1]
+
     mentioned_routes = {
         section["via"]
         for section in row_route
@@ -101,19 +105,19 @@ def routes_checks(
                             f"Route direction between {from_point} and {to_point}"
                             f"is from {section_obj.point2} to {section_obj.point1}. "
                         )
-                if levels_to_int(row_section["level"]) < section_obj.lower_limit:
+                if levels_to_FL_int(row_section["level"]) < section_obj.lower_limit:
                     err["logical_error"] += (
                         f"Route {via} Lower Limit exceeded, between {from_point} and "
                         f"{to_point}(FL{section_obj.lower_limit}). "
                     )
-                if levels_to_int(row_section["level"]) > section_obj.upper_limit:
+                if levels_to_FL_int(row_section["level"]) > section_obj.upper_limit:
                     err["logical_error"] += (
                         f"Route {via} Upper Limit exceeded, between {from_point} and "
                         f"{to_point}(FL{section_obj.lower_limit}). "
                     )
                 if (
                     row_section["top_level"] != row_section["level"]
-                    and levels_to_int(row_section["top_level"])
+                    and levels_to_FL_int(row_section["top_level"])
                     > section_obj.upper_limit
                 ):
                     err["logical_error"] += (

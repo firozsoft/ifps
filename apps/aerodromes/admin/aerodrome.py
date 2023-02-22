@@ -9,7 +9,6 @@ class AerodromeAdmin(BasePointAdmin):
     search_fields = ("four_letters", "plain_language_name")
     list_display = ("four_letters", "plain_language_name")
     list_filter = ("is_active",)
-    filter_horizontal = ("nav_aids",)
     autocomplete_fields = ("fir",)
     fields = [
         "four_letters",
@@ -26,5 +25,4 @@ class AerodromeAdmin(BasePointAdmin):
         "aur",
         "fir",
         "is_fir_boundary",
-        "nav_aids",
     ]

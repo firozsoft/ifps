@@ -36,6 +36,7 @@ SITE_ID = 1
 LOCAL_APPS = [
     "fplcheck.ApiConfig",
     "apps.aerodromes.AerodromesAppConfig",
+    "apps.airspaces.AirspacesAppConfig",
     "apps.general.GeneralAppConfig",
     "apps.points.PointsAppConfig",
     "apps.routes.RoutesAppConfig",

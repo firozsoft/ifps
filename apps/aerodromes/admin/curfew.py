@@ -1,8 +1,9 @@
 from django.contrib import admin
 
+from apps.aerodromes.admin.abstract import AerodromePropertiesAdmin
 from apps.aerodromes.models import Curfew
 
 
 @admin.register(Curfew)
-class CurfewAdmin(admin.ModelAdmin):
-    autocomplete_fields = ["aerodrome"]
+class CurfewAdmin(AerodromePropertiesAdmin):
+    pass

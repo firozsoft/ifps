@@ -9,7 +9,7 @@ from apps.utils.choices import NotamType
 class NotamManager(models.Manager):
     """Add active filter to objects"""
 
-    def active(self, date: datetime):
+    def active(self, date=datetime.today()):
         """All valid NOTAMs for a given date"""
         return super().get_queryset().filter(start_date__lte=date, end_date__gte=date)
 
@@ -30,13 +30,6 @@ class Notam(AbstractBaseModel):
         null=True,
         blank=True,
         help_text="In case of replacement/cancellation, the relevant 'NOTAM'",
-    )
-    aerodrome = models.ForeignKey(
-        "aerodromes.Aerodrome",
-        verbose_name="Aerodrome",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
     )
     start_date = models.DateTimeField("Start")
     end_date = models.DateTimeField("End", null=True, blank=True)
