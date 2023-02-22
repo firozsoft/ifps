@@ -13,7 +13,7 @@ def levels_to_FL_int(row_flight_levels):
 
 def dms2dd(coordinates: str) -> tuple[Decimal, Decimal]:
     """
-    Convert degrees or degrees+minutes to decimal-degrees.
+    Convert degrees or degrees+minutes or degrees+minutes+seconds to decimal-degrees.
     46N078W -> (46 78) or 4620N07805W -> (46.333333 78.083333)
     """
     pattern = r"\b(?P<latitude>(\d{2}|\d{4}|\d{6})(N|S))(?P<longitude>(\d{3}|\d{5}|\d{7})(W|E))\b"
