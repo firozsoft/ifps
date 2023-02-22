@@ -6,7 +6,7 @@ NUMBER_TYPE_WAKE = (
     r"\b(?P<numbers>[\d]{0,2})(?P<type>[A-Z\d]{2,4})\/(?P<weak>[H,M,L,J])\b"
 )
 
-EQUIPMENTS_CAPACITIES = r"\b(?P<equipments>(N|S|A|B|C|D|E1|E2|E3|F|G|H|I|J1|J2|J3|J4|J5|J6|J7|K|L|M1|M2|M3|O|P1|P2|P3|P4|P5|P6|P7|P8|P9|R|T|U|V|W|X|Y|Z)+)\/(?P<capacities>(A|C|E|H|I|L|P|S|X|B1|B2|U1|U2|V1|V2|D1|G1)+)\b"
+EQUIPMENTS_CAPACITIES = r"\b(?P<equipments>(N|S|A|B|C|D|E1|E2|E3|F|G|H|I|J[1-7]|K|L|M[1-3]|O|P[1-9]|R|T|U|V|W|X|Y|Z)+)\/(?P<capacities>(A|C|E|H|I|L|P|S|X|B1|B2|U1|U2|V1|V2|D1|G1)+)\b"
 
 DEPARTURE_AD_TIME = (
     r"\b((?P<dep_ad>[A-Z]{4})|AFIL|ZZZZ)(?P<eobt>((0|1)[0-9]|2[0-3])[0-5][0-9])\b"
