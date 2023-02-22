@@ -8,7 +8,9 @@ class AbstractBaseAirspace(BaseModel):
     shape = models.PolygonField()
     upper_limit = models.PositiveSmallIntegerField(null=True, blank=True)
     lower_limit = models.PositiveSmallIntegerField(null=True, blank=True)
-    fir = models.ManyToManyField("airspaces.FIR", related_name="%(class)ss")
+    fir = models.ForeignKey(
+        "airspaces.FIR", related_name="%(class)ss", on_delete=models.CASCADE
+    )
 
     class Meta:
         abstract = True
@@ -37,7 +39,7 @@ class CTR(BaseAirspaces):
 
 
 class CTA(BaseAirspaces):
-    aerodrome = models.ManyToManyField("aerodromes.Aerodrome")
+    pass
 
 
 class ProhibitedArea(AbstractBaseAirspace):

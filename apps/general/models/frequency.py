@@ -7,5 +7,9 @@ class Frequency(AbstractBaseModel):
     frequency = models.DecimalField(max_digits=6, decimal_places=3, unique=True)
     rcags = models.ManyToManyField("general.RCAG")
 
+    class Meta:
+        verbose_name = "Frequency"
+        verbose_name_plural = "Frequencies"
+
     def __str__(self):
         return f"{self.frequency}"
