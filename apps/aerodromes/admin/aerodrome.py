@@ -1,4 +1,5 @@
-from django.contrib.gis import admin
+# from django.contrib.gis import admin
+from django.contrib import admin
 
 from apps.aerodromes.models import Aerodrome
 from apps.general.admin.generics import BasePointAdmin
@@ -14,10 +15,10 @@ class AerodromeAdmin(BasePointAdmin):
         "four_letters",
         "plain_language_name",
         "iatacode",
-        "coordinates",
+        ("coordinates",
         "latitude",
-        "longitude",
-        "location",
+        "longitude"),
+        # "location",
         "type",
         "ifr_vfr",
         "is_international",

@@ -20,15 +20,6 @@ class SidStar(BaseRoute):
         null=True,
         blank=True,
     )
-    nav_aid = models.ForeignKey(
-        "points.NavAid",
-        verbose_name="Nav. Aid",
-        related_name="sid_star",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-    )
-    rnp_app = models.BooleanField(default=False, choices=YesNo)
     aerodrome = models.ForeignKey(
         "aerodromes.Aerodrome",
         verbose_name="Aerodrome",
@@ -38,12 +29,21 @@ class SidStar(BaseRoute):
     point = models.ForeignKey(
         "points.Point", verbose_name="Point", on_delete=models.CASCADE
     )
+    nav_aid = models.ForeignKey(
+        "points.NavAid",
+        verbose_name="Nav.Aid",
+        related_name="sid_star",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
     type = models.CharField(max_length=8, choices=SidStarType.choices)
     rwy = models.ManyToManyField(
         "aerodromes.RWY",
         verbose_name="RWY",
-        limit_choices_to={"aerodrome": "self.aerodrome"},
+        limit_choices_to={"aerodrome__four_letters": "self.aerodrome__four_letters"},
     )
+    rnp_app = models.BooleanField(default=False, choices=YesNo)
     remarks = models.TextField(null=True, blank=True)
 
     class Meta(BaseRoute.Meta):

@@ -5,4 +5,4 @@ from apps.general.models import Aircraft
 
 @admin.register(Aircraft)
 class AircraftAdmin(admin.ModelAdmin):
-    pass
+    search_fields = ("type",)

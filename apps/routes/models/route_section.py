@@ -1,5 +1,7 @@
-from django.contrib.gis.db import models
 from django.core.exceptions import ValidationError
+
+# from django.contrib.gis.db import models
+from django.db import models
 from django.db.models import F
 
 from apps.general.models.abstracts import BaseModel
@@ -22,7 +24,7 @@ class RouteSection(BaseModel):
         verbose_name="Second Point",
         related_name="route_sections2",
     )
-    line = models.LineStringField(null=True, blank=True)
+    # line = models.LineStringField(null=True, blank=True)
     direction = models.CharField(
         "Direction", max_length=7, choices=Direction.choices, default=Direction.TO_FROM
     )

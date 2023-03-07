@@ -1,6 +1,7 @@
 import json
 
-from django.contrib.gis.db import models
+# from django.contrib.gis.db import models
+from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -10,13 +11,13 @@ from .abstract import BaseRoute
 @receiver(post_save, sender="routes.RouteSection", dispatch_uid="update_route_points")
 def update_route(**kwargs):
     instance = kwargs.pop("instance")
-    instance.route.lines |= instance.line
+    # instance.route.lines |= instance.line
     instance.route.update_points(instance.point1, instance.point2)
 
 
 class Route(BaseRoute):
     _points = models.TextField(db_column="points", null=True, blank=True)
-    lines = models.MultiLineStringField(null=True, blank=True)
+    # lines = models.MultiLineStringField(null=True, blank=True)
 
     class Meta(BaseRoute.Meta):
         pass

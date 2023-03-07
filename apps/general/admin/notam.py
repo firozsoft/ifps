@@ -5,4 +5,5 @@ from apps.general.models import Notam
 
 @admin.register(Notam)
 class NOTAMAdmin(admin.ModelAdmin):
-    pass
+    search_fields = ("number",)
+    autocomplete_fields = ("relevant",)

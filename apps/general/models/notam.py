@@ -37,11 +37,15 @@ class Notam(AbstractBaseModel):
 
     objects = NotamManager()
 
-    def __str__(self) -> str:
-        return f"{self.number}"
-
     class Meta:
         ordering = ("number",)
         indexes = [models.Index(fields=["number"])]
         verbose_name = "NOTAM"
         verbose_name_plural = "NOTAMs"
+
+    def __str__(self) -> str:
+        return f"{self.number}"
+
+    def save(self, *args, **kwargs):
+        if self.type != NotamType.NEW and not self.relevant:
+            raise Exception()

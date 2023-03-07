@@ -1,9 +1,11 @@
-from django.contrib.gis.db import models
-from django.contrib.gis.geos import GEOSGeometry
+from django.db import models
 
 from apps.utils.choices import YesNo
 from apps.utils.helpers import dms2dd
 from apps.utils.validators import coordinate_validator
+
+# from django.contrib.gis.geos import GEOSGeometry
+
 
 
 class AbstractBaseModel(models.Model):
@@ -47,11 +49,11 @@ class BasePoint(BaseModel):
         null=True,
         editable=False,
     )
-    location = models.PointField(
-        blank=True,
-        null=True,
-        # editable=False,
-    )
+    # location = models.PointField(
+    #     blank=True,
+    #     null=True,
+    #     # editable=False,
+    # )
     fir = models.ManyToManyField(
         "airspaces.FIR",
         verbose_name="Located/Boundary FIR(s)",
@@ -68,8 +70,8 @@ class BasePoint(BaseModel):
     def save(self, *args, **kwargs):
         """save the model."""
         self.latitude, self.longitude = dms2dd(self.coordinates)
-        self.location = GEOSGeometry(
-            f"POINT({self.longitude} {self.latitude})",
-            srid=4326,
-        )
+        # self.location = GEOSGeometry(
+        #     f"POINT({self.longitude} {self.latitude})",
+        #     srid=4326,
+        # )
         super().save(*args, **kwargs)

@@ -1,11 +1,12 @@
-from django.contrib.gis.db import models
+# from django.contrib.gis.db import models
+from django.db import models
 
 from apps.general.models.abstracts import BaseModel
 
 
 class AbstractBaseAirspace(BaseModel):
     name = models.CharField(max_length=50, unique=True, null=True, blank=True)
-    shape = models.PolygonField()
+    # shape = models.PolygonField()
     upper_limit = models.PositiveSmallIntegerField(null=True, blank=True)
     lower_limit = models.PositiveSmallIntegerField(null=True, blank=True)
     fir = models.ForeignKey(
@@ -64,7 +65,7 @@ class AerialRefueling(AbstractBaseAirspace):
 
 class FIR(BaseModel):
     four_letters = models.CharField("ICAO Four Letters", max_length=4, unique=True)
-    shape = models.PolygonField(null=True, blank=True)
+    # shape = models.PolygonField(null=True, blank=True)
 
     class Meta:
         ordering = ("four_letters",)
@@ -77,7 +78,7 @@ class FIR(BaseModel):
 
 class ACC(BaseModel):
     four_letters = models.CharField("ICAO Four Letters", max_length=4, unique=True)
-    shape = models.MultiPolygonField(null=True, blank=True)
+    # shape = models.MultiPolygonField(null=True, blank=True)
     sectors = models.ManyToManyField("airspaces.Sector")
 
     class Meta:

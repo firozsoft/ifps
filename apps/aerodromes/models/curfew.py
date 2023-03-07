@@ -19,9 +19,7 @@ class Curfew(AerodromeProperties):
     sm = models.BooleanField("SM Flight", choices=YesNo, default=True)
     emergency = models.BooleanField("Emergency", choices=YesNo, default=True)
     scramble = models.BooleanField("Scramble", choices=YesNo, default=True)
-    delayed_sch_flight = models.BooleanField(
-        "Delayed Schedule Flight", choices=YesNo, default=True
-    )
+    delayed_sch_flight = models.BooleanField("Delayed Schedule Flight", choices=YesNo, default=True)
     military_il76 = models.BooleanField("Military IL76", choices=YesNo, default=True)
     curfew_coordinated = models.BooleanField(
         "Curfew Coordinated", choices=YesNo, default=True

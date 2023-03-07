@@ -14,11 +14,11 @@ class PointAdmin(BasePointAdmin):
     autocomplete_fields = ("fir",)
     fields = (
         "name",
-        "coordinates",
         "is_active",
+        ("coordinates",
         "latitude",
-        "longitude",
-        "location",
+        "longitude"),
+        # "location",
         "fir",
         "is_fir_boundary",
         # "fir_boundaries",

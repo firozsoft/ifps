@@ -1,6 +1,7 @@
 import pandas as pd
 from django.conf import settings
-from django.contrib.gis.geos import GEOSGeometry
+
+# from django.contrib.gis.geos import GEOSGeometry
 from django.core.management.base import BaseCommand
 
 from apps.aerodromes.models import Aerodrome
@@ -63,11 +64,12 @@ class Command(BaseCommand):
 
     def _get_geo_coordinates(self, coordinates: str):
         latitude, longitude = dms2dd(coordinates)
-        location = GEOSGeometry(
-            f"POINT({longitude} {latitude})",
-            srid=4326,
-        )
-        return latitude, longitude, location
+        # location = GEOSGeometry(
+        #     f"POINT({longitude} {latitude})",
+        #     srid=4326,
+        # )
+        # return latitude, longitude, location
+        return latitude, longitude
 
     def create_airports(self):
         """Cleans and Creates Aerodromes form excel file"""
@@ -110,7 +112,10 @@ class Command(BaseCommand):
                 coordinates=item[3],
                 ifr_vfr=item[4],
             )
-            ad.latitude, ad.longitude, ad.location = self._get_geo_coordinates(
+            # ad.latitude, ad.longitude, ad.location = self._get_geo_coordinates(
+            #     ad.coordinates
+            # )
+            ad.latitude, ad.longitude = self._get_geo_coordinates(
                 ad.coordinates
             )
             aerodromes.add(ad)

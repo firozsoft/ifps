@@ -1,10 +1,14 @@
-from django.contrib.postgres.fields import IntegerRangeField
-from django.contrib.postgres.validators import RangeMaxValueValidator as RngMXV
-from django.contrib.postgres.validators import RangeMinValueValidator as RngMinV
+from django.core.validators import MaxValueValidator, MinValueValidator
+
+# from django.contrib.postgres.fields import IntegerRangeField
+# from django.contrib.postgres.validators import RangeMaxValueValidator as RngMXV
+# from django.contrib.postgres.validators import RangeMinValueValidator as RngMinV
 from django.db import models
 
 from apps.general.models.abstracts import BaseModel
-from apps.utils.choices import LevelRange, RouteSchemeFlightNature, YesNo
+
+# from apps.utils.choices import LevelRange
+from apps.utils.choices import RouteSchemeFlightNature, YesNo
 from apps.utils.validators import rs_dest_list, rs_flight_path
 
 
@@ -40,21 +44,15 @@ class RouteScheme(BaseModel):
         max_length=10,
         choices=RouteSchemeFlightNature.choices,
     )
-    approved_level_range = IntegerRangeField(
-        verbose_name="Approved Levels Range",
-        default=LevelRange,
-        validators=[RngMinV(0), RngMXV(650)],
-        help_text=(
-            "A range in a canonical form that includes the "
-            "lower bound and excludes the upper bound."
-        ),
-    )
+    approved_levels_upper_limit = models.PositiveSmallIntegerField("Approved Levels Upper Limit",
+                                                                   validators=[MinValueValidator(0),
+                                                                               MaxValueValidator(650)])
     not_approved_levels = models.CharField(
         verbose_name="Not Approved Levels",
         null=True,
         blank=True,
-        max_length=50,
-        help_text="Comma separated list of flight levels.",
+        max_length=100,
+        help_text="Comma separated list of flight levels(e.g: 010,120,310).",
     )
     obligatory = models.BooleanField("Obligatory", choices=YesNo, default=False)
 
@@ -66,3 +64,6 @@ class RouteScheme(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.start} to {self.end}"
+
+    def save(self, *args, **kwargs):
+        self.not_approved_levels = ','.join(map(str.strip(), self.not_approved_levels.replace('F', '').split(',')))
