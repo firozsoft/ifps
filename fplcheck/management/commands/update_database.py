@@ -19,31 +19,19 @@ ROUTES = "./resources/Routes.xlsx"
 
 
 class Command(BaseCommand):
-    help = (
-        "Updates Database by first cleaning it and then loading data from excel files "
-    )
+    help = "Updates Database by first cleaning it and then loading data from excel files in resources directory"
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            "--aerodromes", action="store_true", help="Create Aerodromes"
-        )
-        parser.add_argument(
-            "--aerodromes-iata-code",
-            action="store_true",
-            help="Update Aerodromes IATA Code",
-        )
-        parser.add_argument("-f", "--firs", action="store_true", help="Create FIRs")
-        parser.add_argument("-p", "--points", action="store_true", help="Create Points")
-        parser.add_argument(
-            "-n", "--navaids", action="store_true", help="Create/Update NAVAIDs"
-        )
-        parser.add_argument(
-            "-s", "--sidstars", action="store_true", help="Create/Update SID-STARS"
-        )
+        parser.add_argument("--aerodromes", action="store_true", help="Create Aerodromes")
+        parser.add_argument("--ad-iata-code", action="store_true", help="Update Aerodromes IATA Code")
+        parser.add_argument("--firs", action="store_true", help="Create FIRs")
+        parser.add_argument("--points", action="store_true", help="Create Points")
+        parser.add_argument("--navaids", action="store_true", help="Create/Update NAVAIDs")
+        parser.add_argument("--sidstars", action="store_true", help="Create/Update SID-STARS")
 
     def handle(self, *args, **kwargs):
         aerodromes = kwargs["aerodromes"]
-        iatacodes = kwargs["aerodromes_iata_code"]
+        iatacodes = kwargs["ad_iata_code"]
         firs = kwargs["firs"]
         points = kwargs["points"]
         navaids = kwargs["navaids"]
@@ -115,9 +103,7 @@ class Command(BaseCommand):
             # ad.latitude, ad.longitude, ad.location = self._get_geo_coordinates(
             #     ad.coordinates
             # )
-            ad.latitude, ad.longitude = self._get_geo_coordinates(
-                ad.coordinates
-            )
+            ad.latitude, ad.longitude = self._get_geo_coordinates(ad.coordinates)
             aerodromes.add(ad)
         try:
             Aerodrome.objects.bulk_create(aerodromes)
@@ -130,24 +116,19 @@ class Command(BaseCommand):
 
         df = pd.read_excel(IATA)
         data = [
-            {"four_letters": row["Airport ICAO ID"], "iatacode": row["Airport IATA ID"]}
-            for _, row in df.iterrows()
+            {"four_letters": row["Airport ICAO ID"], "iatacode": row["Airport IATA ID"]} for _, row in df.iterrows()
         ]
         data.sort(key=lambda item: item["four_letters"])
         aerodromes = [item["four_letters"] for item in data]
         updated_ads = []
-        ads = Aerodrome.objects.filter(four_letters__in=aerodromes).order_by(
-            "four_letters"
-        )
+        ads = Aerodrome.objects.filter(four_letters__in=aerodromes).order_by("four_letters")
         for aerodrome, info in zip(ads, data):
             aerodrome.iatacode = info["iatacode"]
             updated_ads.append(aerodrome)
 
         try:
             Aerodrome.objects.bulk_update(updated_ads, ["iatacode"])
-            self.stdout.write(
-                self.style.SUCCESS("Aeroromes iatacode have been updated.")
-            )
+            self.stdout.write(self.style.SUCCESS("Aeroromes iatacode have been updated."))
         except Exception as err:
             self.stdout.write(self.style.ERROR(err))
 
@@ -160,9 +141,7 @@ class Command(BaseCommand):
 
         firs = set()
         fir_names = set(
-            row["COUNTRY"]
-            for _, row in df.iterrows()
-            if isinstance(row["COUNTRY"], str) and row["COUNTRY"]
+            row["COUNTRY"] for _, row in df.iterrows() if isinstance(row["COUNTRY"], str) and row["COUNTRY"]
         )
         fir_names.add(settings.FIR_FOUR_LETTERS)
         for inx, four_letters in enumerate(fir_names, start=1):
@@ -197,9 +176,7 @@ class Command(BaseCommand):
             points_and_firs.append((point, *p_firs))
 
             if settings.FIR_FOUR_LETTERS in p_firs and not point.coordinates:
-                raise SystemExit(
-                    f"Point with name '{point.name}' must have coordinates!"
-                )
+                raise SystemExit(f"Point with name '{point.name}' must have coordinates!")
 
         points = set()
         for inx, item in enumerate(points_and_firs, start=1):
@@ -216,9 +193,7 @@ class Command(BaseCommand):
                 for point in created_points:
                     for item in points_and_firs:
                         if point.name == item[0].name:
-                            point.fir.add(
-                                *FIR.objects.filter(four_letters__in=item[1:])
-                            )
+                            point.fir.add(*FIR.objects.filter(four_letters__in=item[1:]))
                             break
                 self.stdout.write(self.style.SUCCESS("Points FIR have been updated."))
             except Exception as err:
@@ -239,13 +214,7 @@ class Command(BaseCommand):
             coordinates = f'{row["COORDINATE"]}' * isinstance(row["COORDINATE"], str)
             tp = row["TYPE"].replace("/", "_").lower()
             ad = row["AIRPORT ICAO LETTER"]
-            uc = (
-                row["USE IN ROUTE/USE IN AIRPORT"]
-                .replace("USE ", "")
-                .strip()
-                .replace(" ", "_")
-                .lower()
-            )
+            uc = row["USE IN ROUTE/USE IN AIRPORT"].replace("USE ", "").strip().replace(" ", "_").lower()
 
             if not NavAid.objects.filter(name=name, use_case=uc, type=tp).exists():
                 new_nav = NavAid.objects.create(
@@ -278,23 +247,15 @@ class Command(BaseCommand):
             rnp = row["NAVID"] == "RNP"
 
             ad = Aerodrome.objects.filter(four_letters=adname).first()
-            navaid = NavAid.objects.filter(
-                name=nvname, type__in=[ntp, *ntp.split("_")]
-            ).first()
+            navaid = NavAid.objects.filter(name=nvname, type__in=[ntp, *ntp.split("_")]).first()
 
             spname = ssname[:-2]
-            for plname, name in (
-                ("SAVEH", "SAV"),
-                ("LAVAN", "LVA"),
-                ("DEHNAMK", "DHN"),
-            ):
+            for plname, name in (("SAVEH", "SAV"), ("LAVAN", "LVA"), ("DEHNAMK", "DHN")):
                 if spname == plname:
                     spname = name
             point = Point.objects.filter(name=spname).first()
 
-            if not SidStar.objects.filter(
-                name=ssname, aerodrome=ad, nav_aid=navaid
-            ).exists():
+            if not SidStar.objects.filter(name=ssname, aerodrome=ad, nav_aid=navaid).exists():
                 try:
                     SidStar.objects.create(
                         name=ssname,
@@ -306,31 +267,19 @@ class Command(BaseCommand):
                         type=tp,
                         rwy=rwy,
                     )
-                    self.stdout.write(
-                        self.style.SUCCESS(f"SID-STAR {sidstar} have been created.")
-                    )
+                    self.stdout.write(self.style.SUCCESS(f"SID-STAR {sidstar} have been created."))
                 except Exception as err:
                     self.stdout.write(self.style.ERROR(err))
-                    with open(
-                        "./not-created-sid-stars.txt", "a+", encoding="utf-8"
-                    ) as dpf:
+                    with open("./not-created-sid-stars.txt", "a+", encoding="utf-8") as dpf:
                         dpf.write(ssname + "\n")
             else:
                 sidstar = SidStar.objects.get(name=ssname, aerodrome=ad)
                 if sidstar.type != tp:
                     sidstar.type = "SID_STAR"
                     sidstar.save()
-                    self.stdout.write(
-                        self.style.SUCCESS(f"SID-STAR {sidstar} have been updated.")
-                    )
+                    self.stdout.write(self.style.SUCCESS(f"SID-STAR {sidstar} have been updated."))
                 else:
                     self.stdout.write(self.style.ERROR(str(row)))
-                    with open(
-                        "./duplicate-sid-stars.txt", "a+", encoding="utf-8"
-                    ) as dpf:
+                    with open("./duplicate-sid-stars.txt", "a+", encoding="utf-8") as dpf:
                         dpf.write(str(row) + "\n")
-                        self.stdout.write(
-                            self.style.ERROR(
-                                f"SID-STAR {sidstar} considred duplicated."
-                            )
-                        )
+                        self.stdout.write(self.style.ERROR(f"SID-STAR {sidstar} considred duplicated."))

@@ -1,4 +1,5 @@
 Django
-psycopg2-binary
 pandas
 openpyxl
+python-decouple
+dj-database-url
