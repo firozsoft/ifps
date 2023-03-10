@@ -32,6 +32,7 @@ class Command(BaseCommand):
         parser.add_argument("--navaids", action="store_true", help="Create/Update Nav.Aids")
         parser.add_argument("--sidstars", action="store_true", help="Create/Update SID-STARS")
         parser.add_argument("--operational-hours", action="store_true", help="Create/Update Operational Hours")
+        parser.add_argument("--routes", action="store_true", help="Create/Update Routes")
 
     def handle(self, *args, **kwargs):
         aerodromes = kwargs["aerodromes"]
@@ -40,7 +41,8 @@ class Command(BaseCommand):
         points = kwargs["points"]
         navaids = kwargs["navaids"]
         sidstars = kwargs["sidstars"]
-        sidstars = kwargs["operational_hours"]
+        operational_hours = kwargs["operational_hours"]
+        routes = kwargs["routes"]
 
         # if aerodromes:
         # self.create_airports()
@@ -54,8 +56,10 @@ class Command(BaseCommand):
         # self.create_points()
         # # if sidstars:
         # self.create_sid_stars()
-        # # if operational_hours:
-        self.create_operational_hours()
+        # if operational_hours:
+        # self.create_operational_hours()
+        # if routes:
+        self.create_routes()
 
     def _get_geo_coordinates(self, coordinates: str):
         latitude, longitude = dms2dd(coordinates)
@@ -341,5 +345,80 @@ class Command(BaseCommand):
 
         try:
             DailyOperationalHour.objects.bulk_create(opr_hours)
+            self.stdout.write(self.style.SUCCESS("Daily Operational Hours have been created."))
         except Exception as err:
-            self.style.ERROR(err)
+            self.stdout.write(self.style.ERROR(err))
+
+    def create_routes(self):
+        Route.objects.all().delete()
+
+        has_err = False
+
+        routes = dict()
+        df = pd.read_excel(ROUTES)
+        for row_inx, row in df.iterrows():
+            if not row["ROUTE"] in routes:
+                routes[row["ROUTE"]] = [row[1:]]
+            else:
+                routes[row["ROUTE"]].append(row[1:])
+
+            if row["INSIDE/OUTSIDE FIR"] == "INSIDE":
+                # Note: these fields must have values
+                # "LOWER", "UPPER", "LATERAL", "DIRECTION", "RNAV5", "MIN RNAV 5", "MAG TR", "DIST"
+                if any(pd.isna(cel) for cel in row[4:12]):
+                    has_err = True
+                    self.stdout.write(self.style.ERROR(f"Error: row: {row_inx}, all fields must have values"))
+
+        if has_err:
+            return
+
+        cleaned_routes = list()
+        for route in routes:
+            rt = Route(name=route)
+            try:
+                rt.full_clean()
+                cleaned_routes.append(rt)
+            except Exception as err:
+                self.stdout.write(self.style.ERROR(err))
+
+        Route.objects.bulk_create(cleaned_routes)
+
+        RQS = Route.objects.all()
+        PQS = Point.objects.all()
+
+        cleaned_route_sections = list()
+        for route, sections in routes.items():
+            rt = RQS.get(name=route)
+            for section in sections:
+                ps = PQS.filter(name__in=(section["FIRST POINT"], section["SECOND POINT"]))
+
+                rsc = RouteSection(
+                    route=rt,
+                    point1=ps.get(name=section["FIRST POINT"]),
+                    point2=ps.get(name=section["SECOND POINT"]),
+                )
+                if section["INSIDE/OUTSIDE FIR"] == "INSIDE":
+                    rsc.direction = section["DIRECTION"].replace("/", "_").lower()
+                    rsc.distance = section["DIST"]
+                    rsc.upper_limit = section["UPPER"]
+                    rsc.lower_limit = section["LOWER"]
+                    rsc.rnav_rnp = section["RNAV5"]
+                    rsc.min_rnav_level = section["MIN RNAV 5"]
+                    rsc.mag_track = section["MAG TR"]
+                    rsc.lateral_limit = section["LATERAL"]
+                    rsc.track_coloration = False if section["TRACK COROLATION"] == "NO" else True
+                    rsc.is_active = False if section["ACTIVE"] == "NO" else True
+                    rsc.domestic_only = True if section["REMARK"] == "DOMESTIC" else False
+                    rsc.remark = section["REMARK"]
+
+                try:
+                    rsc.full_clean()
+                    cleaned_route_sections.append(rsc)
+                except Exception as err:
+                    self.stdout.write(self.style.ERROR(err))
+
+        try:
+            RouteSection.objects.bulk_create(cleaned_route_sections)
+            self.stdout.write(self.style.SUCCESS("Route Sections have been created."))
+        except Exception as err:
+            self.stdout.write(self.style.ERROR(err))
