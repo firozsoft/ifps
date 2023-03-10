@@ -5,4 +5,4 @@ from apps.routes.models import RouteSection
 
 @admin.register(RouteSection)
 class RouteSectionAdmin(admin.ModelAdmin):
-    pass
+    autocomplete_fields = ["route", "point1", "point2"]
