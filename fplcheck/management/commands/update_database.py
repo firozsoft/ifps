@@ -1,11 +1,13 @@
+import datetime as dt
+
 import pandas as pd
 from django.conf import settings
 
 # from django.contrib.gis.geos import GEOSGeometry
 from django.core.management.base import BaseCommand
 
-from apps.aerodromes.models import Aerodrome
-from apps.general.models import FIR
+from apps.aerodromes.models import Aerodrome, DailyOperationalHour
+from apps.airspaces.models import FIR
 from apps.points.models import NavAid, Point
 from apps.routes.models import Route, RouteSection, SidStar
 from apps.utils.helpers import dms2dd
@@ -16,6 +18,7 @@ AERODROMES = "./resources/AIRPORTS.xlsx"
 NAVAIDS = "./resources/NAVID.xlsx"
 SIDSTAR = "./resources/SID & STAR.xlsx"
 ROUTES = "./resources/Routes.xlsx"
+OPERATIONALHOURS = "./resources/OperationalHours.xlsx"
 
 
 class Command(BaseCommand):
@@ -26,8 +29,9 @@ class Command(BaseCommand):
         parser.add_argument("--ad-iata-code", action="store_true", help="Update Aerodromes IATA Code")
         parser.add_argument("--firs", action="store_true", help="Create FIRs")
         parser.add_argument("--points", action="store_true", help="Create Points")
-        parser.add_argument("--navaids", action="store_true", help="Create/Update NAVAIDs")
+        parser.add_argument("--navaids", action="store_true", help="Create/Update Nav.Aids")
         parser.add_argument("--sidstars", action="store_true", help="Create/Update SID-STARS")
+        parser.add_argument("--operational-hours", action="store_true", help="Create/Update Operational Hours")
 
     def handle(self, *args, **kwargs):
         aerodromes = kwargs["aerodromes"]
@@ -36,6 +40,7 @@ class Command(BaseCommand):
         points = kwargs["points"]
         navaids = kwargs["navaids"]
         sidstars = kwargs["sidstars"]
+        sidstars = kwargs["operational_hours"]
 
         # if aerodromes:
         # self.create_airports()
@@ -44,11 +49,13 @@ class Command(BaseCommand):
         # # if firs:
         # self.create_firs()
         # if navaids:
-        self.create_navaids()
+        # self.create_navaids()
         # if points:
-        self.create_points()
+        # self.create_points()
         # # if sidstars:
         # self.create_sid_stars()
+        # # if operational_hours:
+        self.create_operational_hours()
 
     def _get_geo_coordinates(self, coordinates: str):
         latitude, longitude = dms2dd(coordinates)
@@ -283,3 +290,56 @@ class Command(BaseCommand):
                     with open("./duplicate-sid-stars.txt", "a+", encoding="utf-8") as dpf:
                         dpf.write(str(row) + "\n")
                         self.stdout.write(self.style.ERROR(f"SID-STAR {sidstar} considred duplicated."))
+
+    def create_operational_hours(self):
+        DailyOperationalHour.objects.all().delete()
+
+        opr_hours = []
+
+        df = pd.read_excel(OPERATIONALHOURS)
+        for row_inx, row in df.iterrows():
+            if (len(row) - 1) % 5 != 0:
+                self.stdout.write(self.style.ERROR(f"Error: row: {row_inx}, incorrect number of fields."))
+                with open("./not-created-opr-hours.txt", "a+", encoding="utf-8") as dpf:
+                    dpf.write(str(row) + "\n")
+                continue
+
+            dct = {"date": row["date"]}
+
+            for inx in range(1, len(row), 5):
+                dct["aerodrome"] = Aerodrome.objects.filter(four_letters=row[inx]).first()
+                dct["start_time"] = row[inx + 1]
+                dct["end_time"] = row[inx + 2]
+                dct["vfr_start_time"] = row[inx + 3]
+                dct["vfr_end_time"] = row[inx + 4]
+
+                if dct["start_time"] in ("OR", "HS"):
+                    dct["start_time"] = dt.time.min
+                if dct["end_time"] in ("OR", "HS"):
+                    dct["end_time"] = dt.time.max
+
+                if dct["aerodrome"] is None:
+                    self.stdout.write(
+                        self.style.ERROR(f"Error: row: {row_inx}, col: {inx}-{inx+5}, aerodrome is not deffined")
+                    )
+                    print(str(row[inx : inx + 5]))
+                    with open("./not-created-opr-hours.txt", "a+", encoding="utf-8") as dpf:
+                        dpf.write(str(row) + "\n")
+                    continue
+
+                for key in ("start_time", "end_time", "vfr_start_time", "vfr_end_time"):
+                    if not isinstance(dct[key], dt.time):
+                        self.stdout.write(
+                            self.style.ERROR(f"Error: row: {row_inx}, col: {inx}-{inx+5}, an error in a time field")
+                        )
+                        print(str(row[inx : inx + 5]))
+                        with open("./not-created-opr-hours.txt", "a+", encoding="utf-8") as dpf:
+                            dpf.write(str(row) + "\n")
+                        break
+                else:
+                    opr_hours.append(DailyOperationalHour(**dct))
+
+        try:
+            DailyOperationalHour.objects.bulk_create(opr_hours)
+        except Exception as err:
+            self.style.ERROR(err)
