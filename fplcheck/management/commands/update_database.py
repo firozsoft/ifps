@@ -406,9 +406,10 @@ class Command(BaseCommand):
                     rsc.min_rnav_level = section["MIN RNAV 5"]
                     rsc.mag_track = section["MAG TR"]
                     rsc.lateral_limit = section["LATERAL"]
-                    rsc.track_coloration = False if section["TRACK COROLATION"] == "NO" else True
+                    rsc.track_coloration = False if section["TRACK CORRELATION"] == "NO" else True
                     rsc.is_active = False if section["ACTIVE"] == "NO" else True
                     rsc.domestic_only = True if section["REMARK"] == "DOMESTIC" else False
+                    rsc.not_for_over_flights = True if section["REMARK"] == "Not For OverFlights" else False
                     rsc.remark = section["REMARK"]
 
                 try:
