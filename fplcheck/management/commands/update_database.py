@@ -9,16 +9,17 @@ from django.core.management.base import BaseCommand
 from apps.aerodromes.models import Aerodrome, DailyOperationalHour
 from apps.airspaces.models import FIR
 from apps.points.models import NavAid, Point
-from apps.routes.models import Route, RouteSection, SidStar
+from apps.routes.models import Route, RouteScheme, RouteSection, SidStar
 from apps.utils.helpers import dms2dd
 
-IATA = "./resources/YATA CODE.xlsx"
+IATA_CODES = "./resources/IataCode.xlsx"
 POINTS_FIRS = "./resources/Points.xlsx"
 AERODROMES = "./resources/AIRPORTS.xlsx"
-NAVAIDS = "./resources/NAVID.xlsx"
-SIDSTAR = "./resources/SID & STAR.xlsx"
+NAVAIDS = "./resources/NavAid.xlsx"
+SIDS_STARS = "./resources/SidStar.xlsx"
 ROUTES = "./resources/Routes.xlsx"
 OPERATIONALHOURS = "./resources/OperationalHours.xlsx"
+ROUTE_SCHEMES = "./resources/RouteScheme.xlsx"
 
 
 class Command(BaseCommand):
@@ -33,6 +34,7 @@ class Command(BaseCommand):
         parser.add_argument("--sidstars", action="store_true", help="Create/Update SID-STARS")
         parser.add_argument("--operational-hours", action="store_true", help="Create/Update Operational Hours")
         parser.add_argument("--routes", action="store_true", help="Create/Update Routes")
+        parser.add_argument("--route-schemes", action="store_true", help="Create/Update Route Schemes")
 
     def handle(self, *args, **kwargs):
         aerodromes = kwargs["aerodromes"]
@@ -43,6 +45,7 @@ class Command(BaseCommand):
         sidstars = kwargs["sidstars"]
         operational_hours = kwargs["operational_hours"]
         routes = kwargs["routes"]
+        routes = kwargs["route_schemes"]
 
         # if aerodromes:
         # self.create_airports()
@@ -59,7 +62,9 @@ class Command(BaseCommand):
         # if operational_hours:
         # self.create_operational_hours()
         # if routes:
-        self.create_routes()
+        # self.create_routes()
+        # if route_schemes:
+        self.create_route_schemes()
 
     def _get_geo_coordinates(self, coordinates: str):
         latitude, longitude = dms2dd(coordinates)
@@ -125,7 +130,7 @@ class Command(BaseCommand):
     def set_ad_iatacode(self):
         """Sets Aerodromes IATA code from excel file"""
 
-        df = pd.read_excel(IATA)
+        df = pd.read_excel(IATA_CODES)
         data = [
             {"four_letters": row["Airport ICAO ID"], "iatacode": row["Airport IATA ID"]} for _, row in df.iterrows()
         ]
@@ -247,7 +252,7 @@ class Command(BaseCommand):
 
         SidStar.objects.all().delete()
 
-        df = pd.read_excel(SIDSTAR)
+        df = pd.read_excel(SIDS_STARS)
         for inx, row in df.iterrows():
             adname = row["AIRPORT"]
             ntp = row["NAVID"].replace("/", "_").lower()
@@ -423,3 +428,13 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("Route Sections have been created."))
         except Exception as err:
             self.stdout.write(self.style.ERROR(err))
+
+    def create_route_schemes(self):
+        RouteScheme.objects.all().delete()
+
+        df = pd.read_excel(ROUTE_SCHEMES)
+        ['ENTRY', 'EXIT', 'DES', 'NXT FIR', 'TYPE RESTRICTION',
+         'TRANSITING / LANDING', 'APPROVED LEVEL', 'NOT APPROVED LEVEL ', 'DESCRIPTION']
+        for row_inx, row in df.iterrows():
+            print(df.columns)
+            break
