@@ -37,6 +37,7 @@ class RouteSection(BaseModel):
     lateral_limit = models.PositiveSmallIntegerField("Lateral limit")
     track_coloration = models.BooleanField("Track Coloration", default=True, choices=YesNo)
     domestic_only = models.BooleanField("Domestic Flights Only", default=False, choices=YesNo)
+    not_for_over_flights = models.BooleanField("Not For OverFlights", default=False, choices=YesNo)
     remark = models.TextField("Remarks", null=True, blank=True)
 
     class Meta:
