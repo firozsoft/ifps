@@ -252,6 +252,7 @@ class Command(BaseCommand):
         for tp in zip(navaid_objects, created_navaids):
             tp[0].aerodromes.add(*tp[1][1])
             tp[0].fir.add(current_fir)
+        self.stdout.write(self.style.SUCCESS("NavAids Aerodromes and FIRs have been updated."))
 
     def create_sid_stars(self):
 
