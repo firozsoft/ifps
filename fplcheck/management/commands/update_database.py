@@ -194,28 +194,23 @@ class Command(BaseCommand):
             if settings.FIR_FOUR_LETTERS in p_firs and not point.coordinates:
                 raise SystemExit(f"Point with name '{point.name}' must have coordinates!")
 
-        points = set()
-        for inx, item in enumerate(points_and_firs, start=1):
-            point = item[0]
-            point.id = inx
-            if any(point.name == added_point.name for added_point in points):
-                raise SystemExit(f"Point with name '{point.name}' already exists!")
-            points.add(point)
-        try:
-            created_points = Point.objects.bulk_create(points)
-            self.stdout.write(self.style.SUCCESS("Points have been created."))
-
+        points_and_firs = []
+        for point, *firs in points_and_firs:
             try:
-                for point in created_points:
-                    for item in points_and_firs:
-                        if point.name == item[0].name:
-                            point.fir.add(*FIR.objects.filter(four_letters__in=item[1:]))
-                            break
-                self.stdout.write(self.style.SUCCESS("Points FIR have been updated."))
+                point.full_clean()
+                points_and_firs.append((point, *firs))
             except Exception as err:
                 self.stdout.write(self.style.ERROR(err))
-        except Exception as err:
-            self.stdout.write(self.style.ERROR(err))
+
+        created_points = Point.objects.bulk_create(map(lambda tp: tp[0], points_and_firs))
+        self.stdout.write(self.style.SUCCESS("Points have been created."))
+
+        point_objects = list(Point.objects.all().order_by("name"))
+        created_points.sort(key=lambda point: point.name)
+
+        for tp in zip(point_objects, created_points):
+            tp[0].fir.add(*FIR.objects.filter(four_letters__in=tp[1][1:]))
+        self.stdout.write(self.style.SUCCESS("Points FIR have been updated."))
 
     def create_navaids(self):
         """Note: just use to store NAVAIDs of settings.FIR_FOUR_LETTERS"""
@@ -224,6 +219,7 @@ class Command(BaseCommand):
         current_fir = FIR.objects.get(four_letters=settings.FIR_FOUR_LETTERS)
 
         df = pd.read_excel(NAVAIDS)
+        navids = []
         for _, row in df.iterrows():
             name = row["STATION"]
             name_pl = row["NAME OF AIRPORT"]
@@ -232,21 +228,30 @@ class Command(BaseCommand):
             ad = row["AIRPORT ICAO LETTER"]
             uc = row["USE IN ROUTE/USE IN AIRPORT"].replace("USE ", "").strip().replace(" ", "_").lower()
 
-            if not NavAid.objects.filter(name=name, use_case=uc, type=tp).exists():
-                new_nav = NavAid.objects.create(
-                    name=name,
-                    name_pl=name_pl,
-                    type=tp,
-                    use_case=uc,
-                    coordinates=coordinates,
+            navids.append(
+                (
+                    NavAid(name=name, name_pl=name_pl, type=tp, use_case=uc, coordinates=coordinates),
+                    Aerodrome.objects.filter(four_letters=ad),
                 )
+            )
 
-                new_nav.aerodromes.add(*Aerodrome.objects.filter(four_letters=ad))
-                new_nav.fir.add(current_fir)
+        cleaned_navaids = []
+        for navaid, ad_qs in navids:
+            try:
+                navaid.full_clean()
+                cleaned_navaids.append(navaid, ad_qs)
+            except Exception as err:
+                self.stdout.write(self.style.ERROR(err))
 
-            else:
-                print(row)
+        created_navaids = NavAid.objects.bulk_create(map(lambda tp: tp[0], cleaned_navaids))
         self.stdout.write(self.style.SUCCESS("NavAids have been created."))
+
+        navaid_objects = list(NavAid.objects.all().order_by("name"))
+        created_navaids.sort(key=lambda tp: tp[0].name)
+
+        for tp in zip(navaid_objects, created_navaids):
+            tp[0].aerodromes.add(*tp[1][1])
+            tp[0].fir.add(current_fir)
 
     def create_sid_stars(self):
 
@@ -387,6 +392,7 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR(err))
 
         Route.objects.bulk_create(cleaned_routes)
+        self.stdout.write(self.style.SUCCESS("Routes have been created."))
 
         RQS = Route.objects.all()
         PQS = Point.objects.all()
@@ -433,8 +439,17 @@ class Command(BaseCommand):
         RouteScheme.objects.all().delete()
 
         df = pd.read_excel(ROUTE_SCHEMES)
-        ['ENTRY', 'EXIT', 'DES', 'NXT FIR', 'TYPE RESTRICTION',
-         'TRANSITING / LANDING', 'APPROVED LEVEL', 'NOT APPROVED LEVEL ', 'DESCRIPTION']
+        [
+            "ENTRY",
+            "EXIT",
+            "DES",
+            "NXT FIR",
+            "TYPE RESTRICTION",
+            "TRANSITING / LANDING",
+            "APPROVED LEVEL",
+            "NOT APPROVED LEVEL ",
+            "DESCRIPTION",
+        ]
         for row_inx, row in df.iterrows():
             print(df.columns)
             break
