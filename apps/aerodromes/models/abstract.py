@@ -8,7 +8,7 @@ class AerodromeProperties(AbstractBaseModel):
     aerodrome = models.ForeignKey(
         "aerodromes.Aerodrome",
         verbose_name="Aerodrome",
-        related_name="%(class)s",
+        related_name="%(class)ss",
         on_delete=models.CASCADE,
     )
     date = models.DateField("Date")
