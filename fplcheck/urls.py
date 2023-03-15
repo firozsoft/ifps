@@ -1,7 +1,8 @@
 from django.urls import path
 
-from .views import scrutinization
+from . import views
 
 urlpatterns = [
-    path("", scrutinization),
+    path("add-data/", views.fill_database),
+    path("", views.scrutinization, name="fpl-scrutinization"),
 ]
