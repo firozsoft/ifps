@@ -1,6 +1,9 @@
+from django.forms import modelformset_factory
 from django.http import HttpRequest, JsonResponse
+from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
+from apps.models import *
 from fplcheck.analyses.logical_checks import logical_check
 from fplcheck.analyses.regexer import regex_parse
 
@@ -15,9 +18,7 @@ def membership_status_check(user):
 def scrutinization(request: HttpRequest) -> JsonResponse:
     msg = request.POST.get(key="message", default=None)
     if not msg:
-        return JsonResponse(
-            {"error_message": "field message is missing", "error_code": "msg_not_found"}
-        )
+        return JsonResponse({"error_message": "field message is missing", "error_code": "msg_not_found"})
     if msg.startswith("(FPL"):
         return fpl_scrutinization(msg)
     return JsonResponse({"Error": "text must be an AFTN FPL message"})
