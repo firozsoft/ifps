@@ -44,9 +44,9 @@ class RouteScheme(BaseModel):
         max_length=10,
         choices=RouteSchemeFlightNature.choices,
     )
-    approved_levels_upper_limit = models.PositiveSmallIntegerField("Approved Levels Upper Limit",
-                                                                   validators=[MinValueValidator(0),
-                                                                               MaxValueValidator(650)])
+    approved_levels_upper_limit = models.PositiveSmallIntegerField(
+        "Approved Levels Upper Limit", validators=[MinValueValidator(0), MaxValueValidator(999)]
+    )
     not_approved_levels = models.CharField(
         verbose_name="Not Approved Levels",
         null=True,
@@ -66,4 +66,4 @@ class RouteScheme(BaseModel):
         return f"{self.start} to {self.end}"
 
     def save(self, *args, **kwargs):
-        self.not_approved_levels = ','.join(map(str.strip(), self.not_approved_levels.replace('F', '').split(',')))
+        self.not_approved_levels = ",".join(map(str.strip(), self.not_approved_levels.replace("F", "").split(",")))
