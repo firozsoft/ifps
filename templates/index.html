@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}
+  FPL Check
+{% endblock title %}
+
+{% block content %}
+  <form action="{% url "fpl-scrutinization" %}" method="post">
+    {% csrf_token %}
+    <textarea name="message" id="message" cols="130" rows="10"></textarea>
+    <button type="submit">submit</button>
+  </form>
+{% endblock content %}
