@@ -7,7 +7,6 @@ from apps.utils.validators import coordinate_validator
 # from django.contrib.gis.geos import GEOSGeometry
 
 
-
 class AbstractBaseModel(models.Model):
     """Abstract Base Model"""
 
@@ -56,13 +55,11 @@ class BasePoint(BaseModel):
     # )
     fir = models.ManyToManyField(
         "airspaces.FIR",
-        verbose_name="Located/Boundary FIR(s)",
+        verbose_name="FIR(s)",
         related_name="%(class)ss",
-        help_text="The location of FIR boundary points can be assumed in more than one FIR",
+        help_text="FIR boundary points have more than one FIR",
     )
-    is_fir_boundary = models.BooleanField(
-        "Is FIR Boundary", choices=YesNo, default=False
-    )
+    is_fir_boundary = models.BooleanField("Is FIR Boundary", choices=YesNo, default=False)
 
     class Meta:
         abstract = True
