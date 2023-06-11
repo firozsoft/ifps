@@ -33,4 +33,4 @@ class AerodromeInline(admin.TabularInline):
 @admin.register(FIR)
 class FIRAdmin(admin.ModelAdmin):
     search_fields = ("four_letters",)
-    inlines = [AerodromeInline]
+    # inlines = [AerodromeInline]
