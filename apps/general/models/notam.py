@@ -49,3 +49,4 @@ class Notam(AbstractBaseModel):
     def save(self, *args, **kwargs):
         if self.type != NotamType.NEW and not self.relevant:
             raise Exception()
+
