@@ -3,3 +3,7 @@ pandas
 openpyxl
 python-decouple
 dj-database-url
+
+# Bot Requirements
+python-telegram-bot~=13.15
+pdf2image~=1.16
