@@ -14,7 +14,7 @@ from apps.utils.helpers import dms2dd
 
 IATA_CODES = "./resources/IataCode.xlsx"
 POINTS_FIRS = "./resources/Points.xlsx"
-AERODROMES = "./resources/AIRPORTS.xlsx"
+AERODROMES = "./resources/Airports.xlsx"
 NAVAIDS = "./resources/NavAid.xlsx"
 SIDS_STARS = "./resources/SidStar.xlsx"
 ROUTES = "./resources/Routes.xlsx"
