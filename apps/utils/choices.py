@@ -17,18 +17,18 @@ class AerodromeType(models.TextChoices):
 
 
 class Direction(models.TextChoices):
-    TO = "to"
-    FROM = "from"
+    TO = "to", "TO"
+    FROM = "from", "FROM"
     TO_FROM = "to_from", "TO/FROM"
 
 
 class NavAidType(models.TextChoices):
-    VOR = "vor"
-    NDB = "ndb"
-    DME = "dme"
-    ILS = "ils"
-    DVOR = "dvor"
-    TACAN = "tacan"
+    VOR = "vor", "VOR"
+    NDB = "ndb", "NDB"
+    DME = "dme", "DME"
+    ILS = "ils", "ILS"
+    DVOR = "dvor", "DVOR"
+    TACAN = "tacan", "TACAN"
     NDB_DME = "ndb_dme", "NDB/DME"
     VOR_DME = "vor_dme", "VOR/DME"
     DVOR_DME = "dvor_dme", "DVOR/DME"
