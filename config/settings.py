@@ -143,4 +143,4 @@ MESSAGE_TAGS = {messages.DEBUG: "info"}
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # fpl-check required settings
-FIR_FOUR_LETTERS = "OIIX"
+FIR_INDICATOR = "OIIX"

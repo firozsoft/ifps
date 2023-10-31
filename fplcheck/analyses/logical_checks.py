@@ -14,15 +14,15 @@ def logical_check(data: dict[str, Union[bool, str, list[dict[str, str]]]]):
     err: dict[str, str] = {"logical_error": ""}
 
     data["domestic_dep"] = True
-    if not data["departure_ad"].startswith(settings.FIR_FOUR_LETTERS[:2]) or (
-        "eet" in data.keys() and settings.FIR_FOUR_LETTERS in data["eet"]
+    if not data["departure_ad"].startswith(settings.FIR_INDICATOR[:2]) or (
+        "eet" in data.keys() and settings.FIR_INDICATOR in data["eet"]
     ):
         data["domestic_dep"] = False
     data["domestic_dest"] = True
     if (
-        not data["destination_ad"].startswith(settings.FIR_FOUR_LETTERS[:2])
+        not data["destination_ad"].startswith(settings.FIR_INDICATOR[:2])
         or "eet" in data.keys()
-        and len(data["eet"].split(settings.FIR_FOUR_LETTERS)[1].strip()) > 4
+        and len(data["eet"].split(settings.FIR_INDICATOR)[1].strip()) > 4
     ):
         data["domestic_dest"] = False
 

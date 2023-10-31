@@ -110,7 +110,7 @@ class Command(BaseCommand):
         for inx, item in enumerate(lst, start=1):
             ad = Aerodrome(
                 id=inx,
-                four_letters=item[0],
+                indicator=item[0],
                 name=item[1],
                 type=item[2],
                 coordinates=item[3],
@@ -132,12 +132,12 @@ class Command(BaseCommand):
 
         df = pd.read_excel(IATA_CODES)
         data = [
-            {"four_letters": row["Airport ICAO ID"], "iatacode": row["Airport IATA ID"]} for _, row in df.iterrows()
+            {"indicator": row["Airport ICAO ID"], "iatacode": row["Airport IATA ID"]} for _, row in df.iterrows()
         ]
-        data.sort(key=lambda item: item["four_letters"])
-        aerodromes = [item["four_letters"] for item in data]
+        data.sort(key=lambda item: item["indicator"])
+        aerodromes = [item["indicator"] for item in data]
         updated_ads = []
-        ads = Aerodrome.objects.filter(four_letters__in=aerodromes).order_by("four_letters")
+        ads = Aerodrome.objects.filter(indicator__in=aerodromes).order_by("indicator")
         for aerodrome, info in zip(ads, data):
             aerodrome.iatacode = info["iatacode"]
             updated_ads.append(aerodrome)
@@ -159,9 +159,9 @@ class Command(BaseCommand):
         fir_names = set(
             row["COUNTRY"] for _, row in df.iterrows() if isinstance(row["COUNTRY"], str) and row["COUNTRY"]
         )
-        fir_names.add(settings.FIR_FOUR_LETTERS)
-        for inx, four_letters in enumerate(fir_names, start=1):
-            firs.add(FIR(id=inx, four_letters=four_letters))
+        fir_names.add(settings.FIR_INDICATOR)
+        for inx, indicator in enumerate(fir_names, start=1):
+            firs.add(FIR(id=inx, indicator=indicator))
 
         try:
             FIR.objects.bulk_create(firs)
@@ -186,12 +186,12 @@ class Command(BaseCommand):
 
             p_firs = []
             if row["FIR BOUNDARY/INSIDE FIR"] == "INSIDE FIR ":
-                p_firs = [settings.FIR_FOUR_LETTERS]
+                p_firs = [settings.FIR_INDICATOR]
             elif row["FIR BOUNDARY/INSIDE FIR"] == "FIR BOUNDARY":
-                p_firs = [settings.FIR_FOUR_LETTERS] + [row["COUNTRY"]]
+                p_firs = [settings.FIR_INDICATOR] + [row["COUNTRY"]]
             points_and_firs.append((point, *p_firs))
 
-            if settings.FIR_FOUR_LETTERS in p_firs and not point.coordinates:
+            if settings.FIR_INDICATOR in p_firs and not point.coordinates:
                 raise SystemExit(f"Point with name '{point.name}' must have coordinates!")
 
         points_and_firs = []
@@ -209,14 +209,14 @@ class Command(BaseCommand):
         created_points.sort(key=lambda point: point.name)
 
         for tp in zip(point_objects, created_points):
-            tp[0].fir.add(*FIR.objects.filter(four_letters__in=tp[1][1:]))
+            tp[0].fir.add(*FIR.objects.filter(indicator__in=tp[1][1:]))
         self.stdout.write(self.style.SUCCESS("Points FIR have been updated."))
 
     def create_navaids(self):
-        """Note: just use to store NAVAIDs of settings.FIR_FOUR_LETTERS"""
+        """Note: just use to store NAVAIDs of settings.FIR_INDICATOR"""
         NavAid.objects.all().delete()
 
-        current_fir = FIR.objects.get(four_letters=settings.FIR_FOUR_LETTERS)
+        current_fir = FIR.objects.get(indicator=settings.FIR_INDICATOR)
 
         df = pd.read_excel(NAVAIDS)
         navids = []
@@ -231,7 +231,7 @@ class Command(BaseCommand):
             navids.append(
                 (
                     NavAid(name=name, name_pl=name_pl, type=tp, use_case=uc, coordinates=coordinates),
-                    Aerodrome.objects.filter(four_letters=ad),
+                    Aerodrome.objects.filter(indicator=ad),
                 )
             )
 
@@ -268,7 +268,7 @@ class Command(BaseCommand):
             rwy = f'{row["RWY"]}' * isinstance(row["RWY"], str)
             rnp = row["NAVID"] == "RNP"
 
-            ad = Aerodrome.objects.filter(four_letters=adname).first()
+            ad = Aerodrome.objects.filter(indicator=adname).first()
             navaid = NavAid.objects.filter(name=nvname, type__in=[ntp, *ntp.split("_")]).first()
 
             spname = ssname[:-2]
@@ -322,7 +322,7 @@ class Command(BaseCommand):
             dct = {"date": row["date"]}
 
             for inx in range(1, len(row), 5):
-                dct["aerodrome"] = Aerodrome.objects.filter(four_letters=row[inx]).first()
+                dct["aerodrome"] = Aerodrome.objects.filter(indicator=row[inx]).first()
                 dct["start_time"] = row[inx + 1]
                 dct["end_time"] = row[inx + 2]
                 dct["vfr_start_time"] = row[inx + 3]

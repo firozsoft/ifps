@@ -15,7 +15,7 @@ class Aerodrome(BasePoint):
         nav_aids: All Navigation-Aids of the aerodrome
     """
 
-    four_letters = models.CharField(
+    indicator = models.CharField(
         "ICAO Four Letters",
         max_length=4,
         unique=True,
@@ -43,8 +43,8 @@ class Aerodrome(BasePoint):
     class Meta(BasePoint.Meta):
         verbose_name = "Aerodrome"
         verbose_name_plural = "Aerodromes"
-        ordering = ("four_letters",)
-        indexes = [models.Index(fields=["four_letters"])]
+        ordering = ("indicator",)
+        indexes = [models.Index(fields=["indicator"])]
 
     def __str__(self):
-        return f"{self.four_letters}"
+        return f"{self.indicator}"

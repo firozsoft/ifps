@@ -57,7 +57,7 @@ def points_checks(
     exited = data["domestic_dest"]
     entry_point = before_entry_point = after_entry_point = None
     exit_point = before_exit_point = after_exit_point = None
-    eets = data["eet"].split(settings.FIR_FOUR_LETTERS)
+    eets = data["eet"].split(settings.FIR_INDICATOR)
     previous_fir, next_fir = (eets[0], eets[1]) if len(eets) > 1 else (None, eets[0])
 
     for mentioned_point in mentioned_points:
@@ -71,14 +71,14 @@ def points_checks(
             if not point_obj.is_active:
                 err["logical_error"] += f"Point {mentioned_point} is not active. "
             if not entered:
-                if point_obj.fir.filter(name=settings.FIR_FOUR_LETTERS).exists():
+                if point_obj.fir.filter(name=settings.FIR_INDICATOR).exists():
                     entered, after_entry_point = True, point_obj
                     if point_obj.is_fir_boundary:
                         entry_point = mentioned_point
                 else:
                     before_entry_point = point_obj
             if not exited:
-                if point_obj.fir.filter(~Q(name=settings.FIR_FOUR_LETTERS)).exists():
+                if point_obj.fir.filter(~Q(name=settings.FIR_INDICATOR)).exists():
                     exited, after_exit_point = True, point_obj
                     if point_obj.is_fir_boundary:
                         exit_point = mentioned_point
@@ -90,10 +90,10 @@ def points_checks(
     if exit_point:
         row_route = row_route[: row_route.index(exit_point) + 1]
 
-    if not (entered and exited) and settings.FIR_FOUR_LETTERS not in data["eet"]:
+    if not (entered and exited) and settings.FIR_INDICATOR not in data["eet"]:
         err[
             "logical_error"
-        ] += f"Not domestic nor Overflight for {settings.FIR_FOUR_LETTERS}. "
+        ] += f"Not domestic nor Overflight for {settings.FIR_INDICATOR}. "
 
     else:
 
@@ -153,7 +153,7 @@ def points_checks(
                 )
             return (
                 x_point.route_sections1
-                if x_point.route_sections1.point2.fir.name == settings.FIR_FOUR_LETTERS
+                if x_point.route_sections1.point2.fir.name == settings.FIR_INDICATOR
                 else x_point.route_sections2
             )
 

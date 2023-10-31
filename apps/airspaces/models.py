@@ -64,27 +64,27 @@ class AerialRefueling(AbstractBaseAirspace):
 
 
 class FIR(BaseModel):
-    four_letters = models.CharField("ICAO Four Letters", max_length=4, unique=True)
+    indicator = models.CharField("ICAO Four Letters", max_length=4, unique=True)
     # shape = models.PolygonField(null=True, blank=True)
 
     class Meta:
-        ordering = ("four_letters",)
+        ordering = ("indicator",)
         verbose_name = "FIR"
         verbose_name_plural = "FIRs"
 
     def __str__(self):
-        return self.four_letters
+        return self.indicator
 
 
 class ACC(BaseModel):
-    four_letters = models.CharField("ICAO Four Letters", max_length=4, unique=True)
+    indicator = models.CharField("ICAO Four Letters", max_length=4, unique=True)
     # shape = models.MultiPolygonField(null=True, blank=True)
     sectors = models.ManyToManyField("airspaces.Sector")
 
     class Meta:
-        ordering = ("four_letters",)
+        ordering = ("indicator",)
         verbose_name = "ACC"
         verbose_name_plural = "ACCs"
 
     def __str__(self):
-        return self.four_letters
+        return self.indicator

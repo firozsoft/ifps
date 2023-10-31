@@ -14,7 +14,7 @@ class AerodromeInline(admin.TabularInline):
         models.TextField: {"widget": Textarea(attrs={"rows": 2})},
     }
     fields = [
-        "four_letters",
+        "indicator",
         "plain_language_name",
         "iatacode",
         "coordinates",
@@ -32,5 +32,5 @@ class AerodromeInline(admin.TabularInline):
 
 @admin.register(FIR)
 class FIRAdmin(admin.ModelAdmin):
-    search_fields = ("four_letters",)
+    search_fields = ("indicator",)
     # inlines = [AerodromeInline]

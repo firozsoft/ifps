@@ -23,7 +23,7 @@ class SidStar(BaseRoute):
     rwy = models.ManyToManyField(
         "aerodromes.RWY",
         verbose_name="Runway",
-        limit_choices_to={"aerodrome__four_letters": "self.aerodrome__four_letters"},
+        limit_choices_to={"aerodrome__indicator": "self.aerodrome__indicator"},
     )
     rnp_app = models.BooleanField(default=False, choices=YesNo)
     remarks = models.TextField(null=True, blank=True)

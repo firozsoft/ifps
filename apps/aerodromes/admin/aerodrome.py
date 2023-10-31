@@ -42,12 +42,12 @@ class RWYInline(admin.TabularInline):
 
 @admin.register(Aerodrome)
 class AerodromeAdmin(BasePointAdmin):
-    search_fields = ("four_letters", "plain_language_name")
-    list_display = ("four_letters", "plain_language_name")
+    search_fields = ("indicator", "plain_language_name")
+    list_display = ("indicator", "plain_language_name")
     list_filter = ("is_active",)
     autocomplete_fields = ("fir",)
     fields = [
-        "four_letters",
+        "indicator",
         "plain_language_name",
         "iatacode",
         ("coordinates", "latitude", "longitude"),

@@ -114,21 +114,21 @@ def aerodromes_checks(data: dict[str, Union[bool, str, list[dict[str, str]]]], e
     dep_datatime = datetime.datetime.strptime(data["dof"] + data["eobt"], "%y%m%d%H%M")
     est_arrival_datetime = dep_datatime + datetime.timedelta(hours=int(data["teet"][:2]), minutes=int(data["teet"][2:]))
 
-    def _get_ad(four_letters: str) -> Union[Aerodrome, None]:
+    def _get_ad(indicator: str) -> Union[Aerodrome, None]:
         """getting dep, dest and first alt aerodromes"""
-        if four_letters in ("ZZZZ", "AFIL"):
+        if indicator in ("ZZZZ", "AFIL"):
             return None
-        if not four_letters[:2] == settings.FIR_FOUR_LETTERS[:2]:
+        if not indicator[:2] == settings.FIR_INDICATOR[:2]:
             return None
         try:
-            ad_model = Aerodrome.objects.get(four_letters=four_letters).prefetch_related(
+            ad_model = Aerodrome.objects.get(indicator=indicator).prefetch_related(
                 "dailyoperationalhour", "temporaryclosure", "curfew"
             )
         except Aerodrome.DoesNotExist:
-            err["logical_error"] += f"{four_letters} does not exist. "
+            err["logical_error"] += f"{indicator} does not exist. "
         else:
             if not ad_model.is_active:
-                err["logical_error"] += f"{four_letters} is not active. "
+                err["logical_error"] += f"{indicator} is not active. "
             else:
                 return ad_model
 
