@@ -3,6 +3,8 @@
         ✓ Aerodromes existence
         ✓ Aerodromes accept the flight regarding the flight Type
         ✓ Aerodromes accept the flight regarding the flight Rule
+        ✓ Aerodromes accept the flight regarding the Internationality
+        ✓ Aerodromes available upon request
         ✓ Aerodromes operational hours and curfews
         ✓ SID/STAR
 """
@@ -17,51 +19,62 @@ from apps.aerodromes.models import (
     DailyOperationalHour,
     TemporaryClosure,
 )
-from apps.routes.models import SidStar
+
+HELIPORTS_ACCEPTABLE_AC_TYPES = ["HEL", "B212", "B412"]
 
 
-def _check_flight_type_acceptable(ard: Aerodrome, ac_type: str, err: dict[str, str]) -> None:
-    if ard.type == "heliport" and ac_type not in ["HEL", "B212", "B412"]:
-        err[
-            "logical_error"
-        ] += f"{ard} is HELIPORT and isn't applicable for {ac_type}(\
-                                accepted types are HEL, B212 and B412). "
+def _check_flight_type_acceptable(ad: Aerodrome, ac_type: str, err: dict[str, list[str]]) -> None:
+    if ad.type == "heliport" and ac_type not in HELIPORTS_ACCEPTABLE_AC_TYPES:
+        err["logical_error"].append(
+            f"{ad} is HELIPORT and isn't applicable for {ac_type}; "
+            f"accepted types are {HELIPORTS_ACCEPTABLE_AC_TYPES}."
+        )
 
 
 def _check_aerodrome_operational_hours(
-    aerodrome: Aerodrome, flight_datetime: datetime, flight_rule: str, err: dict[str, str]
+    aerodrome: Aerodrome,
+    flight_datetime: datetime,
+    flight_rule: str,
+    err: dict[str, list[str]],
 ):
     flight_date = flight_datetime.date()
     flight_time = flight_datetime.time()
     try:
-        aerodrome_hours = aerodrome.dailyoperationalhour.get(date=flight_date)
+        op_hours = aerodrome.dailyoperationalhours.get(date=flight_date)
     except DailyOperationalHour.DoesNotExist:
         pass
     else:
-        aerodrome_start = aerodrome_hours.start_time
-        aerodrome_end = aerodrome_hours.end_time
+        opr_start = op_hours.start_time
+        opr_end = op_hours.end_time
+
         if flight_rule == "VFR":
-            aerodrome_start = aerodrome_hours.vfr_start_time
-            aerodrome_end = aerodrome_hours.vfr_end_time
-        if flight_time <= aerodrome_start or flight_time >= aerodrome_end:
-            err["logical_error"] += (
-                f"Your time {flight_time} at {aerodrome} is not in its operational "
-                f"hours, between {aerodrome_start} and {aerodrome_end}. "
-            )
+            opr_start = op_hours.vfr_start_time
+            opr_end = op_hours.vfr_end_time
+
+        if not (opr_start < flight_time < opr_end):
+            if not aerodrome.aur:
+                err["logical_error"].append(
+                    f"Your estimated time {flight_time} at {aerodrome} is not in aerodrome's operational hours,"
+                    f" ({opr_start} till {opr_end}), and aerodrome is not available upon request. "
+                )
 
 
-def _check_aerodrome_temporarily_closure(aerodrome: Aerodrome, flight_datetime: datetime, err: dict[str, str]):
+def _check_aerodrome_temporarily_closure(
+    aerodrome: Aerodrome, flight_datetime: datetime, err: dict[str, list[str]]
+):
     flight_date = flight_datetime.date()
     flight_time = flight_datetime.time()
     try:
-        temp_closure = aerodrome.temporaryclosure.get(
-            date=flight_date, start_time__lte=flight_time, end_time__gte=flight_time
+        temp_closure = aerodrome.temporaryclosures.get(
+            date=flight_date,
+            start_time__lte=flight_time,
+            end_time__gte=flight_time,
         )
     except TemporaryClosure.DoesNotExist:
         pass
     else:
-        err["logical_error"] += (
-            f"{aerodrome} temporary closure, between {temp_closure.start_time} " f"and {temp_closure.end_time}. "
+        err["logical_error"].append(
+            f"{aerodrome} is temporary closed, {temp_closure.start_time} till {temp_closure.end_time}."
         )
 
 
@@ -70,19 +83,23 @@ def _check_aerodrome_curfew(
     flight_datetime: datetime,
     data_sts: str,
     data_rmk: str,
-    err: dict[str, str],
+    err: dict[str, list[str]],
 ):
     flight_date = flight_datetime.date()
     flight_time = flight_datetime.time()
     try:
-        curfew = aerodrome.curfew.get(date=flight_date, start_time__lte=flight_time, end_date__gte=flight_time)
+        curfew = aerodrome.curfews.get(
+            date=flight_date, start_time__lte=flight_time, end_date__gte=flight_time
+        )
     except Curfew.DoesNotExist:
         pass
     else:
         if not any(sts in curfew.acceptable_sts for sts in data_sts) or not any(
             [rmk in data_rmk for rmk in curfew.acceptable_rmk]
         ):
-            err["logical_error"] += f"{aerodrome} curfew time, between {curfew.start_time} " f"and {curfew.end_time}. "
+            err["logical_error"].append(
+                f"{aerodrome} curfew time, {curfew.start_time} till {curfew.end_time}."
+            )
 
 
 def _analyse(
@@ -90,81 +107,145 @@ def _analyse(
     aircraft_type: str,
     flight_rule: str,
     flight_datetime: datetime,
-    err: dict[str, str],
+    err: dict[str, list[str]],
     data_sts: str,
     data_rmk: str,
 ):
     _check_flight_type_acceptable(aerodrome, aircraft_type, err)
-
-    if flight_rule not in aerodrome.ifr_vfr:
-        err["logical_error"] += f"{aerodrome} does not accept {flight_rule.upper()}. "
-
     _check_aerodrome_operational_hours(aerodrome, flight_datetime, flight_rule, err)
     _check_aerodrome_temporarily_closure(aerodrome, flight_datetime, err)
     _check_aerodrome_curfew(aerodrome, flight_datetime, data_sts, data_rmk, err)
 
+    if flight_rule not in aerodrome.ifr_vfr:
+        err["logical_error"].append(f"{aerodrome} does not accept {flight_rule.upper()}.")
 
-def aerodromes_checks(data: dict[str, Union[bool, str, list[dict[str, str]]]], err: dict[str, str]):
+
+def aerodromes_checks(data: dict[str, Union[bool, str, list[dict[str, str]]]], err: dict[str, list[str]]):
     """Checks Related To Aerodromes"""
+
+    if not all([data["departure_ad"], data["destination_ad"], data["alt_ad_1"]]):
+        err["logical_error"].append(
+            "The Destination, Departure and at least one Alternate Aerodromes are mandatory."
+        )
+        # if any of these is not found or active, then the rest of the checks could not be done!
+        return
 
     flight_type = data["flight_type"]
     initial_flight_rule = "ifr" if data["flight_rule"] in "IY" else "vfr"
     last_flight_rule = "ifr" if data["route"][-1]["flight_rule"] in "IY" else "vfr"
 
     dep_datatime = datetime.datetime.strptime(data["dof"] + data["eobt"], "%y%m%d%H%M")
-    est_arrival_datetime = dep_datatime + datetime.timedelta(hours=int(data["teet"][:2]), minutes=int(data["teet"][2:]))
+    est_arrival_datetime = dep_datatime + datetime.timedelta(
+        hours=int(data["teet"][:2]), minutes=int(data["teet"][2:])
+    )
 
-    def _get_ad(indicator: str) -> Union[Aerodrome, None]:
-        """getting dep, dest and first alt aerodromes"""
-        if indicator in ("ZZZZ", "AFIL"):
-            return None
-        if not indicator[:2] == settings.FIR_INDICATOR[:2]:
-            return None
-        try:
-            ad_model = Aerodrome.objects.get(indicator=indicator).prefetch_related(
-                "dailyoperationalhour", "temporaryclosure", "curfew"
-            )
-        except Aerodrome.DoesNotExist:
-            err["logical_error"] += f"{indicator} does not exist. "
-        else:
-            if not ad_model.is_active:
-                err["logical_error"] += f"{indicator} is not active. "
-            else:
-                return ad_model
+    def _get_aerodromes(indicators: list[str]) -> Union[Aerodrome, None]:
+        """getting dep, dest and alternate aerodromes"""
+        aerodromes = Aerodrome.objects.filter(indicator__in=indicators).prefetch_related(
+            "dailyoperationalhours", "temporaryclosures", "curfews", "sid_stars"
+        )
+        aerodrome_four_letters_list = list(aerodromes.values_list("indicator", flat=True))
 
-    if not all([data["departure_ad"], data["destination_ad"], data["alt_ad_1"]]):
-        err["logical_error"] += "The Destination, Departure and at least one Alternate are Mandatory. "
-        # if any of these is not found or active, then the rest of checks could
-        # not be done!
-        return
-    else:
-        departure_ad = _get_ad(data["departure_ad"])
-        destination_ad = _get_ad(data["destination_ad"])
-        alt_ad_1 = _get_ad(data["alt_ad_1"])
-        if data["alt_ad_2"] is not None:
-            alt_ad_2 = _get_ad(data["alt_ad_2"])
+        for inx, indicator in enumerate(indicators):
+            if indicator in ("ZZZZ", "AFIL", None) or not indicator[:2] == settings.FIR_INDICATOR[:2]:
+                # Indicator is not for a domestic aerodrome
+                aerodrome_four_letters_list.insert(inx, None)
+            elif indicator not in aerodrome_four_letters_list:
+                err["logical_error"].append(f"Aerodrome {indicator} does not exist.")
+                aerodrome_four_letters_list.insert(inx, None)
+
+        return [
+            None if four_letters is None else aerodromes.filter(indicator=four_letters).first()
+            for four_letters in aerodrome_four_letters_list
+        ]
+
+    aerodromes = _get_aerodromes(
+        [data[key] for key in ("departure_ad", "destination_ad", "alt_ad_1", "alt_ad_2")]
+    )
+
+    for aerodrome in aerodromes:
+        if aerodrome is not None and not aerodrome.is_active:
+            err["logical_error"].append(f"{aerodrome} is not active.")
+
+    departure_ad, destination_ad, alt_ad_1, alt_ad_2 = aerodromes
 
     if departure_ad is not None:
-        _analyse(departure_ad, flight_type, initial_flight_rule, dep_datatime, err, data["sts"], data["rmk"])
+        _analyse(
+            departure_ad,
+            flight_type,
+            initial_flight_rule,
+            dep_datatime,
+            err,
+            data["sts"],
+            data["rmk"],
+        )
 
     if destination_ad is not None:
-        _analyse(destination_ad, flight_type, last_flight_rule, est_arrival_datetime, err, data["sts"], data["rmk"])
+        _analyse(
+            destination_ad,
+            flight_type,
+            last_flight_rule,
+            est_arrival_datetime,
+            err,
+            data["sts"],
+            data["rmk"],
+        )
 
     if alt_ad_1 is not None:
-        _analyse(alt_ad_1, flight_type, last_flight_rule, est_arrival_datetime, err, data["sts"], data["rmk"])
+        _analyse(
+            alt_ad_1,
+            flight_type,
+            last_flight_rule,
+            est_arrival_datetime,
+            err,
+            data["sts"],
+            data["rmk"],
+        )
 
-    def _sid_star_check(sid_star: str, type_: str, ad: Aerodrome) -> None:
-        if not (it := SidStar.objects.filter(name=sid_star, aerodrome=ad).select_related("point").first()):
-            err["logical_error"] += f"{type_} {sid_star} does not exist. "
+    if alt_ad_2 is not None:
+        _analyse(
+            alt_ad_2,
+            flight_type,
+            last_flight_rule,
+            est_arrival_datetime,
+            err,
+            data["sts"],
+            data["rmk"],
+        )
+
+    def _sid_star_check(sid_star_name: str, type_: str, ad: Aerodrome) -> None:
+        sid_star = ad.sid_stars.filter(name=sid_star_name).first()
+        if sid_star is None:
+            err["logical_error"].append(f"{type_} {sid_star_name} does not exist.")
         else:
-            if not it.is_active:
-                err["logical_error"] += f"{type_} {sid_star} is not active. "
-            if not it.point.is_active:
-                err["logical_error"] += f"Point {it.point} is not active. "
-            if type_ not in it.type:
-                err["logical_error"] += f"{sid_star}({it.type}) is not of type {type_}. "
+            if not sid_star.is_active:
+                err["logical_error"].append(f"{type_} {sid_star_name} is not active.")
 
-    if data["domestic_dep"] is True and data["sid"] is not None:
+            if type_ not in sid_star.type:
+                err["logical_error"].append(f"{sid_star_name}({sid_star.type}) is not of type {type_}.")
+
+    domestic_departure = data["domestic_departure"]
+    domestic_destination = data["domestic_destination"]
+
+    if domestic_departure and data["sid"] is not None:
         _sid_star_check(data["sid"], "SID", departure_ad)
-    if data["domestic_dest"] is True and data["star"] is not None:
+    if domestic_destination and data["star"] is not None:
         _sid_star_check(data["star"], "STAR", destination_ad)
+
+    if (
+        destination_ad is not None
+        and not domestic_departure
+        and not (destination_ad.is_international and destination_ad.aur)
+    ):
+        err["logical_error"].append(
+            f"Destination {destination_ad} is not international neither available upon request."
+        )
+
+    if (
+        departure_ad is not None
+        and not domestic_destination
+        and not (departure_ad.is_international and departure_ad.aur)
+    ):
+        err["logical_error"].append(
+            f"Departure {departure_ad} is not international neither available upon request."
+        )
