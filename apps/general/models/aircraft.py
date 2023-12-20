@@ -1,6 +1,6 @@
 from django.db import models
 
-from apps.general.models import BaseModel
+from .base import BaseModel
 
 
 class Aircraft(BaseModel):

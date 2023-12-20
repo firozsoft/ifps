@@ -3,8 +3,9 @@ from datetime import datetime
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from apps.general.models import AbstractBaseModel
 from apps.utils.choices import NotamType
+
+from .base import AbstractBaseModel
 
 
 class NotamManager(models.Manager):
