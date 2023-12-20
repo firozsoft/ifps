@@ -1,2 +1,2 @@
-from .navaid import NavAidAdmin
-from .point import PointAdmin
+from .navaid import NavAidAdmin  # noqa
+from .point import PointAdmin  # noqa

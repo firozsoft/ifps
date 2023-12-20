@@ -1,2 +1,2 @@
-from .point import Point
-from .navaid import NavAid
+from .point import Point  # noqa
+from .navaid import NavAid  # noqa
