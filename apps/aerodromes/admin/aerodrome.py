@@ -4,7 +4,6 @@ from django.db import models
 from django.forms import Textarea, TextInput
 
 from apps.aerodromes.models import (
-    RWY,
     Aerodrome,
     Curfew,
     DailyOperationalHour,
@@ -31,15 +30,6 @@ class TemporaryClosureInline(admin.TabularInline):
     classes = ["collapse"]
 
 
-class RWYInline(admin.TabularInline):
-    model = RWY
-    extra = 1
-    formfield_overrides = {
-        # models.CharField: {"widget": TextInput(attrs={"size": "20"})},
-        models.TextField: {"widget": Textarea(attrs={"rows": 2})},
-    }
-
-
 @admin.register(Aerodrome)
 class AerodromeAdmin(BasePointAdmin):
     search_fields = ("indicator", "plain_language_name")
@@ -61,4 +51,4 @@ class AerodromeAdmin(BasePointAdmin):
         "is_fir_boundary",
     ]
 
-    inlines = [RWYInline, CurfewInline, TemporaryClosureInline, DailyOperationalHourInline]
+    inlines = [CurfewInline, TemporaryClosureInline, DailyOperationalHourInline]

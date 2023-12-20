@@ -20,11 +20,6 @@ class SidStar(BaseRoute):
         blank=True,
     )
     type = models.CharField(max_length=8, choices=SidStarType.choices)
-    rwy = models.ManyToManyField(
-        "aerodromes.RWY",
-        verbose_name="Runway",
-        limit_choices_to={"aerodrome__indicator": "self.aerodrome__indicator"},
-    )
     rnp_app = models.BooleanField(default=False, choices=YesNo)
     remarks = models.TextField(null=True, blank=True)
 
