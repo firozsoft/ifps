@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from apps.general.models.abstracts import AbstractBaseModel
+from apps.general.models.base import AbstractBaseModel
 
 
 class AerodromeProperties(AbstractBaseModel):

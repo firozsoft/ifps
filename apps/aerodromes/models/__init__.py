@@ -1,3 +1,4 @@
+from .base import AerodromeProperties  # noqa
 from .aerodrome import Aerodrome  # noqa
 from .curfew import Curfew  # noqa
 from .daily_opr import DailyOperationalHour  # noqa

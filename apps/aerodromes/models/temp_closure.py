@@ -1,4 +1,4 @@
-from .abstract import AerodromeProperties
+from .base import AerodromeProperties
 
 
 class TemporaryClosure(AerodromeProperties):

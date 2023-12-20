@@ -1,8 +1,9 @@
 from datetime import datetime
 
+from django.core.exceptions import ValidationError
 from django.db import models
 
-from apps.general.models.abstracts import AbstractBaseModel
+from apps.general.models import AbstractBaseModel
 from apps.utils.choices import NotamType
 
 
@@ -11,7 +12,7 @@ class NotamManager(models.Manager):
 
     def active(self, date=datetime.today()):
         """All valid NOTAMs for a given date"""
-        return super().get_queryset().filter(start_date__lte=date, end_date__gte=date)
+        return super().get_queryset().filter(start_date__lte=date, end_date__gte=date, is_active=True)
 
 
 class Notam(AbstractBaseModel):
@@ -29,7 +30,7 @@ class Notam(AbstractBaseModel):
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        help_text="In case of replacement/cancellation, the relevant 'NOTAM'",
+        help_text="The NOTAM to be Replaced/Cancelled.",
     )
     start_date = models.DateTimeField("Start")
     end_date = models.DateTimeField("End", null=True, blank=True)
@@ -46,7 +47,7 @@ class Notam(AbstractBaseModel):
     def __str__(self) -> str:
         return f"{self.number}"
 
-    def save(self, *args, **kwargs):
+    def clean(self):
+        super().clean()
         if self.type != NotamType.NEW and not self.relevant:
-            raise Exception()
-
+            raise ValidationError({"relevant": "This field is required."})

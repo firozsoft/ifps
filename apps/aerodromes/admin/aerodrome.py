@@ -1,7 +1,5 @@
 # from django.contrib.gis import admin
 from django.contrib import admin
-from django.db import models
-from django.forms import Textarea, TextInput
 
 from apps.aerodromes.models import (
     Aerodrome,
@@ -9,7 +7,7 @@ from apps.aerodromes.models import (
     DailyOperationalHour,
     TemporaryClosure,
 )
-from apps.general.admin.generics import BasePointAdmin
+from apps.general.admin import BasePointAdmin
 
 
 class CurfewInline(admin.TabularInline):

@@ -1,6 +1,6 @@
 from django.db import models
 
-from apps.general.models.abstracts import AbstractBaseModel
+from apps.general.models import AbstractBaseModel
 
 
 class FIDSData(AbstractBaseModel):

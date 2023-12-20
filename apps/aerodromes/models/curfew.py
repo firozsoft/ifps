@@ -2,7 +2,7 @@ from django.db import models
 
 from apps.utils.choices import YesNo
 
-from .abstract import AerodromeProperties
+from .base import AerodromeProperties
 
 
 class Curfew(AerodromeProperties):

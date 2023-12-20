@@ -1,8 +1,8 @@
 from .choices import (
-    AerodromeFlightType,
-    AerodromeType,
-    Direction,
-    NavAidType,
-    NavAidUseCase,
-    YesNo,
+    AerodromeFlightType,  # noqa
+    AerodromeType,  # noqa
+    Direction,  # noqa
+    NavAidType,  # noqa
+    NavAidUseCase,  # noqa
+    YesNo,  # noqa
 )

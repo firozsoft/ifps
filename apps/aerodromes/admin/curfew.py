@@ -1,8 +1,8 @@
 from django.contrib import admin
 
-from apps.aerodromes.admin.abstract import AerodromePropertiesAdmin
-from apps.aerodromes.models import Curfew
-from apps.aerodromes.models.abstract import AerodromeProperties
+from apps.aerodromes.models import AerodromeProperties, Curfew
+
+from .base import AerodromePropertiesAdmin
 
 
 @admin.register(Curfew)
@@ -12,9 +12,7 @@ class CurfewAdmin(AerodromePropertiesAdmin):
             None,
             {
                 "fields": tuple(
-                    field.name
-                    for field in AerodromeProperties._meta.get_fields()
-                    if field.editable
+                    field.name for field in AerodromeProperties._meta.get_fields() if field.editable
                 )
             },
         ),

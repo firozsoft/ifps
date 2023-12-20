@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.general.admin.generics import BasePointAdmin
+from apps.general.admin import BasePointAdmin
 from apps.points.models import NavAid
 
 
@@ -11,9 +11,7 @@ class NavAidAdmin(BasePointAdmin):
         "plain_language_name",
         "type",
         "is_active",
-        ("coordinates",
-        "latitude",
-        "longitude"),
+        ("coordinates", "latitude", "longitude"),
         # "location",
         "use_case",
         "fir",

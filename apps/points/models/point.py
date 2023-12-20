@@ -1,6 +1,6 @@
 from django.db import models
 
-from apps.general.models.abstracts import BasePoint
+from apps.general.models import BasePoint
 from apps.utils.validators import point_name_validator
 
 
