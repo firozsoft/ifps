@@ -36,7 +36,6 @@ SITE_ID = 1
 LOCAL_APPS = [
     "fplcheck",
     "apps.aerodromes",
-    "apps.airspaces",
     "apps.general",
     "apps.points",
     "apps.routes",
@@ -53,7 +52,11 @@ DJANGO_APPS = [
     # "django.contrib.gis",
 ]
 
-INSTALLED_APPS = LOCAL_APPS + DJANGO_APPS
+DEVELOPMENT_APPS = [
+    "debug_toolbar",
+]
+
+INSTALLED_APPS = LOCAL_APPS + DJANGO_APPS + DEVELOPMENT_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -63,6 +66,16 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+
+if DEBUG:
+    MIDDLEWARE += [
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
+]
+
+# For security, set up internal IPs that are allowed to view the debug toolbar
+INTERNAL_IPS = [
+    "127.0.0.1",
 ]
 
 TEMPLATES = [
