@@ -1,7 +1,10 @@
+import json
+
+from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, JsonResponse
+from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
-from apps.models import *
 from fplcheck.analyses.logical_checks import logical_check
 from fplcheck.analyses.regexer import regex_parse
 
@@ -10,8 +13,7 @@ def membership_status_check(user):
     return user.membership_status
 
 
-# @login_required
-# @user_passes_test(membership_status_check)
+@login_required
 @require_http_methods(["POST"])
 def scrutinization(request: HttpRequest) -> JsonResponse:
     msg = request.POST.get(key="message", default=None)

@@ -1,1 +1,1 @@
-from .aerodromes_checks import aerodromes_checks
+from .aerodromes_checks import aerodromes_checks  # noqa

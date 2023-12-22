@@ -4,8 +4,9 @@ from typing import Union
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
-from apps.aerodromes.analysis import aerodromes_checks
-from apps.points.analysis import points_checks
+from apps.aerodromes.analysis import aerodromes_checks  # noqa
+from apps.points.analysis import points_checks  # noqa
+from apps.routes.analyses import routes_checks  # noqa
 
 
 def logical_check(data: dict[str, Union[bool, str, list[dict[str, str]]]]):
@@ -26,7 +27,7 @@ def logical_check(data: dict[str, Union[bool, str, list[dict[str, str]]]]):
 
     aerodromes_checks(data, err)
     points_checks(data, err)
-    # routes_checks(data, err)
+    routes_checks(data, err)
 
     if err["logical_error"]:
         errors = {f"{inx}": err for inx, err in enumerate(err["logical_error"])}

@@ -1,1 +1,1 @@
-from .routes_chekcs import routes_checks
+from .routes_checks import routes_checks  # noqa
