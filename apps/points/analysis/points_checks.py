@@ -74,6 +74,9 @@ def points_checks(data: dict[str, Union[bool, str, list[dict[str, str]]]], err: 
             for section in row_route:
                 if point_name in (section["from"], section["to"]):
                     section["needs_check"] = False
+                if msg in (section["from"], section["to"]):
+                    # Except for Ad checks, msg is the actual point referenced in the fpl so this "if" should be here.
+                    section["needs_check"] = False
         elif not point_obj.is_active:
             err["logical_error"].append(f"{msg if 'ITEM18' in msg else ''}Point {point_name} is not active.")
 
