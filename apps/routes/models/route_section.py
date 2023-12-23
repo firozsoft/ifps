@@ -5,16 +5,16 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import F
 
-from apps.general.models.abstracts import BaseModel
+from apps.general.models import BaseModel
 from apps.utils.choices import Direction, YesNo
 
 
 class FlightLevelField(models.PositiveSmallIntegerField):
     def __init__(self, *args, **kwargs):
-        if not "default" in kwargs:
+        if "default" not in kwargs:
             kwargs["default"] = 1
         super().__init__(*args, **kwargs)
-        self.validators = [MaxValueValidator(999), MinValueValidator(1)]
+        self.validators = [MinValueValidator(1), MaxValueValidator(999)]
 
 
 class RouteSection(BaseModel):
@@ -26,7 +26,9 @@ class RouteSection(BaseModel):
         "points.Point", on_delete=models.CASCADE, verbose_name="Second Point", related_name="route_sections2"
     )
     # line = models.LineStringField(null=True, blank=True)
-    direction = models.CharField("Direction", max_length=7, choices=Direction.choices, default=Direction.TO_FROM)
+    direction = models.CharField(
+        "Direction", max_length=7, choices=Direction.choices, default=Direction.TO_FROM
+    )
     distance = models.DecimalField("Distance(NM)", default=1, decimal_places=3, max_digits=4)
     min_safe_level = FlightLevelField("Minimum Safe Level(FL)")
     upper_limit = FlightLevelField("Upper Limit(FL)", default=999)

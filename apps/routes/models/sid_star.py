@@ -3,13 +3,17 @@ from django.db import models
 from apps.utils.choices import SidStarType, YesNo
 from apps.utils.validators import sid_star_name_validator
 
-from .abstract import BaseRoute
+from .base import BaseRoute
 
 
 class SidStar(BaseRoute):
     name = models.CharField("Name", max_length=7, validators=[sid_star_name_validator])
-    plain_language_name = models.CharField("Plain Language Name", max_length=50, null=True, blank=True)
-    aerodrome = models.ForeignKey("aerodromes.Aerodrome", on_delete=models.CASCADE, related_name="sid_stars")
+    plain_language_name = models.CharField(
+        "Plain Language Name", max_length=50, null=True, blank=True
+    )
+    aerodrome = models.ForeignKey(
+        "aerodromes.Aerodrome", on_delete=models.CASCADE, related_name="sid_stars"
+    )
     point = models.ForeignKey("points.Point", on_delete=models.CASCADE)
     nav_aid = models.ForeignKey(
         "points.NavAid",
