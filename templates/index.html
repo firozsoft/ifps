@@ -10,4 +10,8 @@
     <textarea name="message" id="message" cols="130" rows="10"></textarea>
     <button type="submit">submit</button>
   </form>
+
+  {% if data %}
+  {{ data }}
+  {% endif %}
 {% endblock content %}

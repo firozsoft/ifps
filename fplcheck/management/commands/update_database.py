@@ -7,38 +7,41 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from apps.aerodromes.models import Aerodrome, DailyOperationalHour
-from apps.airspaces.models import FIR
+from apps.general.models import FIR
 from apps.points.models import NavAid, Point
 from apps.routes.models import Route, RouteScheme, RouteSection, SidStar
 from apps.utils.helpers import dms2dd
 
-IATA_CODES = "./resources/IataCode.xlsx"
-POINTS_FIRS = "./resources/Points.xlsx"
-AERODROMES = "./resources/Airports.xlsx"
+AERODROMES = "./resources/Aerodrome.xlsx"
+POINTS_FIRS = "./resources/Point.xlsx"
 NAVAIDS = "./resources/NavAid.xlsx"
 SIDS_STARS = "./resources/SidStar.xlsx"
-ROUTES = "./resources/Routes.xlsx"
-OPERATIONALHOURS = "./resources/OperationalHours.xlsx"
+ROUTES = "./resources/Route.xlsx"
+OPERATIONALHOURS = "./resources/OperationalHour.xlsx"
 ROUTE_SCHEMES = "./resources/RouteScheme.xlsx"
 
 
 class Command(BaseCommand):
-    help = "Updates Database by first cleaning it and then loading data from excel files in resources directory"
+    help = (
+        "Updates Database by first cleaning it and then loading data from excel files in resources directory"
+    )
 
     def add_arguments(self, parser):
         parser.add_argument("--aerodromes", action="store_true", help="Create Aerodromes")
-        parser.add_argument("--ad-iata-code", action="store_true", help="Update Aerodromes IATA Code")
         parser.add_argument("--firs", action="store_true", help="Create FIRs")
         parser.add_argument("--points", action="store_true", help="Create Points")
         parser.add_argument("--navaids", action="store_true", help="Create/Update Nav.Aids")
         parser.add_argument("--sidstars", action="store_true", help="Create/Update SID-STARS")
-        parser.add_argument("--operational-hours", action="store_true", help="Create/Update Operational Hours")
+        parser.add_argument(
+            "--operational-hours",
+            action="store_true",
+            help="Create/Update Operational Hours",
+        )
         parser.add_argument("--routes", action="store_true", help="Create/Update Routes")
         parser.add_argument("--route-schemes", action="store_true", help="Create/Update Route Schemes")
 
     def handle(self, *args, **kwargs):
         aerodromes = kwargs["aerodromes"]
-        iatacodes = kwargs["ad_iata_code"]
         firs = kwargs["firs"]
         points = kwargs["points"]
         navaids = kwargs["navaids"]
@@ -47,12 +50,10 @@ class Command(BaseCommand):
         routes = kwargs["routes"]
         routes = kwargs["route_schemes"]
 
-        # if aerodromes:
-        # self.create_airports()
-        # # if iatacodes:
-        # self.set_ad_iatacode()
         # # if firs:
-        # self.create_firs()
+        self.create_firs()
+        # if aerodromes:
+        # self.create_aerodromes()
         # if navaids:
         # self.create_navaids()
         # if points:
@@ -64,7 +65,7 @@ class Command(BaseCommand):
         # if routes:
         # self.create_routes()
         # if route_schemes:
-        self.create_route_schemes()
+        # self.create_route_schemes()
 
     def _get_geo_coordinates(self, coordinates: str):
         latitude, longitude = dms2dd(coordinates)
@@ -75,28 +76,87 @@ class Command(BaseCommand):
         # return latitude, longitude, location
         return latitude, longitude
 
-    def create_airports(self):
+    def _excel_data_is_valid(
+        self,
+        df: pd.DataFrame,
+        expected_columns_name: list[str],
+        required_columns_name: list[str],
+    ) -> bool:
+        """Checks if all expected_columns are present in in the given data frame
+        and also there's no empty value in any required_columns
+
+        prints the errors using Commands stdout
+
+        returns boolean (False in case of any error)
+        """
+        if not all(col in df.columns for col in expected_columns_name):
+            missing_cols = [col for col in expected_columns_name if col not in df.columns]
+            self.stdout.write(self.style.ERROR(f"Columns '{missing_cols}' are not found."))
+
+        for col in required_columns_name:
+            if df[col].isnull().any():
+                self.stdout.write(self.style.ERROR(f"Column '{col}' has no values."))
+                return False
+
+        return not all(col in df.columns for col in expected_columns_name)
+
+    def create_firs(self):
+        """Cleans and Creates FIRs form excel file"""
+
+        df = pd.read_excel(POINTS_FIRS)
+
+        expected_columns = [
+            "FIR",
+        ]
+
+        required_columns = expected_columns
+
+        if not self._excel_data_is_valid(df, expected_columns, required_columns):
+            return
+
+        FIR.objects.all().delete()
+
+        firs = set()
+        fir_names = set(row["FIR"] for _, row in df.iterrows() if isinstance(row["FIR"], str) and row["FIR"])
+        fir_names.add(settings.FIR_INDICATOR)
+        for inx, indicator in enumerate(fir_names, start=1):
+            firs.add(FIR(id=inx, indicator=indicator))
+
+        try:
+            FIR.objects.bulk_create(firs)
+            self.stdout.write(self.style.SUCCESS("FIRs have been created."))
+        except Exception as err:
+            self.stdout.write(self.style.ERROR(err))
+
+    def create_aerodromes(self):
         """Cleans and Creates Aerodromes form excel file"""
+
+        df = pd.read_excel(AERODROMES)
+
+        expected_columns = [
+            "NAME",
+            "INDICATOR",
+            "COORDINATE",
+            "TYPE",
+            "IFR/VFR",
+            "IATA Code",
+        ]
+
+        required_columns = expected_columns[:-1]
+
+        if not self._excel_data_is_valid(df, expected_columns, required_columns):
+            return
 
         Aerodrome.objects.all().delete()
 
-        df = pd.read_excel(
-            AERODROMES,
-            usecols=[
-                "AIRPORT ICAO LETER",
-                "COORDINATES",
-                "TYPE",
-                "NAME OF AIRPORT",
-                "IFR/VFR",
-            ],
-        )
         lst = []
         for _, row in df.iterrows():
-            fl = row["AIRPORT ICAO LETER"]
-            cord = row["COORDINATES"]
+            fl = row["INDICATOR"].strip()
+            cord = row["COORDINATE"].strip()
             adtype = row["TYPE"].strip().lower()
-            name = row["NAME OF AIRPORT"].strip().capitalize()
-            ifrvfr = row["IFR/VFR"]
+            name = row["NAME"].strip().capitalize()
+            ifrvfr = row["IFR/VFR"].strip()
+            iatacode = row["IATA Code"].strip() if not pd.isnull(row["IATA Code"]) else None
 
             for tp in ("IFR", "VFR", "IFR/VFR"):
                 if ifrvfr == tp:
@@ -104,17 +164,18 @@ class Command(BaseCommand):
                     break
             else:
                 ifrvfr = "VFR"
-            lst.append((fl, name, adtype, cord, ifrvfr))
+            lst.append((fl, name, adtype, cord, ifrvfr, iatacode))
 
         aerodromes = set()
         for inx, item in enumerate(lst, start=1):
             ad = Aerodrome(
                 id=inx,
                 indicator=item[0],
-                name=item[1],
+                plain_language_name=item[1],
                 type=item[2],
                 coordinates=item[3],
                 ifr_vfr=item[4],
+                iatacode=item[5],
             )
             # ad.latitude, ad.longitude, ad.location = self._get_geo_coordinates(
             #     ad.coordinates
@@ -124,48 +185,6 @@ class Command(BaseCommand):
         try:
             Aerodrome.objects.bulk_create(aerodromes)
             self.stdout.write(self.style.SUCCESS("Aeroromes have been created."))
-        except Exception as err:
-            self.stdout.write(self.style.ERROR(err))
-
-    def set_ad_iatacode(self):
-        """Sets Aerodromes IATA code from excel file"""
-
-        df = pd.read_excel(IATA_CODES)
-        data = [
-            {"indicator": row["Airport ICAO ID"], "iatacode": row["Airport IATA ID"]} for _, row in df.iterrows()
-        ]
-        data.sort(key=lambda item: item["indicator"])
-        aerodromes = [item["indicator"] for item in data]
-        updated_ads = []
-        ads = Aerodrome.objects.filter(indicator__in=aerodromes).order_by("indicator")
-        for aerodrome, info in zip(ads, data):
-            aerodrome.iatacode = info["iatacode"]
-            updated_ads.append(aerodrome)
-
-        try:
-            Aerodrome.objects.bulk_update(updated_ads, ["iatacode"])
-            self.stdout.write(self.style.SUCCESS("Aeroromes iatacode have been updated."))
-        except Exception as err:
-            self.stdout.write(self.style.ERROR(err))
-
-    def create_firs(self):
-        """Cleans and Creates FIRs form excel file"""
-
-        FIR.objects.all().delete()
-
-        df = pd.read_excel(POINTS_FIRS)
-
-        firs = set()
-        fir_names = set(
-            row["COUNTRY"] for _, row in df.iterrows() if isinstance(row["COUNTRY"], str) and row["COUNTRY"]
-        )
-        fir_names.add(settings.FIR_INDICATOR)
-        for inx, indicator in enumerate(fir_names, start=1):
-            firs.add(FIR(id=inx, indicator=indicator))
-
-        try:
-            FIR.objects.bulk_create(firs)
-            self.stdout.write(self.style.SUCCESS("FIRs have been created."))
         except Exception as err:
             self.stdout.write(self.style.ERROR(err))
 
@@ -230,7 +249,13 @@ class Command(BaseCommand):
 
             navids.append(
                 (
-                    NavAid(name=name, name_pl=name_pl, type=tp, use_case=uc, coordinates=coordinates),
+                    NavAid(
+                        name=name,
+                        name_pl=name_pl,
+                        type=tp,
+                        use_case=uc,
+                        coordinates=coordinates,
+                    ),
                     Aerodrome.objects.filter(indicator=ad),
                 )
             )
@@ -255,7 +280,6 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("NavAids Aerodromes and FIRs have been updated."))
 
     def create_sid_stars(self):
-
         SidStar.objects.all().delete()
 
         df = pd.read_excel(SIDS_STARS)
@@ -272,7 +296,11 @@ class Command(BaseCommand):
             navaid = NavAid.objects.filter(name=nvname, type__in=[ntp, *ntp.split("_")]).first()
 
             spname = ssname[:-2]
-            for plname, name in (("SAVEH", "SAV"), ("LAVAN", "LVA"), ("DEHNAMK", "DHN")):
+            for plname, name in (
+                ("SAVEH", "SAV"),
+                ("LAVAN", "LVA"),
+                ("DEHNAMK", "DHN"),
+            ):
                 if spname == plname:
                     spname = name
             point = Point.objects.filter(name=spname).first()
@@ -335,7 +363,9 @@ class Command(BaseCommand):
 
                 if dct["aerodrome"] is None:
                     self.stdout.write(
-                        self.style.ERROR(f"Error: row: {row_inx}, col: {inx}-{inx+5}, aerodrome is not deffined")
+                        self.style.ERROR(
+                            f"Error: row: {row_inx}, col: {inx}-{inx+5}, aerodrome is not deffined"
+                        )
                     )
                     print(str(row[inx : inx + 5]))
                     with open("./not-created-opr-hours.txt", "a+", encoding="utf-8") as dpf:
@@ -345,7 +375,9 @@ class Command(BaseCommand):
                 for key in ("start_time", "end_time", "vfr_start_time", "vfr_end_time"):
                     if not isinstance(dct[key], dt.time):
                         self.stdout.write(
-                            self.style.ERROR(f"Error: row: {row_inx}, col: {inx}-{inx+5}, an error in a time field")
+                            self.style.ERROR(
+                                f"Error: row: {row_inx}, col: {inx}-{inx+5}, an error in a time field"
+                            )
                         )
                         print(str(row[inx : inx + 5]))
                         with open("./not-created-opr-hours.txt", "a+", encoding="utf-8") as dpf:
@@ -368,7 +400,7 @@ class Command(BaseCommand):
         routes = dict()
         df = pd.read_excel(ROUTES)
         for row_inx, row in df.iterrows():
-            if not row["ROUTE"] in routes:
+            if row["ROUTE"] not in routes:
                 routes[row["ROUTE"]] = [row[1:]]
             else:
                 routes[row["ROUTE"]].append(row[1:])

@@ -20,13 +20,13 @@ def scrutinization(request: HttpRequest) -> JsonResponse:
     if not msg:
         return JsonResponse({"error_message": "field message is missing", "error_code": "msg_not_found"})
     if msg.startswith("(FPL"):
-        return fpl_scrutinization(msg)
+        return fpl_scrutinization(request, msg)
     return JsonResponse({"Error": "text must be an AFTN FPL message"})
 
 
-def fpl_scrutinization(msg: str) -> JsonResponse:
+def fpl_scrutinization(request, msg: str) -> JsonResponse:
     parts = msg.split("-")
-    field_data = {
+    filled_data = {
         "call_sign": parts[1],
         "flt_rule_type": parts[2],
         "numbers_type_weak": parts[3],
@@ -37,10 +37,11 @@ def fpl_scrutinization(msg: str) -> JsonResponse:
         "others": parts[8].replace(")", ""),
         # 'extra': parts[9]
     }
-    res, err = regex_parse(field_data)
+    res, err = regex_parse(filled_data)
     if err:
-        return JsonResponse({"error_message": err.message, "error_code": err.code})
+        return JsonResponse(err.params)
     err = logical_check(res)
     if err:
-        return JsonResponse({"error_message": err.message, "error_code": err.code})
-    return JsonResponse(res)
+        # return render(request, "index.html", {"data": json.dumps(err.params)})
+        return JsonResponse(err.params)
+    return render(request, "index.html", {"data": json.dumps(res)})
