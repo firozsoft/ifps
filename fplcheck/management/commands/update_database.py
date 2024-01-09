@@ -89,16 +89,61 @@ class Command(BaseCommand):
 
         returns boolean (False in case of any error)
         """
-        if not all(col in df.columns for col in expected_columns_name):
+
+        all_expected_cols_found = all(col in df.columns for col in expected_columns_name)
+
+        if not all_expected_cols_found:
             missing_cols = [col for col in expected_columns_name if col not in df.columns]
             self.stdout.write(self.style.ERROR(f"Columns '{missing_cols}' are not found."))
+            return False
 
         for col in required_columns_name:
             if df[col].isnull().any():
                 self.stdout.write(self.style.ERROR(f"Column '{col}' has no values."))
                 return False
 
-        return not all(col in df.columns for col in expected_columns_name)
+        return True
+
+    def _validate_operational_hours_excel(self, df: pd.DataFrame):
+        """Specially for OperationalHours.xlsx it checks if the column sequence is consistent and there is
+        no empty/null field in this file
+
+        Returns
+            bool
+        """
+
+        # Define the required column names
+        required_columns = ["DATE", "AD INDICATOR", "IFR START", "IFR END", "SUNRISE", "SUNSET"]
+
+        # Find the index of the 'DATE' column
+        date_column_index = df.columns.get_loc("DATE")
+
+        # Check column sequence for each set of columns after 'DATE'
+        for i in range(date_column_index + 1, len(df.columns), len(required_columns) - 1):
+            columns_to_check = df.iloc[:, i : i + len(required_columns) - 1]
+            # Check if columns contain required columns in the specified order
+            for j, col in enumerate(columns_to_check.columns):
+                if col != required_columns[j + 1]:
+                    self.stdout.write(self.style.ERROR(f"Position {j}: Missing column {col}"))
+                    return False
+
+        invalid_columns = {}
+        for col in df.columns:
+            null_rows = df.index[df[col].isnull()].tolist()
+            if null_rows:
+                invalid_columns[col] = null_rows
+
+        for col, rows in invalid_columns.items():
+            self.stdout.write(
+                self.style.ERROR(
+                    f"Column '{col}' has missing values in rows: {', '.join(str(row) for row in rows)}"
+                )
+            )
+
+        if invalid_columns:
+            return False
+
+        return True
 
     def create_firs(self):
         """Cleans and Creates FIRs form excel file"""
@@ -335,11 +380,15 @@ class Command(BaseCommand):
                         self.stdout.write(self.style.ERROR(f"SID-STAR {sidstar} considred duplicated."))
 
     def create_operational_hours(self):
-        DailyOperationalHour.objects.all().delete()
-
-        opr_hours = []
+        """Cleans and Creates OperationalHours form excel file"""
 
         df = pd.read_excel(OPERATIONALHOURS)
+
+        if self._validate_operational_hours_excel(df):
+            return
+
+        DailyOperationalHour.objects.all().delete()
+
         for row_inx, row in df.iterrows():
             if (len(row) - 1) % 5 != 0:
                 self.stdout.write(self.style.ERROR(f"Error: row: {row_inx}, incorrect number of fields."))
