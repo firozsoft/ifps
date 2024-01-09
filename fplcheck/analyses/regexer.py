@@ -4,7 +4,7 @@ from typing import Union
 
 from django.core.exceptions import ValidationError
 
-from apps.utils import regex_patterns as rgx_pat
+from apps.utils import regex_patterns
 from apps.utils.patterns import OTHER_INFO_SWITCHES
 
 
@@ -23,102 +23,92 @@ def _update_segments(segment_list: list[dict[str, str]], to: str):
     )
 
 
-def _check_item_is_valid_point(item, previous, segments, err):
-    for pat in (rgx_pat.POINT, rgx_pat.CHANGE_SPEED_LEVEL, rgx_pat.CRUISE_CLIMB):
-        if it := re.match(pat, item):
-            previous = {"type": "point", "item": it.group("point")}
-            _update_segments(segments, previous["item"])
-
-            if (
-                pat == rgx_pat.POINT
-                and previous["type"] == "sid"
-                and previous["item"][:-2] != it.group("point")
-            ):
-                err["syntax_error"].append(
-                    f"Point {item} is not connected to SID {previous['item']}."
-                )
-
-            if pat != rgx_pat.POINT:
-                segments[-1]["speed"] = it.group("speed")
-                segments[-1]["level"] = it.group("level")
-                if pat == rgx_pat.CRUISE_CLIMB:
-                    segments[-1]["top_level"] = it.group("top_level")
-            return previous
+def _check_item_is_valid_point_with_indicator(item, previous, segments, res, err):
+    matched = None
+    for pattern in (regex_patterns.POINT, regex_patterns.CHANGE_SPEED_LEVEL, regex_patterns.CRUISE_CLIMB):
+        if (matched := re.match(pattern, item)) is not None:
+            break
     else:
-        err["syntax_error"].append(f"{item} must be a valid ATS Point.")
-
-
-def _check_item_is_valid_sig_point(item, previous, res, segments, err):
-    if it := re.match(rgx_pat.SIG_POINT, item):
-        previous = {"type": "sig_point", "item": it.group()}
-        if "ref_point" in it.groupdict().keys():
-            res["ref_points"].append(it.group("ref_point"))
-    elif it := re.match(rgx_pat.POINT, item):
-        previous = {"type": "point", "item": it.group("point")}
-    else:
-        err["syntax_error"].append(f"{item} must be a valid Significant Point.")
+        err["syntax_error"].append(f"Item {item} must be a valid point.")
         return
+
+    if matched.group("point") is None:
+        err["syntax_error"].append(f"Item {item} must be a valid point Indicator not a location.")
+        return
+
+    if previous["type"] == "sid" and previous["item"][:-2] not in (
+        matched.group("point"),
+        # to accept if they forget the last char of the point name in sid/star
+        matched.group("point")[:-1],
+    ):
+        err["syntax_error"].append(f"Point {item} doesn't match with SID {previous['item']}.")
+
+    # now we can reassign the variable previous to new data
+    previous = {"type": "point", "item": matched.group("point")}
+
+    if pattern != regex_patterns.POINT:
+        segments[-1]["speed"] = matched.group("speed")
+        segments[-1]["level"] = matched.group("level")
+        if pattern == regex_patterns.CRUISE_CLIMB:
+            segments[-1]["top_level"] = matched.group("top_level")
+
+    _update_segments(segments, previous["item"])
+
+    return previous
+
+
+def _check_item_is_valid_point_or_location(item, previous, res, segments, err):
+    matched = None
+    for pattern in (regex_patterns.SIG_POINT, regex_patterns.CHANGE_SPEED_LEVEL, regex_patterns.CRUISE_CLIMB):
+        if (matched := re.match(pattern, item)) is not None:
+            break
+    else:
+        err["syntax_error"].append(f"{item} must be a valid Significant point.")
+        return
+
+    if matched.group("location"):
+        previous = {"type": "location", "item": matched.group("location")}
+        if matched.group("ref_point"):
+            res["ref_points"].append(matched.group("ref_point"))
+    elif matched.group("point"):
+        previous = {"type": "point", "item": matched.group("point")}
+
     _update_segments(segments, previous["item"])
     return previous
 
 
-def _check_item_is_valid_point_or_route_or_dct(item, previous, res, segments, err):
-    if pat := re.match(rgx_pat.SID_STAR, item):
-        if pat.group("point") != previous["item"]:
-            err["syntax_error"].append(
-                f"STAR {item} connected point is not correct {previous['item']}."
-            )
+def _check_item_is_valid_route_or_dct_or_ifr_vfr(item, previous, res, segments, err):
+    if matched := re.match(regex_patterns.SID_STAR, item):
+        if matched.group("point") not in (
+            previous["item"],
+            previous["item"][:-1],  # to accept if they forget the last char of the point name in sid/star
+        ):
+            err["syntax_error"].append(f"Point {previous['item']} doesn't match with STAR {item}.")
 
         else:
-            previous = {"type": "route", "item": (star := pat.group("sid_star"))}
+            previous = {"type": "route", "item": (star := matched.group("sid_star"))}
             segments[-1]["via"] = star
             res["star"] = star
 
-    elif pat := re.match(rgx_pat.ROUTE, item):
-        previous = {"type": "route", "item": (route := pat.group("route"))}
+    elif matched := re.match(regex_patterns.ROUTE, item):
+        previous = {"type": "route", "item": (route := matched.group("route"))}
         segments[-1]["via"] = route
 
     elif item == "DCT":
         previous = {"type": "dct", "item": "DCT"}
         segments[-1]["via"] = "DCT"
 
-    # # """
-    # according following text from Doc4444, next elif part shall be commented.
-    # # Flights along designated ATS routes:
-    # #     DCT, if the flight to the next point will be outside a designated route,
-    # #     unless both points are defined by geographical coordinates.
-    # # Flights outside designated ATS routes:
-    # #     DCT between successive points unless both points are defined by geographical
-    # #     coordinates or by bearing and distance.
-    # """
-    elif pat := re.match(rgx_pat.SIG_POINT, item):
-        previous = {"type": "sig_point", "item": pat.group()}
-        previous = {"type": "point", "item": pat.group()}
-        segments[-1]["via"] = "DCT"
-        _update_segments(segments, previous["item"])
-
-    elif pat := re.match(rgx_pat.POINT, item):
-        previous = {"type": "point", "item": pat.group("point")}
-        segments[-1]["via"] = "DCT"
-        _update_segments(segments, previous["item"])
-
-    elif item in ("IFR", "VFR"):
+    elif item in ("IFR", "VFR") and re.match(regex_patterns.CHANGE_FLT_RULE, f"{previous['item']} {item}"):
         if res["flight_rule"] not in ("Y", "Z"):
-            err["syntax_error"].append(
-                "Illegal change of flight rule initial one was not 'Y' or 'Z'."
-            )
+            err["syntax_error"].append("Illegal change of flight rule initial one was not 'Y' or 'Z'.")
 
         if segments[-1]["flight_rule"] == item[0]:
-            err["syntax_error"].append(
-                f"{item} is Incorrect change of flight rule. {item} to {item}."
-            )
+            err["syntax_error"].append(f"{item} is Incorrect change of flight rule. {item} to {item}.")
 
         else:
             segments[-1]["flight_rule"] = item[0]
     else:
-        err["syntax_error"].append(
-            f"{item} must be a valid Route, Point or word DCT."
-        )
+        err["syntax_error"].append(f"{item} must be a valid Route, Change of flight rule or the word DCT.")
         return
     return previous
 
@@ -130,52 +120,56 @@ def route_regex_parse(
 ):
     """Checks for syntax errors in route part of a fpl msg"""
 
+    # Flight Plan Route (Item 15)
+    # The first cruising speed as in (a) and the first cruising level, then for:
+    # 1- Flight inside controlled airspace
+    # ((Sid | Route) | (DCT Point Route)) ((Point | ChangeSpeedLevel | (Point ChangeFltRule)) (Route | DCT))+ Point Star?
+    # 2- Flight outside controlled airspace
+    # (Point DCT? Point)+
+
     route_items: list[str] = data["route"].split()
-    if not (init_sp_lvl := re.match(rgx_pat.SPEED_LEVEL, route_items[0])):
-        err["syntax_error"].append(
-            f"{route_items[0]} must be a valid speed & level."
-        )
-        return
+    if (init_sp_lvl := re.match(regex_patterns.SPEED_LEVEL, route_items[0])) is not None:
+        res["initial_speed"] = init_sp_lvl.group("speed")
+        res["initial_level"] = init_sp_lvl.group("level")
 
-    res["initial_speed"] = init_sp_lvl.group("speed")
-    res["initial_level"] = init_sp_lvl.group("level")
+    else:
+        err["syntax_error"].append(f"{route_items[0]} must be a valid speed & level.")
 
-    # route_items[1] must be DCT, Route or Point
-    # to create a list of reference points and logical checks on them
+    # to create a list of reference points then doing logical-checks on them
     res["ref_points"] = []
+
+    # keep a look at item already cheked to be able to expect the nature of next item to be checked
     previous: dict[str, str] = {"type": "", "item": ""}
 
-    if item := re.match(rgx_pat.ROUTE, route_items[1]):
+    # route_items[1] must be DCT, Route or Point
+    if route_items[1] == "DCT":
+        previous = {"type": "dct", "item": "DCT"}
+
+    elif item := re.match(regex_patterns.ROUTE, route_items[1]):
         previous = {"type": "route", "item": item.group("route")}
 
-    elif item := re.match(rgx_pat.SID_STAR, route_items[1]):
+    elif item := re.match(regex_patterns.SID_STAR, route_items[1]):
         previous = {"type": "sid", "item": item.group("sid_star")}
         res["sid"] = item.group("sid_star")
 
-    elif route_items[1] == "DCT":
-        previous = {"type": "dct", "item": "DCT"}
-
-    elif item := re.match(rgx_pat.POINT, route_items[1]):
+    elif item := re.match(regex_patterns.POINT, route_items[1]):
         previous = {"type": "point", "item": item.group("point")}
 
-    elif item := re.match(rgx_pat.BEARING_DIST, route_items[1]):
-        previous = {"type": "point", "item": item.group("ref_point")}
-        res["ref_points"].append(item.group("ref_point"))
+    elif item := re.match(regex_patterns.LOCATION, route_items[1]):
+        previous = {"type": "location", "item": item.group("location")}
+        if item.group("ref_point"):
+            res["ref_points"].append(item.group("ref_point"))
 
     else:
-        err["syntax_error"].append(
-            f"{route_items[1]} must be a valid ATS Route or DCT or an ATS Point"
-        )
+        err["syntax_error"].append(f"{route_items[1]} must be a valid ATS Route or DCT or an ATS Point")
         return
 
     # route segments
     segments: list[dict[str, str]] = [
         {
             "from": res["departure_ad"],
-            "to": previous["item"] if previous["type"] == "point" else "",
-            "via": previous["item"]
-            if previous["type"] in ("route", "dct", "sid")
-            else "",
+            "to": previous["item"] if previous["type"] in ("point", "location") else "",
+            "via": previous["item"] if previous["type"] in ("route", "dct", "sid") else "",
             "speed": res["initial_speed"],
             "level": res["initial_level"],
             "top_level": res["initial_level"],
@@ -183,37 +177,35 @@ def route_regex_parse(
         }
     ]
 
-    # previous['type'] == 'route' | 'dct' | 'point' | 'sig_point'
+    # previous['type'] == 'route' | 'dct' | 'point' | 'location'
     for item in route_items[2:]:
         if previous["type"] in ("route", "sid"):
-            previous = _check_item_is_valid_point(item, previous, segments, err)
+            # current item can be a point that has an assigned indicator (point, change speed-level, cruise-climb)
+            previous = _check_item_is_valid_point_with_indicator(item, previous, segments, res, err)
             if previous is None:
                 return
             continue
         if previous["type"] == "dct":
-            previous = _check_item_is_valid_sig_point(
-                item, previous, res, segments, err
-            )
+            # current item can be a sig-point
+            previous = _check_item_is_valid_point_or_location(item, previous, res, segments, err)
             if previous is None:
                 return
             continue
         if previous["type"] == "point":
-            previous = _check_item_is_valid_point_or_route_or_dct(
-                item, previous, res, segments, err
-            )
+            # current item can be a route or dct or IFR/VFR
+            previous = _check_item_is_valid_route_or_dct_or_ifr_vfr(item, previous, res, segments, err)
             if previous is None:
                 return
             continue
-        if previous["type"] == "sig_point":
+        if previous["type"] == "location":
+            # current item can be a location or dct
             if item == "DCT":
                 previous = {"type": "dct", "item": "DCT"}
                 segments[-1]["via"] = "DCT"
-            elif pat := re.match(rgx_pat.SIG_POINT, item):
-                previous = {"type": "point", "item": pat.group()}
+            elif matched := re.match(regex_patterns.LOCATION, item):
+                previous = {"type": "location", "item": matched.group("location")}
             else:
-                err["syntax_error"].append(
-                    f"{item} must be a valid Sig.Point or word DCT."
-                )
+                err["syntax_error"].append(f"{item} must be a valid Sig.Point or word DCT.")
             continue
 
     segments[-1]["to"] = res["destination_ad"]
@@ -223,50 +215,32 @@ def route_regex_parse(
 
 def regex_parse(
     row_data: dict[str, str],
-) -> tuple[
-    dict[str, Union[str, list[dict[str, str]]]], Union[ValidationError, None]
-]:
+) -> tuple[dict[str, Union[str, list[dict[str, str]]]], Union[ValidationError, None]]:
     """Checks for syntax errors and prepares a new dict"""
     regex_parsed_data = dict()
     validation_error = None
     err: dict[str, list[str | None]] = {"syntax_error": []}
 
-    if not (call_sign := re.match(rgx_pat.CALLSIGN, row_data["call_sign"])):
-        err["syntax_error"].append(
-            f"call_sign({row_data['call_sign']}) is not valid."
-        )
+    if not (call_sign := re.match(regex_patterns.CALLSIGN, row_data["call_sign"])):
+        err["syntax_error"].append(f"call_sign({row_data['call_sign']}) is not valid.")
     else:
         regex_parsed_data["call_sign"] = call_sign.group()
 
-    if not (
-        flt_rule_type := re.match(
-            rgx_pat.FLIGHT_RULE_TYPE, row_data["flt_rule_type"]
-        )
-    ):
-        err["syntax_error"].append(
-            f"flight rule/type({row_data['flt_rule_type']}) is not valid."
-        )
+    if not (flt_rule_type := re.match(regex_patterns.FLIGHT_RULE_TYPE, row_data["flt_rule_type"])):
+        err["syntax_error"].append(f"flight rule/type({row_data['flt_rule_type']}) is not valid.")
     else:
         regex_parsed_data["flight_rule"] = flt_rule_type.group("flight_rule")
         regex_parsed_data["flight_type"] = flt_rule_type.group("flight_type")
 
-    if not (
-        numbers_type_weak := re.match(
-            rgx_pat.NUMBER_TYPE_WAKE, row_data["numbers_type_weak"]
-        )
-    ):
-        err["syntax_error"].append(
-            f"numbers/type/weak({row_data['numbers_type_weak']}) is not valid."
-        )
+    if not (numbers_type_weak := re.match(regex_patterns.AC_NUMBER_TYPE_WAKE, row_data["numbers_type_weak"])):
+        err["syntax_error"].append(f"numbers/type/weak({row_data['numbers_type_weak']}) is not valid.")
     else:
         regex_parsed_data["ac_numbers"] = numbers_type_weak.group("numbers") or "1"
         regex_parsed_data["ac_type"] = numbers_type_weak.group("type")
         regex_parsed_data["ac_weak"] = numbers_type_weak.group("weak")
 
     if not (
-        equp_cpct := re.match(
-            rgx_pat.EQUIPMENTS_CAPACITIES, row_data["equipments_and_capacities"]
-        )
+        equp_cpct := re.match(regex_patterns.EQUIPMENTS_CAPACITIES, row_data["equipments_and_capacities"])
     ):
         err["syntax_error"].append(
             f"equipments/capacities({row_data['equipments_and_capacities']}) is not valid."
@@ -275,21 +249,13 @@ def regex_parse(
         regex_parsed_data["equipments"] = equp_cpct.group("equipments")
         regex_parsed_data["capacities"] = equp_cpct.group("capacities")
 
-    if not (
-        dep_ad_time := re.match(rgx_pat.DEPARTURE_AD_TIME, row_data["dep_ad_time"])
-    ):
-        err["syntax_error"].append(
-            f"departure aerodrome or time({row_data['dep_ad_time']}) is not valid."
-        )
+    if not (dep_ad_time := re.match(regex_patterns.DEPARTURE_AD_TIME, row_data["dep_ad_time"])):
+        err["syntax_error"].append(f"departure aerodrome or time({row_data['dep_ad_time']}) is not valid.")
     else:
         regex_parsed_data["departure_ad"] = dep_ad_time.group("dep_ad")
         regex_parsed_data["eobt"] = dep_ad_time.group("eobt")
 
-    if not (
-        dest_teet_alt := re.match(
-            rgx_pat.DEST_AD_TEET_ALTS, row_data["dest_teet_alts"]
-        )
-    ):
+    if not (dest_teet_alt := re.match(regex_patterns.DEST_AD_TEET_ALTS, row_data["dest_teet_alts"])):
         err["syntax_error"].append(
             f"destination aerodrome or time or alternates({row_data['dest_teet_alts']}) is not valid."
         )
@@ -319,9 +285,7 @@ def regex_parse(
                         regex_parsed_data["pbn_rnp_spc"] = matched.group("rnp_spc")
                     elif key == "DOF":
                         try:
-                            datetime.strptime(
-                                regex_parsed_data[key.lower()], "%y%m%d"
-                            )
+                            datetime.strptime(regex_parsed_data[key.lower()], "%y%m%d")
                         except ValueError:
                             err["syntax_error"].append(
                                 f"DOF({regex_parsed_data[key.lower()]}) is not valid(YYMMDD format)."
@@ -337,7 +301,7 @@ def regex_parse(
             err["syntax_error"].append(
                 "DEP is not defined and missing DEP/ switch in ITEM18(Other information)."
             )
-        elif not re.match(rgx_pat.SIG_POINT, regex_parsed_data["dep"]):
+        elif not re.match(regex_patterns.LOCATION, regex_parsed_data["dep"]):
             err["syntax_error"].append(
                 f"DEP/ in ITEM18({regex_parsed_data['dep']}) is not a valid point or coordinate(11 characters) or bearing-distance."
             )
@@ -347,20 +311,17 @@ def regex_parse(
             err["syntax_error"].append(
                 "DEST is not defined and missing DEST/ switch in ITEM18(Other information)."
             )
-        elif not re.match(rgx_pat.SIG_POINT, regex_parsed_data["dest"]):
+        elif not re.match(regex_patterns.LOCATION, regex_parsed_data["dest"]):
             err["syntax_error"].append(
                 f"DEST/ in ITEM18({regex_parsed_data['dep']}) is not a valid point or coordinate(11 characters) or bearing-distance."
             )
 
-    if (
-        regex_parsed_data["alt_ad_1"] == "ZZZZ"
-        or regex_parsed_data["alt_ad_2"] == "ZZZZ"
-    ):
+    if regex_parsed_data["alt_ad_1"] == "ZZZZ" or regex_parsed_data["alt_ad_2"] == "ZZZZ":
         if "altn" not in regex_parsed_data:
             err["syntax_error"].append(
                 "ALTN is not defined and missing ALTN/ switch in ITEM18(Other information)."
             )
-        elif not re.match(rgx_pat.SIG_POINT, regex_parsed_data["dest"]):
+        elif not re.match(regex_patterns.LOCATION, regex_parsed_data["dest"]):
             err["syntax_error"].append(
                 f"ALTN/ in ITEM18({regex_parsed_data['dep']}) is not a valid point or coordinate(11 characters) or bearing-distance."
             )
@@ -373,7 +334,5 @@ def regex_parse(
 
     if err["syntax_error"]:
         errors = {f"{inx}": err for inx, err in enumerate(err["syntax_error"])}
-        validation_error = ValidationError(
-            message="Syntax Error", params=errors, code="syntax_error"
-        )
+        validation_error = ValidationError(message="Syntax Error", params=errors, code="syntax_error")
     return regex_parsed_data, validation_error

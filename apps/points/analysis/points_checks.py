@@ -19,11 +19,11 @@ from django.db.models import Q
 from apps.general.models import FIR
 from apps.points.models import Point
 from apps.routes.models import Route
-from apps.utils.regex_patterns import POINT, SIG_POINT
+from apps.utils.regex_patterns import LOCATION, POINT
 
 
 def _retrieve_point_name_and_add_to_dict(dct: dict, key: str, value: str):
-    matched = re.match(SIG_POINT, value) or re.match(POINT, value)
+    matched = re.match(LOCATION, value) or re.match(POINT, value)
     if matched is not None:
         point_name = matched.groupdict().get("point", matched.groupdict().get("ref_point", None))
         # if SIG_POINT is not a BEARING_DISTANCE then there's no ref_point and point_name is None
