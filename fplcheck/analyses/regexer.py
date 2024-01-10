@@ -29,7 +29,7 @@ def _check_item_is_valid_point_with_indicator(item, previous, segments, res, err
         if (matched := re.match(pattern, item)) is not None:
             break
     else:
-        err["syntax_error"].append(f"Item {item} must be a valid point.")
+        err["syntax_error"].append(f"Item {item} (after {previous['item']}) must be a valid point.")
         return
 
     if matched.group("point") is None:
@@ -63,15 +63,23 @@ def _check_item_is_valid_point_or_location(item, previous, res, segments, err):
         if (matched := re.match(pattern, item)) is not None:
             break
     else:
-        err["syntax_error"].append(f"{item} must be a valid Significant point.")
+        err["syntax_error"].append(f"{item} (after {previous['item']}) must be a valid Significant point.")
         return
 
-    if matched.group("location"):
-        previous = {"type": "location", "item": matched.group("location")}
-        if matched.group("ref_point"):
-            res["ref_points"].append(matched.group("ref_point"))
-    elif matched.group("point"):
-        previous = {"type": "point", "item": matched.group("point")}
+    if matched.groupdict().get("location") or matched.groupdict().get("sig_location"):
+        previous = {
+            "type": "location",
+            "item": matched.groupdict().get("location", matched.groupdict().get("sig_location")),
+        }
+        if matched.groupdict().get("ref_point") or matched.groupdict().get("sig_ref_point"):
+            res["ref_points"].append(
+                matched.groupdict().get("ref_point"), matched.groupdict().get("sig_ref_point")
+            )
+    elif matched.groupdict().get("point") or matched.groupdict().get("sig_point"):
+        previous = {
+            "type": "point",
+            "item": matched.groupdict().get("point", matched.groupdict().get("sig_point")),
+        }
 
     _update_segments(segments, previous["item"])
     return previous
@@ -100,15 +108,21 @@ def _check_item_is_valid_route_or_dct_or_ifr_vfr(item, previous, res, segments, 
 
     elif item in ("IFR", "VFR") and re.match(regex_patterns.CHANGE_FLT_RULE, f"{previous['item']} {item}"):
         if res["flight_rule"] not in ("Y", "Z"):
-            err["syntax_error"].append("Illegal change of flight rule initial one was not 'Y' or 'Z'.")
+            err["syntax_error"].append(
+                f"Illegal change of flight rule (after {previous['item']}) initial one was not 'Y' or 'Z'."
+            )
 
         if segments[-1]["flight_rule"] == item[0]:
-            err["syntax_error"].append(f"{item} is Incorrect change of flight rule. {item} to {item}.")
+            err["syntax_error"].append(
+                f"{item} (after {previous['item']}) is Incorrect change of flight rule. {item} to {item}."
+            )
 
         else:
             segments[-1]["flight_rule"] = item[0]
     else:
-        err["syntax_error"].append(f"{item} must be a valid Route, Change of flight rule or the word DCT.")
+        err["syntax_error"].append(
+            f"{item} (after {previous['item']}) must be a Route or DCT or Change of flight rule (IFR/VFR)."
+        )
         return
     return previous
 
@@ -219,7 +233,9 @@ def route_regex_parse(
             elif matched := re.match(regex_patterns.LOCATION, item):
                 previous = {"type": "location", "item": matched.group("location")}
             else:
-                err["syntax_error"].append(f"{item} must be a valid Sig.Point or word DCT.")
+                err["syntax_error"].append(
+                    f"{item} (after {previous['item']}) must be a valid Sig.Point or word DCT."
+                )
             continue
 
     segments[-1]["to"] = res["destination_ad"]
