@@ -192,8 +192,8 @@ CHANGE_SPEED_LEVEL = r"\b(?P<change_speed_level>{0}\/{1})\b".format(
 
 # * 4- Change of flight rules (maximum 3 characters)
 # (Point (as in 2- above) Or ChangeOfSpeedLevel(as in 3- above)) + 1 space + IFR/VFR
-CHANGE_FLT_RULE = r"\b(?P<change_flt_rule>({0}|{1})\s+(VFR|IFR))\b".format(
-    SIG_POINT.replace("\\b", ""), CHANGE_SPEED_LEVEL.replace("\\b", "")
+CHANGE_FLT_RULE = r"\b(?P<change_flt_rule>({0}(\/{1})?)\s+(VFR|IFR))\b".format(
+    SIG_POINT.replace("\\b", ""), SPEED_LEVEL.replace("\\b", "")
 )
 
 # * 5- Cruise climb (maximum 28 characters)
