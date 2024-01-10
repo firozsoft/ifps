@@ -177,8 +177,22 @@ def route_regex_parse(
         }
     ]
 
+    rest_of_route_items = route_items[2:]
+    set_rest_of_route_items = set(rest_of_route_items)
+
+    needs_change_of_flt_rule = res["flight_rule"] in ("Z", "Y")
+    if needs_change_of_flt_rule:
+        if res["flight_rule"] == "Z" and "IFR" not in set_rest_of_route_items:
+            err["syntax_error"].append(
+                f"Flight rule is filled as {res['flight_rule']} but doesn't changed (to IFR) in the route."
+            )
+        if res["flight_rule"] == "Y" and "VFR" not in set_rest_of_route_items:
+            err["syntax_error"].append(
+                f"Flight rule is filled as {res['flight_rule']} but doesn't changed (to VFR) in the route."
+            )
+
     # previous['type'] == 'route' | 'dct' | 'point' | 'location'
-    for item in route_items[2:]:
+    for item in rest_of_route_items:
         if previous["type"] in ("route", "sid"):
             # current item can be a point that has an assigned indicator (point, change speed-level, cruise-climb)
             previous = _check_item_is_valid_point_with_indicator(item, previous, segments, res, err)
