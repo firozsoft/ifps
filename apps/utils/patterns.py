@@ -18,7 +18,7 @@ OTHER_INFO_SWITCHES = {
     "ORGN": regex_patterns.ORGN,
     "PER": regex_patterns.PER,
     "DEP": regex_patterns.DEP,
-    "DEP": regex_patterns.DEST,
+    "DEST": regex_patterns.DEST,
     "ALTN": regex_patterns.ALTN,
     "RALT": regex_patterns.RALT,
     "TALT": regex_patterns.TALT,
