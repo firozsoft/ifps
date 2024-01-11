@@ -161,13 +161,18 @@ def aerodromes_checks(data: dict[str, Union[bool, str, list[dict[str, str]]]], e
 
     aerodromes = _get_aerodromes(
         [data[key] for key in ("departure_ad", "destination_ad", "alt_ad_1", "alt_ad_2")]
+        + [
+            data[key][f"{key}-ad"]
+            for key in ("altn", "ralt", "talt")
+            if key in data and data[key][f"{key}-ad"] is not None
+        ]
     )
 
     for aerodrome in aerodromes:
         if aerodrome is not None and not aerodrome.is_active:
             err["logical_error"].append(f"{aerodrome} is not active.")
 
-    departure_ad, destination_ad, alt_ad_1, alt_ad_2 = aerodromes
+    departure_ad, destination_ad, alt_ad_1, alt_ad_2, *other_alts = aerodromes
 
     if departure_ad is not None:
         _analyse(
@@ -180,38 +185,17 @@ def aerodromes_checks(data: dict[str, Union[bool, str, list[dict[str, str]]]], e
             data["rmk"],
         )
 
-    if destination_ad is not None:
-        _analyse(
-            destination_ad,
-            flight_type,
-            last_flight_rule,
-            est_arrival_datetime,
-            err,
-            data["sts"],
-            data["rmk"],
-        )
-
-    if alt_ad_1 is not None:
-        _analyse(
-            alt_ad_1,
-            flight_type,
-            last_flight_rule,
-            est_arrival_datetime,
-            err,
-            data["sts"],
-            data["rmk"],
-        )
-
-    if alt_ad_2 is not None:
-        _analyse(
-            alt_ad_2,
-            flight_type,
-            last_flight_rule,
-            est_arrival_datetime,
-            err,
-            data["sts"],
-            data["rmk"],
-        )
+    for ad in (destination_ad, alt_ad_1, alt_ad_2, *other_alts):
+        if ad is not None:
+            _analyse(
+                ad,
+                flight_type,
+                last_flight_rule,
+                est_arrival_datetime,
+                err,
+                data["sts"],
+                data["rmk"],
+            )
 
     def _sid_star_check(sid_star_name: str, type_: str, ad: Aerodrome) -> None:
         sid_star = ad.sid_stars.filter(name=sid_star_name).first()
