@@ -89,7 +89,7 @@ def _check_aerodrome_curfew(
     flight_time = flight_datetime.time()
     try:
         curfew = aerodrome.curfews.get(
-            date=flight_date, start_time__lte=flight_time, end_date__gte=flight_time
+            date=flight_date, start_time__lte=flight_time, end_time__gte=flight_time
         )
     except Curfew.DoesNotExist:
         pass
@@ -147,7 +147,7 @@ def aerodromes_checks(data: dict[str, Union[bool, str, list[dict[str, str]]]], e
         aerodrome_four_letters_list = list(aerodromes.values_list("indicator", flat=True))
 
         for inx, indicator in enumerate(indicators):
-            if indicator in ("ZZZZ", "AFIL", None) or not indicator[:2] == settings.FIR_INDICATOR[:2]:
+            if indicator in ("ZZZZ", "AFIL", None) or indicator[:2] != settings.FIR_INDICATOR[:2]:
                 # Indicator is not for a domestic aerodrome
                 aerodrome_four_letters_list.insert(inx, None)
             elif indicator not in aerodrome_four_letters_list:
@@ -181,8 +181,8 @@ def aerodromes_checks(data: dict[str, Union[bool, str, list[dict[str, str]]]], e
             initial_flight_rule,
             dep_datatime,
             err,
-            data["sts"],
-            data["rmk"],
+            data.get("sts", []),
+            data.get("rmk", []),
         )
 
     for ad in (destination_ad, alt_ad_1, alt_ad_2, *other_alts):
@@ -193,8 +193,8 @@ def aerodromes_checks(data: dict[str, Union[bool, str, list[dict[str, str]]]], e
                 last_flight_rule,
                 est_arrival_datetime,
                 err,
-                data["sts"],
-                data["rmk"],
+                data.get("sts", []),
+                data.get("rmk", []),
             )
 
     def _sid_star_check(sid_star_name: str, type_: str, ad: Aerodrome) -> None:
@@ -211,25 +211,20 @@ def aerodromes_checks(data: dict[str, Union[bool, str, list[dict[str, str]]]], e
     domestic_departure = data["domestic_departure"]
     domestic_destination = data["domestic_destination"]
 
-    if domestic_departure and data["sid"] is not None:
-        _sid_star_check(data["sid"], "SID", departure_ad)
-    if domestic_destination and data["star"] is not None:
-        _sid_star_check(data["star"], "STAR", destination_ad)
+    if departure_ad is not None:
+        if domestic_departure and data["sid"] is not None:
+            _sid_star_check(data["sid"], "SID", departure_ad)
 
-    if (
-        destination_ad is not None
-        and not domestic_departure
-        and not (destination_ad.is_international and destination_ad.aur)
-    ):
-        err["logical_error"].append(
-            f"Destination {destination_ad} is not international neither available upon request."
-        )
+        if not domestic_destination and not (departure_ad.is_international and departure_ad.aur):
+            err["logical_error"].append(
+                f"Departure {departure_ad} is not international neither available upon request."
+            )
 
-    if (
-        departure_ad is not None
-        and not domestic_destination
-        and not (departure_ad.is_international and departure_ad.aur)
-    ):
-        err["logical_error"].append(
-            f"Departure {departure_ad} is not international neither available upon request."
-        )
+    if destination_ad is not None:
+        if domestic_destination and data["star"] is not None:
+            _sid_star_check(data["star"], "STAR", destination_ad)
+
+        if not domestic_departure and not (destination_ad.is_international and destination_ad.aur):
+            err["logical_error"].append(
+                f"Destination {destination_ad} is not international neither available upon request."
+            )
