@@ -8,6 +8,8 @@ limited to the code written in this mudole and not the hole logic to be develope
 This mudole contains RegexPatterns matching the items of flight plan as prescribed in PANS-ATM Appendix 2
 """
 
+AERODROME = r"\b(?P<aerodrome>[A-Z]{{4}})\b"
+
 
 # ? ITEM 7: AIRCRAFT IDENTIFICATION (MAXIMUM 7 CHARACTERS)
 # not exceeding 7 alphanumeric characters
@@ -122,7 +124,9 @@ EQUIPMENTS_CAPACITIES = r"\b(?P<equipments>(N|S|A|B|C|D|E1|E2|E3|F|G|H|I|J[1-7]|
 # Insert all clock times in 4 figures UTC
 # Insert all estimated elapsed times in 4 figures (hours and minutes)
 # TODO: ZZZZ/AFIL and SPECIFY, in Item 18, the name and location of the aerodrome preceded by DEP/
-DEPARTURE_AD_TIME = r"\b((?P<dep_ad>[A-Z]{4})|AFIL|ZZZZ)(?P<eobt>((0|1)[0-9]|2[0-3])[0-5][0-9])\b"
+DEPARTURE_AD_TIME = r"\b({0}|AFIL|ZZZZ)(?P<eobt>((0|1)[0-9]|2[0-3])[0-5][0-9])\b".format(
+    AERODROME.replace("\\b", "").replace("<aerodrome>", "<dep_ad>")
+)
 
 
 # ? ITEM 15: ROUTE
@@ -217,7 +221,7 @@ CRUISE_CLIMB = r"\b(?P<cruiseclimb>C\/{0}\/({1})({2}|PLUS))\b".format(
 DEST_AD_TEET_ALTS = r"\b(?P<dest_teet_alt>(?P<dest_ad>[A-Z]{4})(?P<teet>\d{4})(\s(?P<alt1>[A-Z]{4}))?(\s(?P<alt2>[A-Z]{4}))?)\b"
 
 # ? ITEM 18: OTHER INFORMATION
-OTHER_INFO_SWITCHES = [
+OTHER_INFO_SWITCHES = {
     "STS",
     "PBN",
     "NAV",
@@ -235,19 +239,17 @@ OTHER_INFO_SWITCHES = [
     "ORGN",
     "PER",
     "DEP",
+    "DEST",
     "ALTN",
     "RALT",
     "TALT",
     "RIF",
     "RMK",
-]
+}
 
 
 def _other_switches(switch: str) -> list[str]:
-    res = OTHER_INFO_SWITCHES[:]
-    # NOTE: list.remove works inplace (it returns None)
-    res.remove(switch)
-    return res
+    return OTHER_INFO_SWITCHES - {switch}
 
 
 RNAV_SPC = r"\b(?P<RNAV_SPC>(A1|B[1-6]|C[1-4]|D[1-4]){1,4})\b"
@@ -317,15 +319,13 @@ ORGN = r"\bORGN\/(?P<ORGN>[A-Z]{8})" + r"(?!(" + r"|".join(_other_switches("ORGN
 PER = r"\bPER\/(?P<PER>[A-Z])" + r"(?!(" + r"|".join(_other_switches("PER")) + r"))\b"
 
 DEP = (
-    r"\bDEP\/(?P<DEP>((?P<aerodrome>[A-Z]{{4}})|({0})|({1})|({2}))".format(
-        COR_DEG_MINS.replace("\\b", ""),
-        BEARING_DIST.replace("\\b", ""),
-        POINT.replace("\\b", ""),
-    )
+    r"\bDEP\/(?P<DEP>(({0})|({1}))".format(AERODROME.replace("\\b", ""), SIG_POINT.replace("\\b", ""))
     + r"(?!("
     + r"|".join(_other_switches("DEP"))
     + r")))\b"
 )
+
+DEST = DEP.replace(r"DEP\/", r"DEST\/", 2)
 
 ALTN = DEP.replace(r"DEP\/", r"ALTN\/", 2)
 
@@ -335,6 +335,11 @@ TALT = DEP.replace(r"DEP\/", r"TALT\/", 2)
 
 ROUTESCHEME_PATH = r"(\b[A-Z]{2,5}\d[A-Z]\b)?\s(\b[A-Z]{2,5}\b)\s(\b[A-Z]{1,3}\d{1,3}\b)\s((\b[A-Z]{2,5}\b)?\s(\b[A-Z]{1,3}\d{1,3}\b)?)+\s(\b[A-Z]{2,5}\b)\s(\b[A-Z]{2,5}\d[A-Z]\b)?"
 
+# TODO: RIF data needs to be parsed just like route item
+# RIF/ _> The route details to the revised destination aerodrome,
+# followed by the ICAO four-letter location indicator of the aerodrome.
+# The revised route is subject to reclearance in flight.
+#   Examples: 1- RIF/DTA HEC KLAX  2- RIF/ESP G94 CLA YPPH
 RIF = (
     r"\b(?P<RIF>{0}\s(?P<revised_dest_ad>[A-Z]{{4}}))\b".format(ROUTESCHEME_PATH.replace("\\b", ""))
     + r"(?!("
