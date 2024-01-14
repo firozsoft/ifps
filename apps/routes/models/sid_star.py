@@ -1,7 +1,7 @@
 from django.db import models
 
-from apps.utils.choices import SidStarType, YesNo
-from apps.utils.validators import sid_star_name_validator
+from core.utils.choices import SidStarType, YesNo
+from core.utils.validators import sid_star_name_validator
 
 from .base import BaseRoute
 

@@ -1,7 +1,7 @@
 from django.db import models
 
 from apps.general.models import BaseModel
-from apps.utils.validators import route_name_validator
+from core.utils.validators import route_name_validator
 
 
 class BaseRoute(BaseModel):

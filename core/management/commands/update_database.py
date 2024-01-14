@@ -10,7 +10,7 @@ from apps.aerodromes.models import Aerodrome, DailyOperationalHour
 from apps.general.models import FIR
 from apps.points.models import NavAid, Point
 from apps.routes.models import Route, RouteScheme, RouteSection, SidStar
-from apps.utils.helpers import dms2dd
+from core.utils.helpers import dms2dd
 
 AERODROMES = "./resources/Aerodrome.xlsx"
 POINTS_FIRS = "./resources/Point.xlsx"

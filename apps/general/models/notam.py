@@ -3,7 +3,7 @@ from datetime import datetime
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from apps.utils.choices import NotamType
+from core.utils.choices import NotamType
 
 from .base import AbstractBaseModel
 

@@ -9,9 +9,11 @@
         ✓ SID/STAR
 """
 import datetime
+import re
 from typing import Union
 
 from django.conf import settings
+from django.db.models import QuerySet
 
 from apps.aerodromes.models import (
     Aerodrome,
@@ -19,6 +21,7 @@ from apps.aerodromes.models import (
     DailyOperationalHour,
     TemporaryClosure,
 )
+from core.utils.regex_patterns import AERODROME
 
 HELIPORTS_ACCEPTABLE_AC_TYPES = ["HEL", "B212", "B412"]
 
@@ -32,10 +35,10 @@ def _check_flight_type_acceptable(ad: Aerodrome, ac_type: str, err: dict[str, li
 
 
 def _check_aerodrome_operational_hours(
-    aerodrome: Aerodrome,
-    flight_datetime: datetime,
-    flight_rule: str,
-    err: dict[str, list[str]],
+        aerodrome: Aerodrome,
+        flight_datetime: datetime,
+        flight_rule: str,
+        err: dict[str, list[str]],
 ):
     flight_date = flight_datetime.date()
     flight_time = flight_datetime.time()
@@ -60,7 +63,7 @@ def _check_aerodrome_operational_hours(
 
 
 def _check_aerodrome_temporarily_closure(
-    aerodrome: Aerodrome, flight_datetime: datetime, err: dict[str, list[str]]
+        aerodrome: Aerodrome, flight_datetime: datetime, err: dict[str, list[str]]
 ):
     flight_date = flight_datetime.date()
     flight_time = flight_datetime.time()
@@ -79,11 +82,11 @@ def _check_aerodrome_temporarily_closure(
 
 
 def _check_aerodrome_curfew(
-    aerodrome: Aerodrome,
-    flight_datetime: datetime,
-    data_sts: str,
-    data_rmk: str,
-    err: dict[str, list[str]],
+        aerodrome: Aerodrome,
+        flight_datetime: datetime,
+        data_sts: str,
+        data_rmk: str,
+        err: dict[str, list[str]],
 ):
     flight_date = flight_datetime.date()
     flight_time = flight_datetime.time()
@@ -95,7 +98,7 @@ def _check_aerodrome_curfew(
         pass
     else:
         if not any(sts in curfew.acceptable_sts for sts in data_sts) or not any(
-            [rmk in data_rmk for rmk in curfew.acceptable_rmk]
+                [rmk in data_rmk for rmk in curfew.acceptable_rmk]
         ):
             err["logical_error"].append(
                 f"{aerodrome} curfew time, {curfew.start_time} till {curfew.end_time}."
@@ -103,13 +106,13 @@ def _check_aerodrome_curfew(
 
 
 def _analyse(
-    aerodrome: Aerodrome,
-    aircraft_type: str,
-    flight_rule: str,
-    flight_datetime: datetime,
-    err: dict[str, list[str]],
-    data_sts: str,
-    data_rmk: str,
+        aerodrome: Aerodrome,
+        aircraft_type: str,
+        flight_rule: str,
+        flight_datetime: datetime,
+        err: dict[str, list[str]],
+        data_sts: str,
+        data_rmk: str,
 ):
     _check_flight_type_acceptable(aerodrome, aircraft_type, err)
     _check_aerodrome_operational_hours(aerodrome, flight_datetime, flight_rule, err)
@@ -120,7 +123,30 @@ def _analyse(
         err["logical_error"].append(f"{aerodrome} does not accept {flight_rule.upper()}.")
 
 
-def aerodromes_checks(data: dict[str, Union[bool, str, list[dict[str, str]]]], err: dict[str, list[str]]):
+def _get_aerodromes(indicators: list[str], err: dict[str, list[str]]) -> list[Union[Aerodrome, None]]:
+    """getting dep, dest and alternate aerodromes"""
+    aerodromes: QuerySet = Aerodrome.objects.filter(indicator__in=indicators).prefetch_related(
+        "dailyoperationalhours", "temporaryclosures", "curfews", "sid_stars"
+    )
+    aerodrome_four_letters_list = list(aerodromes.values_list("indicator", flat=True))
+    # convert aerodromes to has-map to optimize db calls
+    aerodromes: dict[str, Aerodrome] = {aerodrome.indicator: aerodrome for aerodrome in aerodromes}
+
+    for inx, indicator in enumerate(indicators):
+        if indicator in ("ZZZZ", "AFIL", None) or indicator[:2] != settings.FIR_INDICATOR[:2]:
+            # Indicator is not for a domestic aerodrome
+            aerodrome_four_letters_list.insert(inx, None)
+        elif indicator not in aerodrome_four_letters_list:
+            err["logical_error"].append(f"Aerodrome {indicator} does not exist.")
+            aerodrome_four_letters_list.insert(inx, None)
+
+    return [
+        None if four_letters is None else aerodromes[four_letters]
+        for four_letters in aerodrome_four_letters_list
+    ]
+
+
+def aerodromes_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err: dict[str, list[str]]):
     """Checks Related To Aerodromes"""
 
     if not all([data["departure_ad"], data["destination_ad"], data["alt_ad_1"]]):
@@ -134,38 +160,22 @@ def aerodromes_checks(data: dict[str, Union[bool, str, list[dict[str, str]]]], e
     initial_flight_rule = "ifr" if data["flight_rule"] in "IY" else "vfr"
     last_flight_rule = "ifr" if data["route"][-1]["flight_rule"] in "IY" else "vfr"
 
+    domestic_departure = data["domestic_departure"]
+    domestic_destination = data["domestic_destination"]
+
     dep_datatime = datetime.datetime.strptime(data["dof"] + data["eobt"], "%y%m%d%H%M")
     est_arrival_datetime = dep_datatime + datetime.timedelta(
         hours=int(data["teet"][:2]), minutes=int(data["teet"][2:])
     )
 
-    def _get_aerodromes(indicators: list[str]) -> Union[Aerodrome, None]:
-        """getting dep, dest and alternate aerodromes"""
-        aerodromes = Aerodrome.objects.filter(indicator__in=indicators).prefetch_related(
-            "dailyoperationalhours", "temporaryclosures", "curfews", "sid_stars"
-        )
-        aerodrome_four_letters_list = list(aerodromes.values_list("indicator", flat=True))
-
-        for inx, indicator in enumerate(indicators):
-            if indicator in ("ZZZZ", "AFIL", None) or indicator[:2] != settings.FIR_INDICATOR[:2]:
-                # Indicator is not for a domestic aerodrome
-                aerodrome_four_letters_list.insert(inx, None)
-            elif indicator not in aerodrome_four_letters_list:
-                err["logical_error"].append(f"Aerodrome {indicator} does not exist.")
-                aerodrome_four_letters_list.insert(inx, None)
-
-        return [
-            None if four_letters is None else aerodromes.filter(indicator=four_letters).first()
-            for four_letters in aerodrome_four_letters_list
-        ]
+    extra_ad_to_check = []
+    for key in ("DEP", "DEST", "ALTN", "RALT", "TALT"):
+        if key.lower() in data and (domestic_departure or domestic_destination):
+            if re.match(AERODROME, data[key.lower()]) is not None:
+                extra_ad_to_check.append(re.match(AERODROME, data[key.lower()]).groupdict().get("aerodrome"))
 
     aerodromes = _get_aerodromes(
-        [data[key] for key in ("departure_ad", "destination_ad", "alt_ad_1", "alt_ad_2")]
-        + [
-            data[key][f"{key}-ad"]
-            for key in ("altn", "ralt", "talt")
-            if key in data and data[key][f"{key}-ad"] is not None
-        ]
+        [data[key] for key in ("departure_ad", "destination_ad", "alt_ad_1", "alt_ad_2")] + extra_ad_to_check, err
     )
 
     for aerodrome in aerodromes:
@@ -207,9 +217,6 @@ def aerodromes_checks(data: dict[str, Union[bool, str, list[dict[str, str]]]], e
 
             if type_ not in sid_star.type:
                 err["logical_error"].append(f"{sid_star_name}({sid_star.type}) is not of type {type_}.")
-
-    domestic_departure = data["domestic_departure"]
-    domestic_destination = data["domestic_destination"]
 
     if departure_ad is not None:
         if domestic_departure and data["sid"] is not None:

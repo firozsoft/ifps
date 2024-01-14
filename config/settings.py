@@ -34,7 +34,7 @@ SITE_ID = 1
 
 # Application definition
 LOCAL_APPS = [
-    "fplcheck",
+    "core",
     "apps.aerodromes",
     "apps.general",
     "apps.points",

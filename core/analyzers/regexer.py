@@ -1,15 +1,18 @@
+import json
 import re
 from datetime import datetime
 from typing import Union
 
 from django.core.exceptions import ValidationError
 
-from apps.utils import regex_patterns
-from apps.utils.patterns import OTHER_INFO_SWITCHES
+from core.utils import regex_patterns
+from core.utils.patterns import OTHER_INFO_SWITCHES
 
 
 def _update_segments(segment_list: list[dict[str, str]], to: str):
     segment_list[-1]["to"] = to
+    # NOTO: Don't try to be smart here! creating a new_segment like: `new_segment = segment_list[-1]`
+    # then `In python` it will point to the same object (segment_list[-1]) not a new copy of it! use copy.deepcopy !!
     segment_list.append(
         {
             "from": to,
@@ -23,10 +26,21 @@ def _update_segments(segment_list: list[dict[str, str]], to: str):
     )
 
 
-def _check_item_is_valid_point_with_indicator(item, previous, segments, res, err):
-    matched = None
-    for pattern in (regex_patterns.POINT, regex_patterns.CHANGE_SPEED_LEVEL, regex_patterns.CRUISE_CLIMB):
+def _check_and_handle_possible_speed_level_change(pattern, matched, segments):
+    if pattern in (regex_patterns.CHANGE_SPEED_LEVEL, regex_patterns.CRUISE_CLIMB):
+        segments[-1]["speed"] = matched.groupdict().get("speed")
+        segments[-1]["level"] = matched.groupdict().get("level")
+        if pattern == regex_patterns.CRUISE_CLIMB:
+            segments[-1]["top_level"] = matched.groupdict().get("top_level")
+        else:
+            segments[-1]["top_level"] = segments[-1]["level"]
+
+
+def _check_item_is_valid_point_with_indicator(item, previous, segments, err):
+    matched_pattern = None
+    for pattern in (regex_patterns.CHANGE_SPEED_LEVEL, regex_patterns.CRUISE_CLIMB, regex_patterns.POINT):
         if (matched := re.match(pattern, item)) is not None:
+            matched_pattern = pattern
             break
     else:
         err["syntax_error"].append(f"Item {item} (after {previous['item']}) must be a valid point.")
@@ -37,30 +51,25 @@ def _check_item_is_valid_point_with_indicator(item, previous, segments, res, err
         return
 
     if previous["type"] == "sid" and previous["item"][:-2] not in (
-        matched.groupdict().get("point"),
-        # to accept if they forget the last char of the point name in sid/star
-        matched.groupdict().get("point")[:-1],
+            matched.groupdict().get("point"),
+            # to accept if they forget the last char of the point name in sid/star
+            matched.groupdict().get("point")[:-1],
     ):
         err["syntax_error"].append(f"Point {item} doesn't match with SID {previous['item']}.")
 
     # now we can reassign the variable previous to new data
     previous = {"type": "point", "item": matched.groupdict().get("point")}
 
-    if pattern != regex_patterns.POINT:
-        segments[-1]["speed"] = matched.groupdict().get("speed")
-        segments[-1]["level"] = matched.groupdict().get("level")
-        if pattern == regex_patterns.CRUISE_CLIMB:
-            segments[-1]["top_level"] = matched.groupdict().get("top_level")
-
-    _update_segments(segments, previous["item"])
+    _check_and_handle_possible_speed_level_change(matched_pattern, matched, segments)
 
     return previous
 
 
 def _check_item_is_valid_point_or_location(item, previous, res, segments, err):
-    matched = None
-    for pattern in (regex_patterns.SIG_POINT, regex_patterns.CHANGE_SPEED_LEVEL, regex_patterns.CRUISE_CLIMB):
+    matched_pattern = None
+    for pattern in (regex_patterns.CHANGE_SPEED_LEVEL, regex_patterns.CRUISE_CLIMB, regex_patterns.SIG_POINT):
         if (matched := re.match(pattern, item)) is not None:
+            matched_pattern = pattern
             break
     else:
         err["syntax_error"].append(f"{item} (after {previous['item']}) must be a valid Significant point.")
@@ -68,20 +77,25 @@ def _check_item_is_valid_point_or_location(item, previous, res, segments, err):
 
     if matched.groupdict().get("location"):
         previous = {"type": "location", "item": matched.groupdict().get("location")}
+        segments[-1]["section_doesnt_need_check"] = True
         if matched.groupdict().get("ref_point"):
             res["ref_points"].append(matched.groupdict().get("ref_point"))
+            # TODO: check if the line below is required ro delete it
+            # segments[-1].pop("section_doesnt_need_check", None)
+
     elif matched.groupdict().get("point"):
         previous = {"type": "point", "item": matched.groupdict().get("point")}
 
-    _update_segments(segments, previous["item"])
+    _check_and_handle_possible_speed_level_change(matched_pattern, matched, segments)
+
     return previous
 
 
 def _check_item_is_valid_route_or_dct_or_ifr_vfr(item, previous, res, segments, err):
-    if matched := re.match(regex_patterns.SID_STAR, item):
+    if (matched := re.match(regex_patterns.SID_STAR, item)) is not None:
         if matched.groupdict().get("point") not in (
-            previous["item"],
-            previous["item"][:-1],  # to accept if they forget the last char of the point name in sid/star
+                previous["item"],
+                previous["item"][:-1],  # to accept if they forget the last char of the point name in sid/star
         ):
             err["syntax_error"].append(f"Point {previous['item']} doesn't match with STAR {item}.")
 
@@ -97,6 +111,7 @@ def _check_item_is_valid_route_or_dct_or_ifr_vfr(item, previous, res, segments, 
     elif item == "DCT":
         previous = {"type": "dct", "item": "DCT"}
         segments[-1]["via"] = "DCT"
+        segments[-1]["section_doesnt_need_check"] = True
 
     elif item in ("IFR", "VFR") and re.match(regex_patterns.CHANGE_FLT_RULE, f"{previous['item']} {item}"):
         if res["flight_rule"] not in ("Y", "Z"):
@@ -116,13 +131,14 @@ def _check_item_is_valid_route_or_dct_or_ifr_vfr(item, previous, res, segments, 
             f"{item} (after {previous['item']}) must be a Route or DCT or Change of flight rule (IFR/VFR)."
         )
         return
+
     return previous
 
 
 def route_regex_parse(
-    data: dict[str, str],
-    res: dict[str, Union[str, list[dict[str, str]]]],
-    err: dict[str, list[str]],
+        data: dict[str, str],
+        res: dict[str, Union[str, list[dict[str, str]]]],
+        err: dict[str, list[str]],
 ):
     """Checks for syntax errors in route part of a fpl msg"""
 
@@ -141,7 +157,7 @@ def route_regex_parse(
     else:
         err["syntax_error"].append(f"{route_items[0]} must be a valid speed & level.")
 
-    # keep a look at item already cheked to be able to expect the nature of next item to be checked
+    # keep a look at item already checked to be able to expect the nature of next item to be checked
     previous: dict[str, str] = {"type": "", "item": ""}
 
     # route_items[1] must be DCT, Route or Point
@@ -196,16 +212,21 @@ def route_regex_parse(
 
     # previous['type'] == 'route' | 'dct' | 'point' | 'location'
     for item in rest_of_route_items:
+        # NOTE: _update_segments must only be called if item is a SIG_POINT not for DCT or ROUTE or IFR/VFR or etc.
         if previous["type"] in ("route", "sid"):
             # current item can be a point that has an assigned indicator (point, change speed-level, cruise-climb)
-            previous = _check_item_is_valid_point_with_indicator(item, previous, segments, res, err)
-            if previous is None:
+            previous = _check_item_is_valid_point_with_indicator(item, previous, segments, err)
+            if previous is not None:
+                _update_segments(segments, previous["item"])
+            else:
                 return
             continue
         if previous["type"] == "dct":
             # current item can be a sig-point
             previous = _check_item_is_valid_point_or_location(item, previous, res, segments, err)
-            if previous is None:
+            if previous is not None:
+                _update_segments(segments, previous["item"])
+            else:
                 return
             continue
         if previous["type"] == "point":
@@ -215,12 +236,16 @@ def route_regex_parse(
                 return
             continue
         if previous["type"] == "location":
-            # current item can be a location or dct
+            # current item can be a location or dct => this means there's no predefined route section used here
+            segments[-1]["section_doesnt_need_check"] = True
             if item == "DCT":
                 previous = {"type": "dct", "item": "DCT"}
                 segments[-1]["via"] = "DCT"
+                segments[-1]["section_doesnt_need_check"] = True
             elif matched := re.match(regex_patterns.LOCATION, item):
                 previous = {"type": "location", "item": matched.groupdict().get("location")}
+                _update_segments(segments, previous["item"])
+                segments[-1]["section_doesnt_need_check"] = True
             else:
                 err["syntax_error"].append(
                     f"{item} (after {previous['item']}) must be a valid Sig.Point or word DCT."
@@ -233,7 +258,7 @@ def route_regex_parse(
 
 
 def regex_parse(
-    row_data: dict[str, str],
+        row_data: dict[str, str],
 ) -> tuple[dict[str, Union[str, list[dict[str, str]]]], Union[ValidationError, None]]:
     """Checks for syntax errors and prepares a new dict"""
     regex_parsed_data = dict()
@@ -259,7 +284,7 @@ def regex_parse(
         regex_parsed_data["ac_weak"] = numbers_type_weak.group("weak")
 
     if not (
-        equp_cpct := re.match(regex_patterns.EQUIPMENTS_CAPACITIES, row_data["equipments_and_capacities"])
+            equp_cpct := re.match(regex_patterns.EQUIPMENTS_CAPACITIES, row_data["equipments_and_capacities"])
     ):
         err["syntax_error"].append(f"Invalid equipments/capacities({row_data['equipments_and_capacities']}).")
     else:
@@ -301,21 +326,6 @@ def regex_parse(
                 if matched := re.match(pattern, item):
                     regex_parsed_data[key.lower()] = matched.groupdict().get(key)
 
-                    if key in ("DEP", "DEST", "ALTN", "RALT", "TALT"):
-                        regex_parsed_data[key.lower()] = {
-                            f"{key.lower()}-ad": None,
-                            f"{key.lower()}-point": None,
-                        }
-
-                        if "aerodrome" in matched.groupdict():
-                            regex_parsed_data[key.lower()][f"{key.lower()}-ad"] = matched.groupdict().get(
-                                "aerodrome"
-                            )
-                        for ppp in ("point", "ref_point"):
-                            if (ref_point := matched.groupdict().get(ppp)) is not None:
-                                regex_parsed_data[key.lower()][f"{key.lower()}-point"] = ref_point
-                                regex_parsed_data["ref_points"].append(ref_point)
-
                     if key == "PBN":
                         regex_parsed_data["pbn_rnav_spc"] = matched.group("rnav_spc")
                         regex_parsed_data["pbn_rnp_spc"] = matched.group("rnp_spc")
@@ -342,6 +352,12 @@ def regex_parse(
                 f"DEP/ in ITEM18({regex_parsed_data['dep']}) is not a valid point or coordinate (7 or 11 characters) or bearing-distance."
             )
 
+    if regex_parsed_data["departure_ad"] not in ("ZZZZ", "AFIL"):
+        if "dep" in regex_parsed_data:
+            err["syntax_error"].append(
+                "There must be only one of departure-ad or DEP/ switch in ITEM18 (Other information)."
+            )
+
     if regex_parsed_data["destination_ad"] == "ZZZZ":
         if "dest" not in regex_parsed_data:
             err["syntax_error"].append(
@@ -350,6 +366,12 @@ def regex_parse(
         elif not re.match(regex_patterns.LOCATION, regex_parsed_data["dest"]):
             err["syntax_error"].append(
                 f"DEST/ in ITEM18({regex_parsed_data['dest']}) is not a valid point or coordinate (7 or 11 characters) or bearing-distance."
+            )
+
+    if regex_parsed_data["destination_ad"] != "ZZZZ":
+        if "dest" in regex_parsed_data:
+            err["syntax_error"].append(
+                "There must be only one of destination-ad or DEST/ switch in ITEM18 (Other information)."
             )
 
     if regex_parsed_data["alt_ad_1"] == "ZZZZ" or regex_parsed_data["alt_ad_2"] == "ZZZZ":

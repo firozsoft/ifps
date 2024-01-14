@@ -5,8 +5,8 @@ from django.http import HttpRequest, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
-from fplcheck.analyses.logical_checks import logical_check
-from fplcheck.analyses.regexer import regex_parse
+from core.analyzers.logical_checks import logical_check  # noqa
+from core.analyzers.regexer import regex_parse
 
 
 def membership_status_check(user):
@@ -25,7 +25,7 @@ def scrutinization(request: HttpRequest) -> JsonResponse:
 
 
 def fpl_scrutinization(request, msg: str) -> JsonResponse:
-    parts = msg.split("-")
+    parts = list(map(str.strip, msg.split("-")))
     filled_data = {
         "call_sign": parts[1],
         "flt_rule_type": parts[2],
@@ -37,6 +37,7 @@ def fpl_scrutinization(request, msg: str) -> JsonResponse:
         "others": parts[8].replace(")", ""),
         # 'extra': parts[9]
     }
+
     res, err = regex_parse(filled_data)
     if err:
         return JsonResponse(err.params)

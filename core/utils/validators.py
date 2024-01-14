@@ -4,7 +4,7 @@ from . import regex_patterns
 
 coordinate_validator = RegexValidator(
     regex=rf"({regex_patterns.COR_DEGREES})|({regex_patterns.COR_DEG_MINS})",
-    message=("Coordinate must be either in DM(7 characters) or DMS(11 characters)"),
+    message="Coordinate must be either in DM(7 characters) or DMS(11 characters)",
     code="invalid_coordinates",
 )
 
@@ -27,13 +27,7 @@ sid_star_name_validator = RegexValidator(
 )
 
 rs_dest_list = RegexValidator(
-    regex=r"\b[A-Z]{4},?\b",
+    regex=regex_patterns.AERODROME,
     message="RouteScheme destination/next FIRs must be a list of comma separated ICAO 4-letters FIR names",
     code="invalid_route_scheme_dest",
-)
-
-rs_flight_path = RegexValidator(
-    regex=regex_patterns.ROUTESCHEME_PATH,
-    message="Route scheme flight path shall be a combination of points and routes.",
-    code="invalid_route_scheme_path",
 )
