@@ -2,7 +2,7 @@ from django.core.validators import MinLengthValidator
 from django.db import models
 
 from apps.general.models import BasePoint
-from apps.utils.choices import AerodromeFlightType, AerodromeType, YesNo
+from core.utils import AerodromeFlightType, AerodromeType, YesNo
 
 
 class Aerodrome(BasePoint):

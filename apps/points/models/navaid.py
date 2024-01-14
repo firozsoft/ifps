@@ -3,7 +3,7 @@ from django.db import models
 
 from apps.general.models import BasePoint
 from apps.points.models.point import Point
-from apps.utils import NavAidType, NavAidUseCase
+from core.utils.choices import NavAidType, NavAidUseCase
 
 
 class NavAid(Point):

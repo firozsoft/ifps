@@ -1,6 +1,6 @@
 from django.db import models
 
-from apps.utils.choices import YesNo
+from core.utils.choices import YesNo
 
 from .base import AerodromeProperties
 

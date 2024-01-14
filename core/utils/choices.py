@@ -1,8 +1,6 @@
 from django.db import models
 
-# from psycopg2.extras import NumericRange
-
-YesNo = [(True, "Yes"), (False, "No")]
+YesNo: list[tuple[bool, str]] = [(True, "Yes"), (False, "No")]
 
 
 class AerodromeFlightType(models.TextChoices):
@@ -53,6 +51,13 @@ class RouteSchemeFlightNature(models.TextChoices):
     DOMESTIC = "domestic"
     TRANSITION = "transition"
     OTHER = "other"
+
+
+class LevelUnit(models.TextChoices):
+    A = "A", "A"
+    F = "F", "F"
+    S = "S", "S"
+    VFR = "VFR", "VFR"
 
 
 class SidStarType(models.TextChoices):

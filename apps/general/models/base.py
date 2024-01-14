@@ -1,8 +1,9 @@
+from django.conf import settings
 from django.db import models
 
-from apps.utils.choices import YesNo
-from apps.utils.helpers import dms2dd
-from apps.utils.validators import coordinate_validator
+from core.utils import YesNo
+from core.utils.helpers import dms2dd
+from core.utils.validators import coordinate_validator
 
 # from django.contrib.gis.geos import GEOSGeometry
 
@@ -29,6 +30,7 @@ class BaseModel(AbstractBaseModel):
 
 class FIR(BaseModel):
     indicator = models.CharField("ICAO Four Letters", max_length=4, unique=True)
+    is_adjacent = models.BooleanField(choices=YesNo, help_text=f"Is adjacent to {settings.FIR_INDICATOR}")
     # shape = models.PolygonField(null=True, blank=True)
 
     class Meta:
