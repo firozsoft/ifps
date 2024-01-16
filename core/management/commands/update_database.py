@@ -82,7 +82,7 @@ class Command(BaseCommand):
         expected_columns_name: list[str],
         required_columns_name: list[str],
     ) -> bool:
-        """Checks if all expected_columns are present in in the given data frame
+        """Checks if all expected_columns are present in the given data frame
         and also there's no empty value in any required_columns
 
         prints the errors using Commands stdout
@@ -146,7 +146,7 @@ class Command(BaseCommand):
         return True
 
     def create_firs(self):
-        """Cleans and Creates FIRs form excel file"""
+        """Cleans and Creates FIRs form Excel file"""
 
         df = pd.read_excel(POINTS_FIRS)
 
@@ -174,7 +174,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(err))
 
     def create_aerodromes(self):
-        """Cleans and Creates Aerodromes form excel file"""
+        """Cleans and Creates Aerodromes form Excel file"""
 
         df = pd.read_excel(AERODROMES)
 
@@ -234,7 +234,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(err))
 
     def create_points(self):
-        """Cleans and Creates Points form excel file"""
+        """Cleans and Creates Points form Excel file"""
 
         Point.objects.all().delete()
 
@@ -380,7 +380,7 @@ class Command(BaseCommand):
                         self.stdout.write(self.style.ERROR(f"SID-STAR {sidstar} considred duplicated."))
 
     def create_operational_hours(self):
-        """Cleans and Creates OperationalHours form excel file"""
+        """Cleans and Creates OperationalHours form Excel file"""
 
         df = pd.read_excel(OPERATIONALHOURS)
 

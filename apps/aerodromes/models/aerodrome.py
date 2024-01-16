@@ -2,14 +2,14 @@ from django.core.validators import MinLengthValidator
 from django.db import models
 
 from apps.general.models import BasePoint
-from core.utils import AerodromeFlightType, AerodromeType, YesNo
+from core.utils.choices import AerodromeFlightType, AerodromeType, YesNo
 
 
 class Aerodrome(BasePoint):
     """
     Aerodrome is a point itself and has following attrs:
         name: Aerodrome name in plain language (from base_model)
-        type: Is it a heliport or airport, etc
+        type: Is it a heliport or airport, etc.
         ifr_vfr: Accepts ifr or vfr or both flight types
         aur: Is the aerodrome available on request when it is supposed to be closed
     """

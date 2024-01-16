@@ -15,7 +15,7 @@ class DailyOperationalHour(AerodromeProperties):
         verbose_name_plural = "Operational Hours"
 
     def clean(self):
-        if not any(self.vfr_start_time, self.vfr_end_time):
+        if not any([self.vfr_start_time, self.vfr_end_time]):
             raise ValidationError(
                 message="VFR start and end times are mandatory",
                 code="ad_vfr_times_required",

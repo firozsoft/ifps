@@ -18,7 +18,7 @@ class CurfewAdmin(AerodromePropertiesAdmin):
         ),
         (
             "Exception STS",
-            {"fields": (("hosp", "head", "sar", "ffr", "hazmat", "medevac"),)},
+            {"fields": (("hosp", "head", "sar", "ffr", "hazmat", "med_evac"),)},
         ),
         (
             "Exception RMK",

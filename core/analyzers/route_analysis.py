@@ -25,15 +25,14 @@ from collections import OrderedDict
 from typing import Union
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, ValidationError
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist, ValidationError
 from django.db.models import Q
 
 from apps.general.models import FIR
 from apps.points.models import Point
 from apps.routes.models import RouteSection
 from core.analyzers.route_section_valiation import validate_fpl_route_section
-from core.utils.regex_patterns import AERODROME
-from core.utils.regex_patterns import SIG_POINT
+from core.utils.regex_patterns import AERODROME, SIG_POINT
 
 
 def eet_is_correct(data_dict, err_dict: dict[str, list[str]]) -> bool:
@@ -183,7 +182,7 @@ def found_boundary_point(r_section, index, for_next, text, data, existing_sectio
 def found_boundary_limit(data, existing_points, existing_sections, err, for_next):
     """Finds and Limits the flight planed route to the boundary of Our FIR
     for_next: bool - is used to slice the EET and control the flow of code
-    * In python booleans are also integers so it's possible to use then for list slicing
+    * In python booleans are also integers, so it's possible to use then for list slicing
     """
     # sample: EET/XXXX0000 OBBI0140 OIIX0220
     text = "Entry" if not for_next else "Exit"
@@ -195,7 +194,7 @@ def found_boundary_limit(data, existing_points, existing_sections, err, for_next
         neighbour_fir_indicator = neighbour_firs_indicators[(not for_next) * -1]
         neighbour_fir = FIR.objects.filter(indicator=neighbour_fir_indicator).prefetch_related("points").first()
     elif not for_next:
-        # In case of flights departing from a neighbour FIR they omit the previous FIR in EET so we check that
+        # In case of flights departing from a neighbour FIR they omit the previous FIR in EET, so we check that
         neighbour_fir = FIR.objects.filter(
             indicator__startswith=data["departure_ad"][:2]).prefetch_related("points").first()
         neighbour_firs_indicators = [neighbour_fir.indicator]
@@ -229,7 +228,7 @@ def found_boundary_limit(data, existing_points, existing_sections, err, for_next
         if b4_or_after_boundary_point.name in r_section["from"]:
             if b4_or_after_boundary_point.is_fir_boundary:
                 # So it says: entry_point is the b4_or_after_boundary_point, entry_section is this section
-                data["route"] = data["route"][index:] if not for_next else data["route"] = data["route"][:index + 1]
+                data["route"] = data["route"][index:] if not for_next else data["route"][:index + 1]
                 return True
             elif found_boundary_point(r_section, index, for_next, text, data, existing_sections,
                                       neighbour_fir_boundary_points, err):

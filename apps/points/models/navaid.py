@@ -26,8 +26,8 @@ class NavAid(Point):
     def __str__(self):
         return f"{self.name} - {self.get_type_display()}"
 
-    def clean(self, *args, **kwargs):
-        super().clean(*args, **kwargs)
+    def clean(self):
+        super().clean()
 
         if len(self.name) > 3:
             raise ValidationError({"name": "NvaAid name must be 2 or 3 characters."}, code="max_length")

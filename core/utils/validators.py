@@ -26,8 +26,20 @@ sid_star_name_validator = RegexValidator(
     code="invalid_sid_star_name",
 )
 
-rs_dest_list = RegexValidator(
+aerodrome_validator = RegexValidator(
     regex=regex_patterns.AERODROME,
+    message="",
+    code="invalid_aerodrome_indicator",
+)
+
+fir_validator = RegexValidator(
+    regex=regex_patterns.AERODROME,
+    message="",
+    code="invalid_fir_indicator",
+)
+
+rs_dest_list = RegexValidator(
+    regex=r"^(?![IJXQ])([A-Z]{4},? ?)+$",
     message="RouteScheme destination/next FIRs must be a list of comma separated ICAO 4-letters FIR names",
     code="invalid_route_scheme_dest",
 )

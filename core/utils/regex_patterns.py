@@ -1,5 +1,3 @@
-import re
-
 """PLEASE READ PANS-ATM APPENDIX 2
 The instructions for the completion of the flight plan form is included in PANS-ATM Appendix 2
 the comments in this module below are also derived from that document but these comments are mostly
@@ -9,6 +7,7 @@ This mudole contains RegexPatterns matching the items of flight plan as prescrib
 """
 
 AERODROME = r"^(?![IJXQ])(?P<aerodrome>[A-Z]{4})$"
+FIR = AERODROME.replace("<aerodrome>", "fir")
 
 
 # ? ITEM 7: AIRCRAFT IDENTIFICATION (MAXIMUM 7 CHARACTERS)
@@ -269,7 +268,7 @@ RNP_SPC = r"^(?P<RNP_SPC>(L1|O[1-4]|S[1-2]|T[1-2]){1,4})$"
 
 # fmt: off
 STS = (
-    r"^STS\/(?P<STS>(ALTRV|ATFMX|FFR|FLTCK|HAZMAT|HEAD|HOSP|HUM|MARSA|MEDEVAC|NONRVSM|SAR|STATE)+)"
+    r"^STS\/(?P<STS>(ALTRV|ATFMX|FFR|FLTCK|HAZMAT|HEAD|HOSP|HUM|MARSA|med_evac|NONRVSM|SAR|STATE)+)"
     + r"(?!("
     + r"|".join(_other_switches("STS"))
     + r"))$"

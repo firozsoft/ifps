@@ -14,7 +14,7 @@ class Curfew(AerodromeProperties):
     sar = models.BooleanField("SAR(search and rescue)", choices=YesNo, default=True)
     ffr = models.BooleanField("Fire-Fighting", choices=YesNo, default=True)
     hazmat = models.BooleanField("Hazardous Materials", choices=YesNo, default=True)
-    medevac = models.BooleanField("Medical Evacuation", choices=YesNo, default=True)
+    med_evac = models.BooleanField("Medical Evacuation", choices=YesNo, default=True)
     # Fields that could be in RMK
     sm = models.BooleanField("SM Flight", choices=YesNo, default=True)
     emergency = models.BooleanField("Emergency", choices=YesNo, default=True)
@@ -34,7 +34,7 @@ class Curfew(AerodromeProperties):
         """Curfew for flights with STS filled with one of the following switches will be ignored"""
         return [
             item.upper()
-            for item in ("hosp", "head", "sar", "ffr", "hazmat", "medevac")
+            for item in ("hosp", "head", "sar", "ffr", "hazmat", "med_evac")
             if self.__getattribute__(item)
         ]
 

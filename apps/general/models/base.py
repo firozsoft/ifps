@@ -1,9 +1,10 @@
 from django.conf import settings
 from django.db import models
 
-from core.utils import YesNo
+from core.utils.choices import YesNo
 from core.utils.helpers import dms2dd
-from core.utils.validators import coordinate_validator
+from core.utils.validators import coordinate_validator, fir_validator
+
 
 # from django.contrib.gis.geos import GEOSGeometry
 
@@ -29,7 +30,7 @@ class BaseModel(AbstractBaseModel):
 
 
 class FIR(BaseModel):
-    indicator = models.CharField("ICAO Four Letters", max_length=4, unique=True)
+    indicator = models.CharField("ICAO Four Letters", max_length=4, unique=True, validators=[fir_validator])
     is_adjacent = models.BooleanField(choices=YesNo, help_text=f"Is adjacent to {settings.FIR_INDICATOR}")
     # shape = models.PolygonField(null=True, blank=True)
 
@@ -72,7 +73,7 @@ class BasePoint(BaseModel):
         to=FIR,
         verbose_name="FIR(s)",
         related_name="%(class)ss",
-        help_text="FIR boundary points have more than one FIR",
+        help_text="FIR boundary points must have 2 FIRs",
     )
     is_fir_boundary = models.BooleanField(
         "Is FIR Boundary", choices=YesNo, default=False

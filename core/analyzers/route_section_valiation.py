@@ -30,6 +30,47 @@ def validate_fpl_route_section(fpl_section, db_section: RouteSection, data, err)
     # TODO: let's have meeting with the authorities to decide how to implement these checks
     # RouteSection Level Verification Check
     # NOTE: Don't forget to validate fpl_section["top_level"] for all case
+    if fpl_section["level"].startswith("A"):
+        level = int(fpl_section["level"].replace("A", ""))
+        if db_section.minimum_safe_altitude and level < db_section.minimum_safe_altitude:
+            err["logical_error"].append(
+                "Invalid altitude. Minimun Safe Altitude for"
+                f"route {db_section.route.name} - {db_section.point1.name} between {db_section.point2.name} is"
+                f"{db_section.minimum_safe_altitude}."
+            )
+        if db_section.lower_limit_altitude and level < db_section.lower_limit_altitude:
+            err["logical_error"].append(
+                "Invalid altitude. Minimun Limit Altitude for"
+                f"route {db_section.route.name} - {db_section.point1.name} between {db_section.point2.name} is"
+                f"{db_section.lower_limit_altitude}."
+            )
+        if db_section.upper_limit_altitude and level > db_section.upper_limit_altitude:
+            err["logical_error"].append(
+                "Invalid altitude. Upper Limit Altitude for"
+                f"route {db_section.route.name} - {db_section.point1.name} between {db_section.point2.name} is"
+                f"{db_section.lower_limit_altitude}."
+            )
+
+    if fpl_section["level"].startswith("F"):
+        level = int(fpl_section["level"].replace("F", ""))
+        if db_section.minimum_safe_flight_level and level < db_section.minimum_safe_flight_level:
+            err["logical_error"].append(
+                "Invalid flight level. Minimun Safe Flight Level for"
+                f"route {db_section.route.name} - {db_section.point1.name} between {db_section.point2.name} is"
+                f"{db_section.minimum_safe_flight_level}."
+            )
+        if db_section.lower_limit_flight_level and level < db_section.lower_limit_flight_level:
+            err["logical_error"].append(
+                "Invalid flight level. Minimun Limit Flight Level for"
+                f"route {db_section.route.name} - {db_section.point1.name} between {db_section.point2.name} is"
+                f"{db_section.lower_limit_flight_level}."
+            )
+        if db_section.upper_limit_flight_level and level > db_section.upper_limit_flight_level:
+            err["logical_error"].append(
+                "Invalid flight level. Upper Limit Flight Level for"
+                f"route {db_section.route.name} - {db_section.point1.name} between {db_section.point2.name} is"
+                f"{db_section.lower_limit_flight_level}."
+            )
     ...
     # RouteSection RNVA/RNP Compliance Check (plus rnav level)
     ...
