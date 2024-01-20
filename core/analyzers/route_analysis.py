@@ -152,17 +152,19 @@ def find_all_nested_real_sections(fpl_route_section: dict[str, str], db_sections
         raise ValidationError(message=f"No path found between {start_point} and {end_point} through {route}.")
 
 
-def found_boundary_point(r_section, index, for_next, text, data, existing_sections, neighbour_fir_boundary_points, err):
+def found_boundary_point(r_section, index, for_next, text, data, existing_sections, neighbor_fir_boundary_points, err):
     boundary_route = r_section["via"]
+    if boundary_route in ("", "DCT"):
+        err["logical_error"].append(
+            f"{text.lower()} route to {settings.FIR_INDICATOR} can't be DCT or Null/Empty.")
     try:
         route_section = existing_sections.get(
-            (Q(point1__in=neighbour_fir_boundary_points) & Q(point2__fir__indicator__in=[settings.FIR_INDICATOR]))
-            | (Q(point2__in=neighbour_fir_boundary_points) & Q(point1__fir__indicator__in=[settings.FIR_INDICATOR])),
+            (Q(point1__in=neighbor_fir_boundary_points) & Q(point2__fir__indicator__in=[settings.FIR_INDICATOR]))
+            | (Q(point2__in=neighbor_fir_boundary_points) & Q(point1__fir__indicator__in=[settings.FIR_INDICATOR])),
             route__name=boundary_route
         )
     except ObjectDoesNotExist:
-        err["logical_error"].append(
-            f"No {text.lower()} route/point to {settings.FIR_INDICATOR} determined.")
+        err["logical_error"].append(f"No {text.lower()} route/point to {settings.FIR_INDICATOR} determined.")
     except MultipleObjectsReturned:
         err["logical_error"].append(
             f"Multiple {text.lower()} routes/points (route segments) to {settings.FIR_INDICATOR} determined.")
@@ -182,56 +184,72 @@ def found_boundary_point(r_section, index, for_next, text, data, existing_sectio
 def found_boundary_limit(data, existing_points, existing_sections, err, for_next):
     """Finds and Limits the flight planed route to the boundary of Our FIR
     for_next: bool - is used to slice the EET and control the flow of code
-    * In python booleans are also integers, so it's possible to use then for list slicing
     """
+    # * In python booleans are also integers, so it's possible to use them for list slicing
     # sample: EET/XXXX0000 OBBI0140 OIIX0220
     text = "Entry" if not for_next else "Exit"
-    b4_or_after_boundary_point, neighbour_fir, neighbour_firs_indicators = None, None, None
+    to_from = "from" if not for_next else "to"
+    b4_bh_boundary_point, neighbor_fir, neighbor_firs_indicators = None, None, None
     eets = data['eet'].split(settings.FIR_INDICATOR)[for_next].strip().split()
 
     if eets:
-        neighbour_firs_indicators = list(map(lambda string: string[:4], eets[for_next:]))
-        neighbour_fir_indicator = neighbour_firs_indicators[(not for_next) * -1]
-        neighbour_fir = FIR.objects.filter(indicator=neighbour_fir_indicator).prefetch_related("points").first()
+        neighbor_firs_indicators = list(map(lambda string: string[:4], eets[for_next:]))
+        neighbor_fir_indicator = neighbor_firs_indicators[(not for_next) * -1]
+        neighbor_fir = FIR.objects.filter(indicator=neighbor_fir_indicator).prefetch_related("points").first()
     elif not for_next:
-        # In case of flights departing from a neighbour FIR they omit the previous FIR in EET, so we check that
-        neighbour_fir = FIR.objects.filter(
+        # In case of flights departing from a neighbor FIR they omit the previous FIR in EET, so we check that
+        neighbor_fir = FIR.objects.filter(
             indicator__startswith=data["departure_ad"][:2]).prefetch_related("points").first()
-        neighbour_firs_indicators = [neighbour_fir.indicator]
+        neighbor_firs_indicators = [neighbor_fir.indicator]
 
-    if neighbour_fir is None:
+    if neighbor_fir is None:
         err["logical_error"].append(f"{text} point to {settings.FIR_INDICATOR} is not determined (look at EET/).")
         return
 
-    neighbour_fir_boundary_points = check_fir_and_get_its_boundary_points(neighbour_fir, err)
+    neighbor_fir_boundary_points = check_fir_and_get_its_boundary_points(neighbor_fir, err)
 
-    # Reverse iterate over existing_points will eventually give us a point that is located within next firs
-    # Reverse iterate over existing_points will eventually give us a point that is located within previous firs
-    # that point is the b4_or_after_boundary_point and the route which the point is on it is the entry/exit route
+    # Iteration over existing_points will eventually give us a point that is located within next firs
+    # Reversed iteration over existing_points will eventually give us a point that is located within previous firs
+    # that point is the b4_bh_boundary_point and the route which the point is on it is the entry/exit route
     for point_name, point_obj in list(existing_points.items())[::(not for_next) * -1]:
         try:
-            point_obj.fir.get(indicator__in=neighbour_firs_indicators)
+            point_obj.fir.get(indicator__in=neighbor_firs_indicators)
         except ObjectDoesNotExist:
             pass
         except MultipleObjectsReturned:
             err["logical_error"].append(f"Point {point_name} has more than 2 FIRs. "
                                         "Please Inform Administration.")
         else:
-            # Here it entered/exited
-            b4_or_after_boundary_point = point_obj
+            # Here is before entry point Or after exit point and this point is out side of our FIR
+            b4_bh_boundary_point = point_obj
             break
     else:
-        err["logical_error"].append(f"{text} point to {settings.FIR_INDICATOR} can not be determined.")
-        return
+        for point_name, point_obj in list(existing_points.items())[::for_next * -1]:
+            try:
+                point_obj.fir.get(indicator__in=[settings.FIR_INDICATOR])
+            except ObjectDoesNotExist:
+                pass
+            except MultipleObjectsReturned:
+                err["logical_error"].append(f"Point {point_name} has more than 2 FIRs. "
+                                            "Please Inform Administration.")
+            else:
+                # Here is before exit point Or after entry point and this point is inside our FIR
+                b4_bh_boundary_point = point_obj
+                to_from = "from" if for_next else "to"
+                break
+
+        else:
+            err["logical_error"].append(f"{text} point to {settings.FIR_INDICATOR} can not be determined.")
+            return
 
     for index, r_section in enumerate(data["route"]):
-        if b4_or_after_boundary_point.name in r_section["from"]:
-            if b4_or_after_boundary_point.is_fir_boundary:
+        if b4_bh_boundary_point.name in r_section[to_from]:
+            if b4_bh_boundary_point.is_fir_boundary:
                 # So it says: entry_point is the b4_or_after_boundary_point, entry_section is this section
                 data["route"] = data["route"][index:] if not for_next else data["route"][:index + 1]
                 return True
             elif found_boundary_point(r_section, index, for_next, text, data, existing_sections,
-                                      neighbour_fir_boundary_points, err):
+                                      neighbor_fir_boundary_points, err):
                 return True
     else:
         err["logical_error"].append(f"{text} point to {settings.FIR_INDICATOR} can not be determined (second try).")
@@ -266,13 +284,13 @@ def route_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err:
 
     check_points_exists_and_are_active(mentioned_points_in_route, existing_mentioned_points, data, err)
 
-    fpl_route_sections = {route_section["via"] for route_section in data["route"]
+    fpl_routes = {route_section["via"] for route_section in data["route"]
                           if "section_doesnt_need_check" not in route_section
                           or (route_section["via"] not in ("", "DCT"))
                           }
 
     existing_sections = RouteSection.objects.filter(
-        route__name__in=fpl_route_sections).prefetch_related("route", "point1", "point2")
+        route__name__in=fpl_routes).prefetch_related("route", "point1", "point2")
 
     # 1- If boundary_points are mentioned in the flight plan route, so we can limit the route to that portion
     # 2- Otherwise we have to find the before/after boundary-points
@@ -288,13 +306,13 @@ def route_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err:
     existing_sections_dict = {
         (sec.route.name, sec.point1.name, sec.point2.name): sec for sec in existing_sections}
 
-    fpl_route_sections = {route_section for route_section in data["route"]
+    fpl_routes = {route_section for route_section in data["route"]
                           if "section_doesnt_need_check" not in route_section
                           or (route_section["via"] not in ("", "DCT"))
                           }
 
     fpl_section_and_its_nested_real_sections = {}
-    for fpl_route_section in fpl_route_sections:
+    for fpl_route_section in fpl_routes:
         try:
             real_sections = find_all_nested_real_sections(fpl_route_section, existing_sections_dict)
         except ValidationError as e:
