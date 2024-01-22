@@ -17,7 +17,7 @@ class AerodromeInline(admin.TabularInline):
         "indicator",
         "plain_language_name",
         "iatacode",
-        "coordinates",
+        "coordinate",
         # "location",
         "type",
         "ifr_vfr",

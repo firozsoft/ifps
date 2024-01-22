@@ -38,7 +38,7 @@ class AerodromeAdmin(BasePointAdmin):
         "indicator",
         "plain_language_name",
         "iatacode",
-        ("coordinates", "latitude", "longitude"),
+        ("coordinate", "latitude", "longitude"),
         # "location",
         "type",
         "ifr_vfr",

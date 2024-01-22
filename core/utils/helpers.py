@@ -13,16 +13,16 @@ def levels_to_fl_int(row_flight_levels):
     return int(row_flight_levels[1:])
 
 
-def dms2dd(coordinates: str) -> tuple[Decimal, Decimal]:
+def dms2dd(coordinate: str) -> tuple[Decimal, Decimal]:
     """
     Convert degrees or degrees+minutes or degrees+minutes+seconds to decimal-degrees.
     46N078W -> (46 78) or 4620N07805W -> (46.333333 78.083333)
     """
     pattern = r"\b(?P<latitude>(\d{2}|\d{4}|\d{6})(N|S))(?P<longitude>(\d{3}|\d{5}|\d{7})(W|E))\b"
     try:
-        lat, long = re.match(pattern, coordinates).groupdict().items()
+        lat, long = re.match(pattern, coordinate).groupdict().items()
     except AttributeError as attr_error:
-        raise ValueError(f"Invalid coordinates: {coordinates}") from attr_error
+        raise ValueError(f"Invalid coordinate: {coordinate}") from attr_error
 
     def convertor(lat_or_lang, string):
         getcontext().prec = 8

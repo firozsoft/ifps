@@ -157,7 +157,7 @@ SPEED_LEVEL = r"^{spd}{lvl}$".format(spd=SPEED.replace(r"^", "").replace(r"$", "
 # FOLLOWED IN EACH CASE
 # by the designator of the next ATS route segment, even if the same as the previous one, or
 # by DCT, if the flight to the next point will be outside a designated route,
-# unless both points are defined by geographical coordinates or by bearing and distance.
+# unless both points are defined by geographical coordinate or by bearing and distance.
 # ? USE ONLY the conventions in (1) to (5) below and SEPARATE each sub-item by a space.
 
 # ? Degrees only (7 characters)

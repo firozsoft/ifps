@@ -67,8 +67,8 @@ class Command(BaseCommand):
         # if route_schemes:
         # self.create_route_schemes()
 
-    def _get_geo_coordinates(self, coordinates: str):
-        latitude, longitude = dms2dd(coordinates)
+    def _get_geo_coordinate(self, coordinate: str):
+        latitude, longitude = dms2dd(coordinate)
         # location = GEOSGeometry(
         #     f"POINT({longitude} {latitude})",
         #     srid=4326,
@@ -218,14 +218,14 @@ class Command(BaseCommand):
                 indicator=item[0],
                 plain_language_name=item[1],
                 type=item[2],
-                coordinates=item[3],
+                coordinate=item[3],
                 ifr_vfr=item[4],
                 iatacode=item[5],
             )
-            # ad.latitude, ad.longitude, ad.location = self._get_geo_coordinates(
-            #     ad.coordinates
+            # ad.latitude, ad.longitude, ad.location = self._get_geo_coordinate(
+            #     ad.coordinate
             # )
-            ad.latitude, ad.longitude = self._get_geo_coordinates(ad.coordinates)
+            ad.latitude, ad.longitude = self._get_geo_coordinate(ad.coordinate)
             aerodromes.add(ad)
         try:
             Aerodrome.objects.bulk_create(aerodromes)
@@ -236,17 +236,29 @@ class Command(BaseCommand):
     def create_points(self):
         """Cleans and Creates Points form Excel file"""
 
-        Point.objects.all().delete()
-
         df = pd.read_excel(POINTS_FIRS)
+
+        expected_columns = [
+            "NAME",
+            "COORDINATE",
+            "IS FIR BOUNDARY",
+            "FIR",
+        ]
+
+        required_columns = expected_columns[:-1]
+
+        if not self._excel_data_is_valid(df, expected_columns, required_columns):
+            return
+
+        Point.objects.all().delete()
 
         points_and_firs = []
         for _, row in df.iterrows():
             p_name = row["NAME"]
-            p_cors = f'{row["COORDINATES"]}' * isinstance(row["COORDINATES"], str)
+            p_cors = f'{row["COORDINATE"]}' * isinstance(row["COORDINATE"], str)
             is_fir_bnd = row["FIR BOUNDARY/INSIDE FIR"] == "FIR BOUNDARY"
 
-            point = Point(name=p_name, coordinates=p_cors, is_fir_boundary=is_fir_bnd)
+            point = Point(name=p_name, coordinate=p_cors, is_fir_boundary=is_fir_bnd)
 
             p_firs = []
             if row["FIR BOUNDARY/INSIDE FIR"] == "INSIDE FIR ":
@@ -255,8 +267,8 @@ class Command(BaseCommand):
                 p_firs = [settings.FIR_INDICATOR] + [row["COUNTRY"]]
             points_and_firs.append((point, *p_firs))
 
-            if settings.FIR_INDICATOR in p_firs and not point.coordinates:
-                raise SystemExit(f"Point with name '{point.name}' must have coordinates!")
+            if settings.FIR_INDICATOR in p_firs and not point.coordinate:
+                raise SystemExit(f"Point with name '{point.name}' must have coordinate!")
 
         points_and_firs = []
         for point, *firs in points_and_firs:
@@ -287,7 +299,7 @@ class Command(BaseCommand):
         for _, row in df.iterrows():
             name = row["STATION"]
             name_pl = row["NAME OF AIRPORT"]
-            coordinates = f'{row["COORDINATE"]}' * isinstance(row["COORDINATE"], str)
+            coordinate = f'{row["COORDINATE"]}' * isinstance(row["COORDINATE"], str)
             tp = row["TYPE"].replace("/", "_").lower()
             ad = row["AIRPORT ICAO LETTER"]
             uc = row["USE IN ROUTE/USE IN AIRPORT"].replace("USE ", "").strip().replace(" ", "_").lower()
@@ -299,7 +311,7 @@ class Command(BaseCommand):
                         name_pl=name_pl,
                         type=tp,
                         use_case=uc,
-                        coordinates=coordinates,
+                        coordinate=coordinate,
                     ),
                     Aerodrome.objects.filter(indicator=ad),
                 )

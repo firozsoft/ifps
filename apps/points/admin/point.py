@@ -7,14 +7,14 @@ from apps.points.models import Point
 @admin.register(Point)
 class PointAdmin(BasePointAdmin):
     search_fields = ("name",)
-    list_display = ("name", "coordinates", "is_active")
-    search_fields = ("name", "coordinates")
+    list_display = ("name", "coordinate", "is_active")
+    search_fields = ("name", "coordinate")
     # filter_horizontal = ("fir_boundaries",)
     autocomplete_fields = ("fir",)
     fields = (
         "name",
         "is_active",
-        ("coordinates", "latitude", "longitude"),
+        ("coordinate", "latitude", "longitude"),
         # "location",
         "fir",
         "is_fir_boundary",

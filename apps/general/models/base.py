@@ -46,7 +46,7 @@ class FIR(BaseModel):
 class BasePoint(BaseModel):
     """Base Point Model"""
 
-    coordinates = models.CharField(
+    coordinate = models.CharField(
         validators=[coordinate_validator],
         max_length=15,
     )
@@ -84,7 +84,7 @@ class BasePoint(BaseModel):
 
     def save(self, *args, **kwargs):
         """save the model."""
-        self.latitude, self.longitude = dms2dd(self.coordinates)
+        self.latitude, self.longitude = dms2dd(self.coordinate)
         # self.location = GEOSGeometry(
         #     f"POINT({self.longitude} {self.latitude})",
         #     srid=4326,

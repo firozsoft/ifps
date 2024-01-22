@@ -11,7 +11,7 @@ class NavAidAdmin(BasePointAdmin):
         "plain_language_name",
         "type",
         "is_active",
-        ("coordinates", "latitude", "longitude"),
+        ("coordinate", "latitude", "longitude"),
         # "location",
         "use_case",
         "fir",
@@ -22,11 +22,11 @@ class NavAidAdmin(BasePointAdmin):
         "name",
         "plain_language_name",
         "type",
-        "coordinates",
+        "coordinate",
         "use_case",
         "is_active",
     )
-    search_fields = ("name", "plain_language_name", "type", "coordinates")
+    search_fields = ("name", "plain_language_name", "type", "coordinate")
     list_filter = ("type", "use_case", "is_active")
     # filter_horizontal = ("fir_boundaries",)
     autocomplete_fields = ("fir",)
