@@ -3,11 +3,12 @@
         ✓ Aerodromes existence
         ✓ Aerodromes accept the flight regarding the flight Type
         ✓ Aerodromes accept the flight regarding the flight Rule
-        ✓ Aerodromes accept the flight regarding the Internationality
-        ✓ Aerodromes available upon request
+        ✓ Aerodromes accept the flight regarding the Ad. Internationality
         ✓ Aerodromes operational hours and curfews
+        ✓ Aerodromes available upon request
         ✓ SID/STAR
 """
+
 import datetime
 import re
 from typing import Union
@@ -35,38 +36,40 @@ def _check_flight_type_acceptable(ad: Aerodrome, ac_type: str, err: dict[str, li
 
 
 def _check_aerodrome_operational_hours(
-        aerodrome: Aerodrome,
-        flight_datetime: datetime,
-        flight_rule: str,
-        err: dict[str, list[str]],
+    aerodrome: Aerodrome,
+    flight_datetime: datetime,
+    flight_rule: str,
+    err: dict[str, list[str]],
 ):
     flight_date = flight_datetime.date()
     flight_time = flight_datetime.time()
+
     try:
         op_hours = aerodrome.dailyoperationalhours.get(date=flight_date)
     except DailyOperationalHour.DoesNotExist:
-        pass
-    else:
-        opr_start = op_hours.start_time
-        opr_end = op_hours.end_time
+        return
 
-        if flight_rule == "VFR":
-            opr_start = op_hours.vfr_start_time
-            opr_end = op_hours.vfr_end_time
+    opr_start = op_hours.start_time
+    opr_end = op_hours.end_time
 
-        if not (opr_start < flight_time < opr_end):
-            if not aerodrome.aur:
-                err["logical_error"].append(
-                    f"Your estimated time {flight_time} at {aerodrome} is not in aerodrome's operational hours,"
-                    f" ({opr_start} till {opr_end}), and aerodrome is not available upon request. "
-                )
+    if flight_rule == "VFR":
+        opr_start = op_hours.vfr_start_time
+        opr_end = op_hours.vfr_end_time
+
+    if not (opr_start < flight_time < opr_end):
+        if not aerodrome.aur:
+            err["logical_error"].append(
+                f"Your estimated time {flight_time} at {aerodrome} is not in aerodrome's operational hours,"
+                f" ({opr_start} till {opr_end}), and aerodrome is not available upon request. "
+            )
 
 
 def _check_aerodrome_temporarily_closure(
-        aerodrome: Aerodrome, flight_datetime: datetime, err: dict[str, list[str]]
+    aerodrome: Aerodrome, flight_datetime: datetime, err: dict[str, list[str]]
 ):
     flight_date = flight_datetime.date()
     flight_time = flight_datetime.time()
+
     try:
         temp_closure = aerodrome.temporaryclosures.get(
             date=flight_date,
@@ -82,37 +85,39 @@ def _check_aerodrome_temporarily_closure(
 
 
 def _check_aerodrome_curfew(
-        aerodrome: Aerodrome,
-        flight_datetime: datetime,
-        data_sts: str,
-        data_rmk: str,
-        err: dict[str, list[str]],
+    aerodrome: Aerodrome,
+    flight_datetime: datetime,
+    data_sts: str,
+    data_rmk: str,
+    err: dict[str, list[str]],
 ):
     flight_date = flight_datetime.date()
     flight_time = flight_datetime.time()
+
     try:
         curfew = aerodrome.curfews.get(
             date=flight_date, start_time__lte=flight_time, end_time__gte=flight_time
         )
     except Curfew.DoesNotExist:
-        pass
-    else:
-        if not any(sts in curfew.acceptable_sts for sts in data_sts) or not any(
-                [rmk in data_rmk for rmk in curfew.acceptable_rmk]
-        ):
-            err["logical_error"].append(
-                f"{aerodrome} curfew time, {curfew.start_time} till {curfew.end_time}."
-            )
+        return
+
+
+    if not any([True for sts in data_sts if sts in curfew.acceptable_sts]) or not any(
+        [True for rmk in curfew.acceptable_rmk if rmk in data_rmk]
+    ):
+        err["logical_error"].append(
+            f"{aerodrome} curfew time, {curfew.start_time} till {curfew.end_time}."
+        )
 
 
 def _analyse(
-        aerodrome: Aerodrome,
-        aircraft_type: str,
-        flight_rule: str,
-        flight_datetime: datetime,
-        err: dict[str, list[str]],
-        data_sts: str,
-        data_rmk: str,
+    aerodrome: Aerodrome,
+    aircraft_type: str,
+    flight_rule: str,
+    flight_datetime: datetime,
+    err: dict[str, list[str]],
+    data_sts: str,
+    data_rmk: str,
 ):
     _check_flight_type_acceptable(aerodrome, aircraft_type, err)
     _check_aerodrome_operational_hours(aerodrome, flight_datetime, flight_rule, err)
@@ -175,7 +180,8 @@ def aerodromes_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]],
                 extra_ad_to_check.append(re.match(AERODROME, data[key.lower()]).groupdict().get("aerodrome"))
 
     aerodromes = _get_aerodromes(
-        [data[key] for key in ("departure_ad", "destination_ad", "alt_ad_1", "alt_ad_2")] + extra_ad_to_check, err
+        [data[key] for key in ("departure_ad", "destination_ad", "alt_ad_1", "alt_ad_2")] + extra_ad_to_check,
+        err,
     )
 
     for aerodrome in aerodromes:

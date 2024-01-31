@@ -1,6 +1,7 @@
 import json
 
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.http import HttpRequest, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
@@ -38,11 +39,16 @@ def fpl_scrutinization(request, msg: str) -> JsonResponse:
         # 'extra': parts[9]
     }
 
-    res, err = regex_parse(filled_data)
+    try:
+        res, err = regex_parse(filled_data)
+    except Exception as exp:
+        err = {"syntax_error": str(exp)}
+        ValidationError(message="Syntax Error", params=err, code="syntax_error")
+
     if err:
         return JsonResponse(err.params)
+
     err = logical_check(res)
     if err:
-        # return render(request, "index.html", {"data": json.dumps(err.params)})
         return JsonResponse(err.params)
     return render(request, "index.html", {"data": json.dumps(res)})

@@ -23,8 +23,11 @@ def logical_check(data: dict[str, Union[bool, str, list[dict[str, str]]]]):
     ):
         data["domestic_destination"] = False
 
-    aerodromes_analysis.aerodromes_analyzer(data, err)
-    route_analysis.route_analyzer(data, err)
+    try:
+        aerodromes_analysis.aerodromes_analyzer(data, err)
+        route_analysis.route_analyzer(data, err)
+    except Exception as exp:
+        err["logical_error"].append(str(exp))
 
     if err["logical_error"]:
         errors = {f"{inx}": err for inx, err in enumerate(err["logical_error"])}
