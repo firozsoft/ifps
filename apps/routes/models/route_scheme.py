@@ -1,9 +1,7 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
-
 from django.db import models
 
 from apps.general.models import BaseModel
-
 from core.utils.choices import RouteSchemeFlightNature, YesNo
 from core.utils.validators import rs_dest_list
 

@@ -1,8 +1,20 @@
-[tool.poetry.dependencies]
-python = "~3.11"
+[project]
+name = "ifps"
+requires-python = ">=3.11"
+dependencies = [
+  "Django~=5.0",
+  "pandas",
+  "openpyxl",
+  "python-decouple",
+  "dj-database-url",
+  "networkx",
+]
 
-[tool.black]
-line-length = 110
+[project.optional-dependencies]
+dev = ["ipython", "django-debug-toolbar", "ruff", "djlint"]
+
 
 [tool.ruff]
 line-length = 110
+# Enable the isort rules.
+lint.extend-select = ["I"]

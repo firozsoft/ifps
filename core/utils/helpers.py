@@ -1,7 +1,6 @@
 """This module contains Helper functions"""
 import re
 from decimal import Decimal, getcontext
-
 from itertools import product
 
 

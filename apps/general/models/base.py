@@ -5,7 +5,6 @@ from core.utils.choices import YesNo
 from core.utils.helpers import dms2dd
 from core.utils.validators import coordinate_validator, fir_validator
 
-
 # from django.contrib.gis.geos import GEOSGeometry
 
 
