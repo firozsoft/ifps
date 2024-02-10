@@ -2,13 +2,11 @@
 from typing import Union
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
 
 from . import aerodromes_analysis, route_analysis
 
 
 def logical_check(data: dict[str, Union[bool, str, list[dict[str, str]]]]):
-    validation_error = None
     err: dict[str, list[str | None]] = {"logical_error": []}
 
     data["domestic_departure"] = True
@@ -23,14 +21,8 @@ def logical_check(data: dict[str, Union[bool, str, list[dict[str, str]]]]):
     ):
         data["domestic_destination"] = False
 
-    try:
-        aerodromes_analysis.aerodromes_analyzer(data, err)
-        route_analysis.route_analyzer(data, err)
-    except Exception as exp:
-        err["logical_error"].append(str(exp))
+    aerodromes_analysis.aerodromes_analyzer(data, err)
+    route_analysis.route_analyzer(data, err)
 
     if err["logical_error"]:
-        errors = {f"{inx}": err for inx, err in enumerate(err["logical_error"])}
-        validation_error = ValidationError(message="Logical Error", params=errors, code="logical_error")
-
-    return validation_error
+        return {f"{inx}": err for inx, err in enumerate(err["logical_error"])}

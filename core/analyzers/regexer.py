@@ -2,8 +2,6 @@ import re
 from datetime import datetime
 from typing import Union
 
-from django.core.exceptions import ValidationError
-
 from core.utils import regex_patterns
 from core.utils.patterns import OTHER_INFO_SWITCHES
 
@@ -254,10 +252,10 @@ def route_regex_parse(
 
 def regex_parse(
     row_data: dict[str, str],
-) -> tuple[dict[str, Union[str, list[dict[str, str]]]], Union[ValidationError, None]]:
+) -> tuple[dict[str, Union[str, list[dict[str, str]]]], Union[dict[str, str], None]]:
     """Checks for syntax errors and prepares a new dict"""
     regex_parsed_data = dict()
-    validation_error = None
+    errors = None
     err: dict[str, list[str | None]] = {"syntax_error": []}
 
     if not (call_sign := re.match(regex_patterns.CALLSIGN, row_data["call_sign"])):
@@ -387,5 +385,4 @@ def regex_parse(
 
     if err["syntax_error"]:
         errors = {f"{inx}": err for inx, err in enumerate(err["syntax_error"])}
-        validation_error = ValidationError(message="Syntax Error", params=errors, code="syntax_error")
-    return regex_parsed_data, validation_error
+    return regex_parsed_data, errors
