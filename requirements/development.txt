@@ -1,3 +1,4 @@
-ipython
 django-debug-toolbar
+djlint
+ipython
 ruff
