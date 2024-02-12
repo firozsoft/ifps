@@ -70,8 +70,8 @@ MIDDLEWARE = [
 
 if DEBUG:
     MIDDLEWARE += [
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
-]
+        "debug_toolbar.middleware.DebugToolbarMiddleware",
+    ]
 
 # For security, set up internal IPs that are allowed to view the debug toolbar
 INTERNAL_IPS = [

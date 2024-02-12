@@ -101,13 +101,10 @@ def _check_aerodrome_curfew(
     except Curfew.DoesNotExist:
         return
 
-
     if not any([True for sts in data_sts if sts in curfew.acceptable_sts]) or not any(
         [True for rmk in curfew.acceptable_rmk if rmk in data_rmk]
     ):
-        err["logical_error"].append(
-            f"{aerodrome} curfew time, {curfew.start_time} till {curfew.end_time}."
-        )
+        err["logical_error"].append(f"{aerodrome} curfew time, {curfew.start_time} till {curfew.end_time}.")
 
 
 def _analyse(

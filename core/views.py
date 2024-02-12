@@ -1,12 +1,21 @@
+import io
 import json
+import zipfile
+from datetime import datetime
 
+import pandas as pd
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
-from django.http import HttpRequest, JsonResponse
+from django.contrib.auth.views import LoginView
+from django.forms import model_to_dict
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
-from core.analyzers.logical_checks import logical_check  # noqa
+from core.analyzers.logical_checks import logical_check
 from core.analyzers.regexer import regex_parse
+from core.forms import ExportForm
+from core.utils.helpers import get_app_all_models, get_model_class_and_fields
 
 
 def membership_status_check(user):
@@ -26,6 +35,12 @@ def scrutinization(request: HttpRequest) -> JsonResponse:
 
 def fpl_scrutinization(request, msg: str) -> JsonResponse:
     parts = list(map(str.strip, msg.split("-")))
+
+    if len(parts) < 9:
+        return JsonResponse(
+            {"syntax_error": "FPL message must have at least 9 sections separated by hyphens."}, status=400
+        )
+
     filled_data = {
         "call_sign": parts[1],
         "flt_rule_type": parts[2],
@@ -41,7 +56,7 @@ def fpl_scrutinization(request, msg: str) -> JsonResponse:
     try:
         res, err = regex_parse(filled_data)
     except Exception as exp:
-        return JsonResponse({"internal_error": exp.__repr__()}, status=400)
+        return JsonResponse({"internal_error": exp.__repr__()}, status=500)
 
     if err:
         return JsonResponse(err, status=400)
@@ -49,9 +64,72 @@ def fpl_scrutinization(request, msg: str) -> JsonResponse:
     try:
         err = logical_check(res)
     except Exception as exp:
-        return JsonResponse({"internal_error": exp.__repr__()}, status=400)
+        return JsonResponse({"internal_error": exp.__repr__()}, status=500)
 
     if err:
         return JsonResponse(err, status=400)
 
     return render(request, "index.html", {"data": json.dumps(res)})
+def model_to_excel_bytesio(model_name: str) -> io.BytesIO:
+    # Get the model class and fields
+    model_class, model_fields, expected_fields, required_fields = get_model_class_and_fields(model_name)
+
+    # Retrieve data from the database
+    data = map(model_to_dict, model_class.objects.all())
+
+    # Create a DataFrame from the data
+    df = pd.DataFrame(data=data, columns=expected_fields)
+
+    # Create a BytesIO object to store the Excel file
+    excel_buffer = io.BytesIO()
+
+    # Write the DataFrame to the BytesIO object as an Excel file
+    df.to_excel(excel_buffer, index=False)
+
+    return excel_buffer
+
+
+@staff_member_required
+def export_all_models(request: HttpRequest) -> HttpResponse:
+    """
+    It exports the data of all models of this project to Excel files and returns
+    a ZIP archive containing the Excel files as an HTTP response.
+    """
+    model_names = get_app_all_models("apps.")
+
+    # Create a BytesIO object to store the ZIP archive
+    zip_buffer = io.BytesIO()
+
+    timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for model_name in model_names:
+            excel_buffer = model_to_excel_bytesio(model_name)
+            zip_file.writestr(f"{model_name}-{timestamp}.xlsx", excel_buffer.getvalue())
+
+    # Create an HttpResponse with the ZIP archive content
+    response = HttpResponse(zip_buffer.getvalue(), content_type="application/zip")
+
+    # Set the filename for the response
+    response["Content-Disposition"] = f'attachment; filename="ifps-{timestamp}.zip"'
+
+    return response
+
+
+@staff_member_required
+def export_model(request: HttpRequest, model_name: str) -> HttpResponse:
+    """This method exports data from a model to an Excel file."""
+
+    excel_buffer = model_to_excel_bytesio(model_name)
+
+    # Set the appropriate HTTP headers for the response
+    response = HttpResponse(
+        excel_buffer.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+    # Set the filename for the response (optional)
+    timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    response["Content-Disposition"] = f'attachment; filename="{model_name}-{timestamp}.xlsx"'
+
+    return response

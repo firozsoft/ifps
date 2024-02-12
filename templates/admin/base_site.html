@@ -1,0 +1,9 @@
+{% extends "admin/base_site.html" %}
+
+{% block userlinks %}
+  <div id="user-tools">
+    <a href="{% url "export_all_models" %}" class="">Export All</a>
+    /
+    {{ block.super }}
+  </div>
+{% endblock userlinks %}

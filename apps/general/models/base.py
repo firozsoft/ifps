@@ -74,9 +74,7 @@ class BasePoint(BaseModel):
         related_name="%(class)ss",
         help_text="FIR boundary points must have 2 FIRs",
     )
-    is_fir_boundary = models.BooleanField(
-        "Is FIR Boundary", choices=YesNo, default=False
-    )
+    is_fir_boundary = models.BooleanField("Is FIR Boundary", choices=YesNo, default=False)
 
     class Meta:
         abstract = True

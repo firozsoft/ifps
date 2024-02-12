@@ -40,7 +40,7 @@ def _check_item_is_valid_point_with_indicator(item, previous, segments, err):
             matched_pattern = pattern
             break
     else:
-        err["syntax_error"].append(f"Item {item} (after {previous['item']}) must be a valid point.")
+        err["syntax_error"].append(f"Item {item} (after {previous['item']}) is not valid syntax.")
         return
 
     if matched.groupdict().get("point") is None:
