@@ -1,3 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700&display=swap');
+
 :root {
   --barand-color-primary: hsl(216, 34%, 19%);
+}
+
+body {
+  font-family: "Titillium Web";
+  background: #e0e0db;
+}
+
+h1,
+h2 {
+  background: #0F2027;
+  /* fallback for old browsers */
+  background: -webkit-linear-gradient(to top, #2C5364, #203A43, #0F2027);
+  /* Chrome 10-25, Safari 5.1-6 */
+  background: linear-gradient(to top, #2C5364, #203A43, #0F2027);
+  /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+h1 {
+  font-size: 72px;
+}
+
+.bi-airplane-engines-fill::before {
+  transform: rotate(45deg);
 }
