@@ -28,4 +28,5 @@ class Route(BaseRoute):
         return set(point for tp in self.sections.values_list("point1", "point2") for point in tp)
 
     class Meta(BaseRoute.Meta):
-        pass
+        verbose_name = "Route"
+        verbose_name_plural = "Routes"

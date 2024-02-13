@@ -17,7 +17,7 @@ class NotamManager(models.Manager):
 
 
 class Notam(AbstractBaseModel):
-    number = models.CharField("Number", max_length=50)
+    number = models.CharField("Number", max_length=50, unique=True)
     qcode = models.CharField("Q Code", max_length=50)
     type = models.CharField(
         "Type",
