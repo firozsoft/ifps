@@ -4,9 +4,12 @@
   --barand-color-primary: hsl(216, 34%, 19%);
 }
 
+* {
+  font-family: 'Titillium Web', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
 body {
-  font-family: "Titillium Web";
-  background: #e0e0db;
+  background: ghostwhite;
 }
 
 h1,
