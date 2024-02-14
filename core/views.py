@@ -14,23 +14,16 @@ from django.views.decorators.http import require_http_methods
 
 from core.analyzers.logical_checks import logical_check
 from core.analyzers.regexer import regex_parse
-from core.forms import ExportForm
-from core.utils.helpers import get_app_all_models, get_model_class_and_fields
+from core.utils.helpers import (
+    field_value_normalize,
+    get_app_all_models,
+    get_model_class_and_fields,
+)
 
 
-def membership_status_check(user):
-    return user.membership_status
-
-
-@login_required
-@require_http_methods(["POST"])
-def scrutinization(request: HttpRequest) -> JsonResponse:
-    msg = request.POST.get(key="message", default=None)
-    if not msg:
-        return JsonResponse({"error_message": "field message is missing", "error_code": "msg_not_found"})
-    if msg.startswith("(FPL"):
-        return fpl_scrutinization(request, msg)
-    return JsonResponse({"Error": "text must be an AFTN FPL message"})
+class CustomLoginView(LoginView):
+    template_name = "pages/login.html"
+    success_url = "/"
 
 
 def fpl_scrutinization(request, msg: str) -> JsonResponse:
@@ -42,6 +35,7 @@ def fpl_scrutinization(request, msg: str) -> JsonResponse:
         )
 
     filled_data = {
+        # "msg_type": parts[0], #-> (FPL
         "call_sign": parts[1],
         "flt_rule_type": parts[2],
         "numbers_type_weak": parts[3],
@@ -69,16 +63,46 @@ def fpl_scrutinization(request, msg: str) -> JsonResponse:
     if err:
         return JsonResponse(err, status=400)
 
-    return render(request, "index.html", {"data": json.dumps(res)})
+    return render(request, "pages/index.html", {"data": json.dumps(res)})
+
+
+@login_required
+@require_http_methods(["POST"])
+def submission(request: HttpRequest) -> JsonResponse:
+    msg = request.POST.get(key="message", default=None)
+    if not msg:
+        return JsonResponse({"error_message": "field message is missing", "error_code": "msg_not_found"})
+    if msg.startswith("(FPL"):
+        return fpl_scrutinization(request, msg)
+    return JsonResponse({"Error": "text must be an AFTN FPL message"})
+
+
 def model_to_excel_bytesio(model_name: str) -> io.BytesIO:
     # Get the model class and fields
-    model_class, model_fields, expected_fields, required_fields = get_model_class_and_fields(model_name)
+    model_class, model_fields, expected_fields_for_excel, required_fields = get_model_class_and_fields(
+        model_name
+    )
+
+    exportable_fields = [model_field.name for model_field in model_fields]
 
     # Retrieve data from the database
-    data = map(model_to_dict, model_class.objects.all())
+    # excel columns have to be field.verbose_name.upper and they'r values should be human readable
+    # but model_to_dict dict is a key value pair of model field.name and field.value
+    # the logic below is used to change dict key from field.name to field.verbose_name
+    field_name_to_vbname = {
+        model_field.name: model_field.verbose_name.upper() for model_field in model_fields
+    }
+    field_name_to_obj = {model_field.name: model_field for model_field in model_fields}
+    data = [
+        {
+            field_name_to_vbname[field]: field_value_normalize(field_name_to_obj[field], value)
+            for field, value in model_to_dict(instance, fields=exportable_fields).items()
+        }
+        for instance in model_class.objects.all()
+    ]
 
     # Create a DataFrame from the data
-    df = pd.DataFrame(data=data, columns=expected_fields)
+    df = pd.DataFrame(data=data, columns=expected_fields_for_excel)
 
     # Create a BytesIO object to store the Excel file
     excel_buffer = io.BytesIO()
@@ -90,7 +114,7 @@ def model_to_excel_bytesio(model_name: str) -> io.BytesIO:
 
 
 @staff_member_required
-def export_all_models(request: HttpRequest) -> HttpResponse:
+def export_models(request: HttpRequest) -> HttpResponse:
     """
     It exports the data of all models of this project to Excel files and returns
     a ZIP archive containing the Excel files as an HTTP response.
@@ -100,7 +124,7 @@ def export_all_models(request: HttpRequest) -> HttpResponse:
     # Create a BytesIO object to store the ZIP archive
     zip_buffer = io.BytesIO()
 
-    timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
 
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
         for model_name in model_names:
@@ -111,7 +135,7 @@ def export_all_models(request: HttpRequest) -> HttpResponse:
     response = HttpResponse(zip_buffer.getvalue(), content_type="application/zip")
 
     # Set the filename for the response
-    response["Content-Disposition"] = f'attachment; filename="ifps-{timestamp}.zip"'
+    response["Content-Disposition"] = f'attachment; filename="ifps-export-{timestamp}.zip"'
 
     return response
 
@@ -129,7 +153,7 @@ def export_model(request: HttpRequest, model_name: str) -> HttpResponse:
     )
 
     # Set the filename for the response (optional)
-    timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
     response["Content-Disposition"] = f'attachment; filename="{model_name}-{timestamp}.xlsx"'
 
     return response

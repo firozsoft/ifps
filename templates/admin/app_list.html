@@ -34,13 +34,6 @@
               <td></td>
             {% endif %}
 
-            {% if model|is_exportable %}
-              <td>
-                <a href="{% url "export_model" model.object_name|lower %}"
-                   class="viewlink">{% translate 'Export' %}</a>
-              </td>
-            {% endif %}
-
             {% if model.admin_url and show_changelinks %}
               {% if model.view_only %}
                 <td>
@@ -54,6 +47,14 @@
             {% elif show_changelinks %}
               <td></td>
             {% endif %}
+
+            {% if model|is_exportable %}
+              <td>
+                <a href="{% url "export_model" model.object_name|lower %}"
+                   class="viewlink">{% translate 'Export' %}</a>
+              </td>
+            {% endif %}
+
           </tr>
         {% endfor %}
       </table>

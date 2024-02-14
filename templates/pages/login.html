@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block extra_heads %}
+  <style>
+      h1,
+      h2 {
+          background: #0F2027;
+          /* fallback for old browsers */
+          background: -webkit-linear-gradient(to top, #2C5364, #203A43, #0F2027);
+          /* Chrome 10-25, Safari 5.1-6 */
+          background: linear-gradient(to top, #2C5364, #203A43, #0F2027);
+          /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+          background-clip: text;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+      }
+
+      h1 {
+          font-size: 72px;
+      }
+  </style>
+{% endblock extra_heads %}
+
+{% block title %}
+  Login
+{% endblock title %}
+
+{% block content %}
+  <div class="row mt-5 pt-5">
+    <div class="col-6">
+      <h1 class="text-purple-500 fw-semibold rounded-1 px-2">
+        <i class="fa fa-list-check"></i>
+        <span class="bg-local">IFPS</span>
+      </h1>
+
+      <h4>Integrated Flight Plan Processing System</h4>
+      <p class="text-body-secondary">
+        Designed for pilots and aviation professionals, our platform offers streamlined flight planning
+        capabilities with user-friendly features for inputting, modifying, and tracking flight plans.
+        <br />
+        From route optimization to NOTAM analysis, our system provides the tools to make
+        informed decisions and ensure compliance with aviation regulations.
+        <br />
+        Your data is securely managed and all activities are logged for accountability.
+        <br />
+        Experience the convenience and reliability of our system.
+      </p>
+    </div>
+    <div class="col-6">
+      <div class="card border-0 bg-light shadow-sm">
+        <div class="card-body">
+          <h2 class="card-title text-center fw-bold mb-4">
+            <i class="bi-person-bounding-box"></i>
+            Login
+          </h2>
+          <p class="card-text mb-4">
+            Access to this platform is restricted to authorized personnel only
+            and all activities are meticulously logged <u>under your credentials</u>.
+            <br />
+            Please remember to log out when you're finshed, to ensure security.
+          </p>
+          <form method="post" action="{% url "login" %}">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <!-- Username input -->
+            {{ form.username.errors }}
+            <div data-mdb-input-init class="form-outline mb-4">
+              <input type="text"
+                     id="username"
+                     name="username"
+                     class="form-control"
+                     autofocus />
+              <label class="form-label" for="username">Username</label>
+              <small>{{ form.username.help_text }}</small>
+            </div>
+
+            <!-- Password input -->
+            {{ form.password.errors }}
+            <div data-mdb-input-init class="form-outline mb-4">
+              <input type="password" id="password" name="password" class="form-control" />
+              <label class="form-label" for="password">Password</label>
+              <small>{{ form.password.help_text }}</small>
+            </div>
+
+            <!-- 2 column grid layout for inline styling -->
+            <div class="row mb-4">
+              <div class="col d-flex justify-content-center">
+                <!-- Submit button -->
+                <button data-mdb-ripple-init type="submit" class="btn btn-primary btn-block">
+                  <i class="bi-unlock-fill"></i>
+                  Sign in
+                </button>
+              </div>
+
+              <div class="col">
+                <!-- Simple link -->
+
+                <a class="btn btn-warning btn-block" href="#!">
+                  <i class="bi-lock-fill"></i>
+                Forgot password?</a>
+              </div>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock content %}

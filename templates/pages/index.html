@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Submission
+{% endblock title %}
+
+{% block content %}
+  <div class="pt-5">
+    <form action="{% url "submission" %}" method="post">
+      {% csrf_token %}
+
+      <div data-mdb-input-init class="form-outline mb-4">
+        <textarea class="form-control" name="message" id="message" rows="8" autofocus></textarea>
+        <label class="form-label" for="message">Message</label>
+      </div>
+
+      <div class="text-center mb-3">
+        <button data-mdb-ripple-init type="submit" class="btn btn-primary mx-auto">Submit</button>
+        <button data-mdb-ripple-init type="reset" class="btn btn-warning mx-auto">Reset</button>
+      </div>
+
+    </form>
+  </div>
+  {% if data %}{{ data }}{% endif %}
+{% endblock content %}
