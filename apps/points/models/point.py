@@ -23,7 +23,9 @@ class Point(BasePoint):
 
     def clean(self) -> None:
         super().clean()
-        similar_points = Point.objects.filter(name=self.name).exclude(pk=self.pk)
+        similar_points = Point.objects.filter(name=self.name).exclude(
+            pk=self.pk
+        )  # Exclude current instance if it's being updated
 
         # ignore navaids (they could have name douplication), hasattr checks existence of navaid specific attr
         if similar_points.exists() and any(

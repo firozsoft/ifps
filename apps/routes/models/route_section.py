@@ -3,7 +3,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 
 # from django.contrib.gis.db import models
 from django.db import models
-from django.db.models import F
+from django.db.models import Q
 
 from apps.general.models import AbstractBaseModel
 from core.utils.choices import Direction, YesNo
@@ -42,7 +42,7 @@ class RouteSection(AbstractBaseModel):
     upper_limit_flight_level = FlightLevelField(default=999)
     minimum_rnav_flight_level = FlightLevelField(null=True, blank=True)
     rnav_rnp = models.CharField("RNAV/RNP Type", max_length=50, null=True, blank=True)
-    mag_track = models.DecimalField("Magnetic Track", decimal_places=3, max_digits=4)
+    mag_track = models.DecimalField("Magnetic Track", decimal_places=1, max_digits=4)
     lateral_limit = models.PositiveSmallIntegerField("Lateral limit (NM)")
     track_coloration = models.BooleanField("Track Coloration", default=True, choices=YesNo)
     domestic_only = models.BooleanField("Domestic Flights Only", default=False, choices=YesNo)
@@ -67,7 +67,13 @@ class RouteSection(AbstractBaseModel):
 
     def clean(self):
         if self.has_related_object("point1") and self.has_related_object("point2"):
-            if RouteSection.objects.filter(F(point1=self.point1) | F(point2=self.point2)).exists():
+            if (
+                RouteSection.objects.filter(
+                    Q(route=self.route) & (Q(point1=self.point1) | Q(point2=self.point2))
+                )
+                .exclude(pk=self.pk)  # Exclude current instance if it's being updated
+                .exists()
+            ):
                 raise ValidationError(
                     message=(
                         "There is another route-section which has the same "

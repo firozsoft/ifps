@@ -44,7 +44,8 @@ class RouteScheme(BaseModel):
         return f"{self.start} to {self.end}"
 
     def save(self, *args, **kwargs):
-        self.not_approved_levels = ",".join(
-            map(str.strip, self.not_approved_levels.replace("F", "").split(","))
-        )
+        if self.not_approved_levels:
+            self.not_approved_levels = ",".join(
+                map(str.strip, self.not_approved_levels.replace("F", "").split(","))
+            )
         return super().save(*args, **kwargs)
