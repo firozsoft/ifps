@@ -34,23 +34,23 @@ class NavAidType(models.TextChoices):
 
 
 class NavAidUseCase(models.TextChoices):
-    IN_ROUTE = "in_route"
-    IN_AIRPORT = "in_airport"
-    BOTH = "both"
+    IN_ROUTE = "in_route", "In Route"
+    IN_AIRPORT = "in_airport", "In Airport"
+    BOTH = "both", "Both"
 
 
 class NotamType(models.TextChoices):
-    NEW = "new"
-    CANCELING = "canceling"
-    REPLACEMENT = "replacement"
+    NEW = "new", "New"
+    CANCELING = "canceling", "Canceling"
+    REPLACEMENT = "replacement", "Replacement"
 
 
 class RouteSchemeFlightNature(models.TextChoices):
-    LANDING = "landing"
-    DEPARTURE = "departure"
-    DOMESTIC = "domestic"
-    TRANSITION = "transition"
-    OTHER = "other"
+    LANDING = "landing", "Landing"
+    DEPARTURE = "departure", "Departure"
+    DOMESTIC = "domestic", "Domestic"
+    TRANSITION = "transition", "Transition"
+    OTHER = "other", "Other"
 
 
 class LevelUnit(models.TextChoices):

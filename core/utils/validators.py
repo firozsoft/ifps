@@ -4,7 +4,7 @@ from . import regex_patterns
 
 coordinate_validator = RegexValidator(
     regex=rf"({regex_patterns.COR_DEGREES})|({regex_patterns.COR_DEG_MINS})",
-    message="Coordinate must be either in DM(7 characters) or DMS(11 characters)",
+    message="Coordinate must be either in DM(7 characters) or DMS(11 characters). e.g: 46N078W, 4602N07805W",
     code="invalid_coordinate",
 )
 
