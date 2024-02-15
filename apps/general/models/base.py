@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.db import models
 
 from core.utils.choices import YesNo
@@ -30,7 +29,7 @@ class BaseModel(AbstractBaseModel):
 
 class FIR(BaseModel):
     indicator = models.CharField("ICAO Four Letters", max_length=4, unique=True, validators=[fir_validator])
-    is_adjacent = models.BooleanField(choices=YesNo, help_text=f"Is adjacent to {settings.FIR_INDICATOR}")
+    adjacent_firs = models.ManyToManyField("self")
     # shape = models.PolygonField(null=True, blank=True)
 
     class Meta:

@@ -119,7 +119,7 @@ def check_fir_and_get_its_boundary_points(fir: FIR, err_dict: dict[str, list[str
         err_dict["logical_error"].append(f"FIR {fir} is not active (look at EET/).")
         return
 
-    if not fir.is_adjacent:
+    if fir not in FIR.objects.get(indicator=settings.FIR_INDICATOR).adjacent_firs:
         err_dict["logical_error"].append(
             f"FIR {fir} is Nonadjacent to {settings.FIR_INDICATOR} (look at EET/)."
         )
@@ -251,7 +251,7 @@ def found_boundary_limit(data, existing_points, existing_sections, err, for_next
             pass
         except MultipleObjectsReturned:
             err["logical_error"].append(
-                f"Point {point_name} has more than 2 FIRs. " "Please Inform Administration."
+                f"Point {point_name} has more than 2 FIRs. <Please Inform Administration>."
             )
         else:
             # Here is before entry point Or after exit point and this point is out side of our FIR
@@ -265,7 +265,7 @@ def found_boundary_limit(data, existing_points, existing_sections, err, for_next
                 pass
             except MultipleObjectsReturned:
                 err["logical_error"].append(
-                    f"Point {point_name} has more than 2 FIRs. " "Please Inform Administration."
+                    f"Point {point_name} has more than 2 FIRs. <Please Inform Administration>."
                 )
             else:
                 # Here is before exit point Or after entry point and this point is inside our FIR
