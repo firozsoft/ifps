@@ -3,11 +3,9 @@ import json
 import zipfile
 from datetime import datetime
 
-import pandas as pd
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
-from django.forms import model_to_dict
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
@@ -15,9 +13,8 @@ from django.views.decorators.http import require_http_methods
 from core.analyzers.logical_checks import logical_check
 from core.analyzers.regexer import regex_parse
 from core.utils.helpers import (
-    field_value_normalize,
     get_app_all_models,
-    get_model_class_and_fields,
+    model_to_excel_bytesio,
 )
 
 
@@ -75,42 +72,6 @@ def submission(request: HttpRequest) -> JsonResponse:
     if msg.startswith("(FPL"):
         return fpl_scrutinization(request, msg)
     return JsonResponse({"Error": "text must be an AFTN FPL message"})
-
-
-def model_to_excel_bytesio(model_name: str) -> io.BytesIO:
-    # Get the model class and fields
-    model_class, model_fields, expected_fields_for_excel, required_fields = get_model_class_and_fields(
-        model_name
-    )
-
-    exportable_fields = [model_field.name for model_field in model_fields]
-
-    # Retrieve data from the database
-    # excel columns have to be field.verbose_name.upper and they'r values should be human readable
-    # but model_to_dict dict is a key value pair of model field.name and field.value
-    # the logic below is used to change dict key from field.name to field.verbose_name
-    field_name_to_vbname = {
-        model_field.name: model_field.verbose_name.upper() for model_field in model_fields
-    }
-    field_name_to_obj = {model_field.name: model_field for model_field in model_fields}
-    data = [
-        {
-            field_name_to_vbname[field]: field_value_normalize(field_name_to_obj[field], value)
-            for field, value in model_to_dict(instance, fields=exportable_fields).items()
-        }
-        for instance in model_class.objects.all()
-    ]
-
-    # Create a DataFrame from the data
-    df = pd.DataFrame(data=data, columns=expected_fields_for_excel)
-
-    # Create a BytesIO object to store the Excel file
-    excel_buffer = io.BytesIO()
-
-    # Write the DataFrame to the BytesIO object as an Excel file
-    df.to_excel(excel_buffer, index=False)
-
-    return excel_buffer
 
 
 @staff_member_required

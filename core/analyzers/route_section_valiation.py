@@ -6,19 +6,19 @@ def check_altitude(level, db_section: RouteSection, err):
     if db_section.minimum_safe_altitude and level < db_section.minimum_safe_altitude:
         err["logical_error"].append(
             "Invalid altitude. Minimun Safe Altitude for"
-            f"route {db_section.route.name} - btw {db_section.point1.name} & {db_section.point2.name} is"
+            f"route {db_section.route.indicator} - btw {db_section.point1.indicator} & {db_section.point2.indicator} is"
             f"{db_section.minimum_safe_altitude}."
         )
     if db_section.lower_limit_altitude and level < db_section.lower_limit_altitude:
         err["logical_error"].append(
             "Invalid altitude. Minimun Limit Altitude for"
-            f"route {db_section.route.name} - btw {db_section.point1.name} & {db_section.point2.name} is"
+            f"route {db_section.route.indicator} - btw {db_section.point1.indicator} & {db_section.point2.indicator} is"
             f"{db_section.lower_limit_altitude}."
         )
     if db_section.upper_limit_altitude and level > db_section.upper_limit_altitude:
         err["logical_error"].append(
             "Invalid altitude. Upper Limit Altitude for"
-            f"route {db_section.route.name} - btw {db_section.point1.name} & {db_section.point2.name} is"
+            f"route {db_section.route.indicator} - btw {db_section.point1.indicator} & {db_section.point2.indicator} is"
             f"{db_section.lower_limit_altitude}."
         )
 
@@ -28,19 +28,19 @@ def check_flight_level(level, db_section: RouteSection, err):
     if db_section.minimum_safe_flight_level and level < db_section.minimum_safe_flight_level:
         err["logical_error"].append(
             "Invalid flight level. Minimun Safe Flight Level for"
-            f"route {db_section.route.name} - btw {db_section.point1.name} & {db_section.point2.name} is"
+            f"route {db_section.route.indicator} - btw {db_section.point1.indicator} & {db_section.point2.indicator} is"
             f"{db_section.minimum_safe_flight_level}."
         )
     if db_section.lower_limit_flight_level and level < db_section.lower_limit_flight_level:
         err["logical_error"].append(
             "Invalid flight level. Minimun Limit Flight Level for"
-            f"route {db_section.route.name} - btw {db_section.point1.name} & {db_section.point2.name} is"
+            f"route {db_section.route.indicator} - btw {db_section.point1.indicator} & {db_section.point2.indicator} is"
             f"{db_section.lower_limit_flight_level}."
         )
     if db_section.upper_limit_flight_level and level > db_section.upper_limit_flight_level:
         err["logical_error"].append(
             "Invalid flight level. Upper Limit Flight Level for"
-            f"route {db_section.route.name} - btw {db_section.point1.name} & {db_section.point2.name} is"
+            f"route {db_section.route.indicator} - btw {db_section.point1.indicator} & {db_section.point2.indicator} is"
             f"{db_section.lower_limit_flight_level}."
         )
 
@@ -55,20 +55,20 @@ def validate_fpl_route_section(fpl_section, db_section: RouteSection, data, err)
     # RouteSection Activity Check
     if not db_section.is_active:
         err["logical_error"].append(
-            f"Route {db_section.route.name} - btw {db_section.point1.name} & "
-            f"{db_section.point2.name} is unavailable."
+            f"Route {db_section.route.indicator} - btw {db_section.point1.indicator} & "
+            f"{db_section.point2.indicator} is unavailable."
         )
 
     # RouteSection Direction Check
-    if db_section.direction == "to" and fpl_section["from"] != db_section.point2.name:
+    if db_section.direction == "to" and fpl_section["from"] != db_section.point2.indicator:
         err["logical_error"].append(
             "Invalid path direction. Please follow the specified direction rules."
-            f"Route {db_section.route.name} - {db_section.point1.name} to {db_section.point2.name}"
+            f"Route {db_section.route.indicator} - {db_section.point1.indicator} to {db_section.point2.indicator}"
         )
-    elif db_section.direction == "from" and fpl_section["from"] != db_section.point1.name:
+    elif db_section.direction == "from" and fpl_section["from"] != db_section.point1.indicator:
         err["logical_error"].append(
             "Invalid path direction. Please follow the specified direction rules."
-            f"Route {db_section.route.name} - {db_section.point1.name} from {db_section.point2.name}"
+            f"Route {db_section.route.indicator} - {db_section.point1.indicator} from {db_section.point2.indicator}"
         )
 
     # TODO: let's have meeting with the authorities to decide how to implement these checks
@@ -89,13 +89,13 @@ def validate_fpl_route_section(fpl_section, db_section: RouteSection, data, err)
     if db_section.domestic_only and (not domestic_departure or not domestic_destination):
         err["logical_error"].append(
             "Invalid path usage."
-            f"Route {db_section.route.name} - btw {db_section.point1.name} & {db_section.point2.name}"
+            f"Route {db_section.route.indicator} - btw {db_section.point1.indicator} & {db_section.point2.indicator}"
             "is available only to domestic flights."
         )
 
     if db_section.not_for_over_flights and (not domestic_departure and not domestic_destination):
         err["logical_error"].append(
             "Invalid path usage."
-            f"Route {db_section.route.name} - {db_section.point1.name} btw {db_section.point2.name}"
+            f"Route {db_section.route.indicator} - {db_section.point1.indicator} btw {db_section.point2.indicator}"
             "is not available to overflights."
         )

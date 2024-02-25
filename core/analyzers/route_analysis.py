@@ -107,7 +107,7 @@ def analyse_points_used_to_locate_ad_in_item18(
                 )
 
     existing_mentioned_points_as_ad = {
-        point.name: point
+            point.indicator: point
         for point in Point.objects.filter(name__in=mentioned_points_as_ad).prefetch_related("fir")
     }
 
@@ -200,10 +200,10 @@ def found_boundary_point(
         )
         new_section = copy.deepcopy(r_section)
         if not for_next:
-            new_section["from"] = boundary_point.name
+            new_section["from"] = boundary_point.indicator
             data["route"] = [new_section] + data["route"][index + 1 :]
         else:
-            new_section["to"] = boundary_point.name
+            new_section["to"] = boundary_point.indicator
             data["route"] = data["route"][:index] + [new_section]
         return True
     return False
@@ -278,7 +278,7 @@ def found_boundary_limit(data, existing_points, existing_sections, err, for_next
             return
 
     for index, r_section in enumerate(data["route"]):
-        if b4_bh_boundary_point.name in r_section[to_from]:
+        if b4_bh_boundary_point.indicator in r_section[to_from]:
             if b4_bh_boundary_point.is_fir_boundary:
                 # So it says: entry_point is the b4_or_after_boundary_point, entry_section is this section
                 data["route"] = data["route"][index:] if not for_next else data["route"][: index + 1]
@@ -311,7 +311,7 @@ def route_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err:
     )
 
     existing_mentioned_points: dict[str, Point] = {
-        point.name: point
+        point.indicator: point
         for point in Point.objects.filter(name__in=mentioned_points_in_route).prefetch_related("fir")
     }
 
@@ -349,17 +349,17 @@ def route_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err:
     # real-data sections also some sections of the filled data may not need to be checked (invalid point, dct, etc.)
 
     existing_sections_dict = {
-        (sec.route.name, sec.point1.name, sec.point2.name): sec for sec in existing_sections
+        (sec.route.indicator, sec.point1.indicator, sec.point2.indicator): sec for sec in existing_sections
     }
 
-    fpl_routes = {
+    fpl_route_sections = {
         route_section
         for route_section in data["route"]
         if "section_doesnt_need_check" not in route_section or (route_section["via"] not in ("", "DCT"))
     }
 
     fpl_section_and_its_nested_real_sections = {}
-    for fpl_route_section in fpl_routes:
+    for fpl_route_section in fpl_route_sections:
         try:
             real_sections = find_all_nested_real_sections(fpl_route_section, existing_sections_dict)
         except ValidationError as e:
