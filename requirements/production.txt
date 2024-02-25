@@ -4,3 +4,4 @@ openpyxl
 python-decouple
 dj-database-url
 networkx
+docutils
