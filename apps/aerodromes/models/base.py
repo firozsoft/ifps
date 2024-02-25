@@ -10,28 +10,27 @@ class AerodromeProperties(AbstractBaseModel):
         verbose_name="Aerodrome",
         related_name="%(class)ss",
         on_delete=models.CASCADE,
+        db_index=True,
     )
-    date = models.DateField("Date")
-    start_time = models.TimeField("Start Time")
-    end_time = models.TimeField("End Time")
+    start = models.DateTimeField()
+    end = models.DateTimeField()
 
     class Meta:
         abstract = True
-        ordering = ("aerodrome", "date")
-        indexes = [models.Index(fields=["aerodrome", "date"])]
+        ordering = ("aerodrome", "start")
         constraints = [
             models.UniqueConstraint(
                 name="unique_%(class)s",
-                fields=["aerodrome", "date", "start_time", "end_time"],
+                fields=["aerodrome", "start", "end"],
             ),
         ]
 
     def __str__(self):
-        return f"{self.aerodrome} - {self.date}"
+        return f"{self.aerodrome} - {self.start} - {self.end}"
 
     def clean(self):
-        if self.start_time > self.end_time:
+        if self.start > self.end:
             raise ValidationError(
-                message="Start time can not be greater than End time",
-                code="ad_times_start_greater_than_end",
+                message="Start datetime can not be greater than end datetime.",
+                code="ad_restriction_start_greater_than_end",
             )

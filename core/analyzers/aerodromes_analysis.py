@@ -14,13 +14,10 @@ import re
 from typing import Union
 
 from django.conf import settings
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 
 from apps.aerodromes.models import (
     Aerodrome,
-    Curfew,
-    DailyOperationalHour,
-    TemporaryClosure,
 )
 from core.utils.regex_patterns import AERODROME
 
@@ -44,41 +41,43 @@ def _check_aerodrome_operational_hours(
     flight_date = flight_datetime.date()
     flight_time = flight_datetime.time()
 
-    try:
-        op_hours = aerodrome.dailyoperationalhours.get(date=flight_date)
-    except DailyOperationalHour.DoesNotExist:
-        return
+    op_hours = aerodrome.dailyoperationalhours.filter(date=flight_date)
+    if op_hours.count() > 1:
+        err["logical_error"].append(
+            f"Inform Administration: More than one daily operational hours settings exists for {aerodrome} at date {flight_date}."
+        )
 
-    opr_start = op_hours.start_time
-    opr_end = op_hours.end_time
+    too_early_or_too_late = None
 
+    too_early_or_too_late = op_hours.filter(
+        Q(start_time__gt=flight_time) | Q(end_time__lt=flight_time)
+    ).fist()
     if flight_rule == "VFR":
-        opr_start = op_hours.vfr_start_time
-        opr_end = op_hours.vfr_end_time
+        too_early_or_too_late = op_hours.filter(
+            Q(vfr_start_time__gt=flight_time) | Q(vfr_end_time__lt=flight_time)
+        ).fist()
 
-    if not (opr_start < flight_time < opr_end):
+    if too_early_or_too_late is not None:
+        msg = f"Your departure/arrival time {flight_time} at {aerodrome} is not in aerodrome's operational hours."
+        if flight_rule == "VFR":
+            msg += f"({too_early_or_too_late.vfr_start_time} & {too_early_or_too_late.vfr_end_time})."
+        else:
+            msg += f"({too_early_or_too_late.start_time} & {too_early_or_too_late.end_time})."
+
         if not aerodrome.aur:
-            err["logical_error"].append(
-                f"Your estimated time {flight_time} at {aerodrome} is not in aerodrome's operational hours,"
-                f" ({opr_start} till {opr_end}), and aerodrome is not available upon request. "
-            )
+            err["logical_error"].append(msg)
+        else:
+            err["warning"].append(msg + ", but this aerodrome is available upon request.")
 
 
 def _check_aerodrome_temporarily_closure(
     aerodrome: Aerodrome, flight_datetime: datetime, err: dict[str, list[str]]
 ):
-    flight_date = flight_datetime.date()
-    flight_time = flight_datetime.time()
+    temp_closures = list(
+        aerodrome.temporaryclosures.filter(start__lte=flight_datetime, end__gte=flight_datetime)
+    )
 
-    try:
-        temp_closure = aerodrome.temporaryclosures.get(
-            date=flight_date,
-            start_time__lte=flight_time,
-            end_time__gte=flight_time,
-        )
-    except TemporaryClosure.DoesNotExist:
-        pass
-    else:
+    for temp_closure in temp_closures:
         err["logical_error"].append(
             f"{aerodrome} is temporary closed, {temp_closure.start_time} till {temp_closure.end_time}."
         )
@@ -91,20 +90,13 @@ def _check_aerodrome_curfew(
     data_rmk: str,
     err: dict[str, list[str]],
 ):
-    flight_date = flight_datetime.date()
-    flight_time = flight_datetime.time()
+    curfews = list(aerodrome.curfews.filter(start__lte=flight_datetime, end__gte=flight_datetime))
 
-    try:
-        curfew = aerodrome.curfews.get(
-            date=flight_date, start_time__lte=flight_time, end_time__gte=flight_time
-        )
-    except Curfew.DoesNotExist:
-        return
-
-    if not any([True for sts in data_sts if sts in curfew.acceptable_sts]) or not any(
-        [True for rmk in curfew.acceptable_rmk if rmk in data_rmk]
-    ):
-        err["logical_error"].append(f"{aerodrome} curfew time, {curfew.start_time} till {curfew.end_time}.")
+    for curfew in curfews:
+        if not any([True for sts in data_sts if sts in curfew.acceptable_sts]) or not any(
+            [True for rmk in curfew.acceptable_rmk if rmk in data_rmk]
+        ):
+            err["logical_error"].append(f"{aerodrome} curfew time, {curfew.start} till {curfew.end}.")
 
 
 def _analyse(
