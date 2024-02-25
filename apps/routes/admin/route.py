@@ -6,8 +6,8 @@ from apps.routes.models import Route
 
 @admin.register(Route)
 class RouteAdmin(admin.ModelAdmin):
-    search_fields = ["name"]
+    search_fields = ["indicator"]
     fields = [
-        "name",
+        "indicator",
         "is_active",
     ]

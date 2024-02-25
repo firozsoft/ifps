@@ -17,11 +17,11 @@ class CurfewAdmin(AerodromePropertiesAdmin):
             },
         ),
         (
-            "Exception STS",
+            "Exception(s) as STS",
             {"fields": (("hosp", "head", "sar", "ffr", "hazmat", "med_evac"),)},
         ),
         (
-            "Exception RMK",
+            "Exception(s) as RMK",
             {
                 "fields": (
                     (

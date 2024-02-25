@@ -26,12 +26,14 @@ class Aerodrome(BasePoint):
         max_length=8,
         choices=AerodromeType.choices,
         default=AerodromeType.AIRPORT,
+        help_text=f"Choices: {', '.join(tp[1] for tp in AerodromeType.choices)}",
     )
     ifr_vfr = models.CharField(
         "IFR/VFR Flight Operation",
         max_length=7,
         choices=AerodromeFlightType.choices,
         default=AerodromeFlightType.IFR_VFR,
+        help_text=f"Choices: {', '.join(tp[1] for tp in AerodromeFlightType.choices)}",
     )
     is_international = models.BooleanField(verbose_name="Is International", choices=YesNo, default=True)
     aur = models.BooleanField("Available Upon Request", choices=YesNo, default=True)

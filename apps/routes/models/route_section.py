@@ -18,12 +18,22 @@ class FlightLevelField(models.PositiveSmallIntegerField):
 
 
 class RouteSection(AbstractBaseModel):
-    route = models.ForeignKey("routes.Route", related_name="sections", on_delete=models.CASCADE)
+    route = models.ForeignKey(
+        "routes.Route",
+        related_name="sections",
+        on_delete=models.CASCADE,
+    )
     point1 = models.ForeignKey(
-        "points.Point", on_delete=models.CASCADE, verbose_name="First Point", related_name="route_sections1"
+        "points.Point",
+        on_delete=models.CASCADE,
+        verbose_name="First Point",
+        related_name="route_sections_as_p1",
     )
     point2 = models.ForeignKey(
-        "points.Point", on_delete=models.CASCADE, verbose_name="Second Point", related_name="route_sections2"
+        "points.Point",
+        on_delete=models.CASCADE,
+        verbose_name="Second Point",
+        related_name="route_sections_as_p2",
     )
     # line = models.LineStringField(null=True, blank=True)
     direction = models.CharField(
@@ -31,7 +41,10 @@ class RouteSection(AbstractBaseModel):
         max_length=7,
         choices=Direction.choices,
         default=Direction.TO_FROM,
-        help_text="Direction between first & second points (either `from` p1 toward p2 Or `to` p1 coming out of p2)",
+        help_text=(
+            "Direction between first & second points (either `from` p1 toward p2 Or `to` p1 coming out of p2). "
+            f"Choices: {', '.join(tp[1] for tp in Direction.choices)}"
+        ),
     )
     distance = models.DecimalField("Distance(NM)", default=1, decimal_places=3, max_digits=4)
     minimum_safe_altitude = FlightLevelField(null=True, blank=True)
@@ -44,7 +57,7 @@ class RouteSection(AbstractBaseModel):
     rnav_rnp = models.CharField("RNAV/RNP Type", max_length=50, null=True, blank=True)
     mag_track = models.DecimalField("Magnetic Track", decimal_places=1, max_digits=4)
     lateral_limit = models.PositiveSmallIntegerField("Lateral limit (NM)")
-    track_coloration = models.BooleanField("Track Coloration", default=True, choices=YesNo)
+    track_coloration = models.BooleanField("Track Correlation", default=True, choices=YesNo)
     domestic_only = models.BooleanField("Domestic Flights Only", default=False, choices=YesNo)
     not_for_over_flights = models.BooleanField("Not For OverFlights", default=False, choices=YesNo)
     remark = models.TextField("Remarks", null=True, blank=True)
@@ -62,11 +75,8 @@ class RouteSection(AbstractBaseModel):
     def __str__(self) -> str:
         return f"{self.route} between {self.point1} and {self.point2}"
 
-    def has_related_object(self, fk_field):
-        return hasattr(self, fk_field) and self.__getattribute__(fk_field) is not None
-
     def clean(self):
-        if self.has_related_object("point1") and self.has_related_object("point2"):
+        if all((getattr(self, "point1"), getattr(self, "point2"))):
             if (
                 RouteSection.objects.filter(
                     Q(route=self.route) & (Q(point1=self.point1) | Q(point2=self.point2))

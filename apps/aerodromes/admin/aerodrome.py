@@ -40,13 +40,13 @@ class AerodromeAdmin(BasePointAdmin):
         "iatacode",
         ("coordinate", "latitude", "longitude"),
         # "location",
+        "fir",
         "type",
         "ifr_vfr",
         "is_international",
-        "is_active",
         "aur",
-        "fir",
         "is_fir_boundary",
+        "is_active",
     ]
 
     inlines = [CurfewInline, TemporaryClosureInline, DailyOperationalHourInline]

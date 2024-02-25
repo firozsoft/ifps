@@ -7,7 +7,7 @@ from apps.points.models import NavAid
 @admin.register(NavAid)
 class NavAidAdmin(BasePointAdmin):
     fields = (
-        "name",
+        "indicator",
         "plain_language_name",
         "type",
         "is_active",
@@ -19,14 +19,15 @@ class NavAidAdmin(BasePointAdmin):
         # "fir_boundaries",
     )
     list_display = (
-        "name",
+        "__str__",
+        "indicator",
         "plain_language_name",
         "type",
         "coordinate",
         "use_case",
         "is_active",
     )
-    search_fields = ("name", "plain_language_name", "type", "coordinate")
+    search_fields = ("indicator", "plain_language_name", "type", "coordinate")
     list_filter = ("type", "use_case", "is_active")
     # filter_horizontal = ("fir_boundaries",)
     autocomplete_fields = ("fir",)

@@ -5,4 +5,4 @@ from apps.routes.models import RouteScheme
 
 @admin.register(RouteScheme)
 class RouteSchemeAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["__str__"]
