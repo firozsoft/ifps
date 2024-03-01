@@ -48,7 +48,17 @@ def dms2dd(coordinate: str) -> tuple[Decimal, Decimal]:
     return convertor(*lat), convertor(*long)
 
 
-def generate_route_from_route_scheme_text(string: str) -> list[str]:
+def get_geo_coordinate(coordinate: str):
+    latitude, longitude = dms2dd(coordinate)
+    # location = GEOSGeometry(
+    #     f"POINT({longitude} {latitude})",
+    #     srid=4326,
+    # )
+    # return latitude, longitude, location
+    return latitude, longitude
+
+
+def generate_routes_from_route_scheme_text(string: str) -> list[str]:
     return list(map(" ".join, product(*map(lambda s: s.split("/"), string.split()))))
 
 
