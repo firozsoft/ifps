@@ -179,7 +179,8 @@ def field_value_codeword(field, human_readable_value) -> str | models.QuerySet:
 
     if isinstance(field, models.ForeignKey):
         dunder_str = map(str.strip, human_readable_value.split("-"))
-        if len(dunder_str) == 3:  # Only for NavAid the __str__ returns "indicator - type - use_case"
+        if len(dunder_str) == 3:
+            # Only for NavAid the __str__ returns "indicator - type - use_case"
             name, type_display, use_case_display = dunder_str
             type = [
                 choice_value
