@@ -1,6 +1,11 @@
 from django.core.validators import RegexValidator
 
 from . import regex_patterns
+type_of_aircraft_validator = RegexValidator(
+    regex=regex_patterns.TYPE_OF_AIRCRAFT,
+    message="Ac. type doesn't fit as specified in Doc 8643 ICAO pulications Aircraft Type Designators.",
+    code="invalid_type_of_aircraft",
+)
 
 coordinate_validator = RegexValidator(
     regex=rf"({regex_patterns.COR_DEGREES})|({regex_patterns.COR_DEG_MINS})",

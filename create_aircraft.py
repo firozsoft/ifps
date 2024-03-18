@@ -1,0 +1,32 @@
+import json
+
+from apps.general.models import Aircraft
+
+command = """
+curl -d "" -H "Content-Type: application/json" https://www4.icao.int/doc8643/External/AircraftTypes >> ac_type.json
+"""
+
+rename = {
+    "Designator": "type",
+    "ModelFullName": "model",
+    "AircraftDescription": "variant",
+    "ManufacturerCode": "manufacturer",
+    "Description": "description",
+    "EngineType": "engine_type",
+    "EngineCount": "engine_count",
+    "WTC": "weakturbulence_category",
+}
+
+objects = list()
+cleaned_objects = list()
+with open("./ac_type.json", "r") as fl:
+    for ac in json.load(fl):
+        objects.append(Aircraft(**{rename[key]: value for key, value in ac.items() if key in rename}))
+for obj in objects:
+    try:
+        obj.full_clean()
+        cleaned_objects.append(obj)
+    except Exception:
+        pass
+
+Aircraft.objects.bulk_create(cleaned_objects)

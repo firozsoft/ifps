@@ -7,12 +7,12 @@ This mudole contains RegexPatterns matching the items of flight plan as prescrib
 """
 
 AERODROME = r"^(?![IJXQ])(?P<aerodrome>[A-Z]{4})$"
-FIR = AERODROME.replace("<aerodrome>", "fir")
-
+FIR = AERODROME.replace("<aerodrome>", "<fir></fir>")
+AFTN_ADDRESS = AERODROME.replace("<aerodrome>", "") + r"\w{4}"
 
 # ? ITEM 7: AIRCRAFT IDENTIFICATION (MAXIMUM 7 CHARACTERS)
 # not exceeding 7 alphanumeric characters
-CALLSIGN = r"^[A-Z\d]{2,7}$"
+AIRCRAFT_IDENTIFICATION = r"^[A-Z\d]{2,7}$"
 
 
 # ? ITEM 8: FLIGHT RULES AND TYPE OF FLIGHT (ONE OR TWO CHARACTERS)
@@ -38,6 +38,7 @@ FLIGHT_RULE_TYPE = r"^(?P<flight_rule>[I,V,Y,Z])(?P<flight_type>[S,N,G,M,X]?)$"
 # * Type of aircraft (2 to 4 characters)
 # TODO: The appropriate designator as specified in Doc 8643, Aircraft Type Designators, or if no such designator has been assigned, or in case of formation flights comprising more than one type, ZZZZ, and SPECIFY in Item 18, the (numbers and) type(s) of aircraft preceded by TYP/
 # * Wake turbulence category (1 character)
+TYPE_OF_AIRCRAFT = r"^(?P<type>[A-Z\d]{2,4})$"
 AC_NUMBER_TYPE_WAKE = r"^(?P<numbers>\d{0,2})(?P<type>[A-Z\d]{2,4})\/(?P<weak>[H,M,L,J])$"
 
 

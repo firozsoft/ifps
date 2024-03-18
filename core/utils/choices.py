@@ -65,6 +65,12 @@ class SidStarType(models.TextChoices):
     STAR = "STAR", "STAR"
     SID_STAR = "SID_STAR", "SID/STAR"
 
+class WeakturbulenceCategory(models.TextChoices):
+    LIGHT = "L", "L"
+    MEDIUM = "M", "M"
+    HEAVY = "H", "H"
+    SUPER_HEAVY = "J", "J"
+
 
 # def LevelRange() -> NumericRange:
 #     return NumericRange(0, 650)

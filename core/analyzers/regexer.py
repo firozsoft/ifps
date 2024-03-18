@@ -258,7 +258,7 @@ def regex_parse(
     errors = None
     err: dict[str, list[str | None]] = {"syntax_error": []}
 
-    if not (call_sign := re.match(regex_patterns.CALLSIGN, row_data["call_sign"])):
+    if not (call_sign := re.match(regex_patterns.AIRCRAFT_IDENTIFICATION, row_data["call_sign"])):
         err["syntax_error"].append(f"Invalid call-sign({row_data['call_sign']}).")
     else:
         regex_parsed_data["call_sign"] = call_sign.group()
