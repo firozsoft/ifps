@@ -16,20 +16,19 @@ from typing import Union
 from django.conf import settings
 from django.db.models import Q, QuerySet
 
-from apps.aerodromes.models import (
-    Aerodrome,
-)
+from apps.aerodromes.models import Aerodrome
+from apps.general.models.aircraft import Aircraft
 from core.utils.regex_patterns import AERODROME
 
-HELIPORTS_ACCEPTABLE_AC_TYPES = ["HEL", "B212", "B412"]
+
+def _get_heliport_acceptable_types():
+    return set(Aircraft.objects.filter(variant="Helicopter").values_list("type", flat=True))
 
 
 def _check_flight_type_acceptable(ad: Aerodrome, ac_type: str, err: dict[str, list[str]]) -> None:
+    HELIPORTS_ACCEPTABLE_AC_TYPES = _get_heliport_acceptable_types()
     if ad.type == "heliport" and ac_type not in HELIPORTS_ACCEPTABLE_AC_TYPES:
-        err["logical_error"].append(
-            f"{ad} is HELIPORT and isn't applicable for {ac_type}; "
-            f"accepted types are {HELIPORTS_ACCEPTABLE_AC_TYPES}."
-        )
+        err["logical_error"].append(f"{ad} is HELIPORT and isn't available for {ac_type}.")
 
 
 def _check_aerodrome_operational_hours(
@@ -44,7 +43,8 @@ def _check_aerodrome_operational_hours(
     op_hours = aerodrome.dailyoperationalhours.filter(date=flight_date)
     if op_hours.count() > 1:
         err["logical_error"].append(
-            f"Inform Administration: More than one daily operational hours settings exists for {aerodrome} at date {flight_date}."
+            "Inform Administration: "
+            f"More than one daily operational hours settings exists for {aerodrome} at date {flight_date}."
         )
 
     too_early_or_too_late = None
@@ -119,25 +119,41 @@ def _analyse(
 
 def _get_aerodromes(indicators: list[str], err: dict[str, list[str]]) -> list[Union[Aerodrome, None]]:
     """getting dep, dest and alternate aerodromes"""
-    aerodromes: QuerySet = Aerodrome.objects.filter(indicator__in=indicators).prefetch_related(
+
+    aerodromes_qs: QuerySet[Aerodrome] = Aerodrome.objects.filter(indicator__in=indicators).prefetch_related(
         "dailyoperationalhours", "temporaryclosures", "curfews", "sid_stars"
     )
-    aerodrome_four_letters_list = list(aerodromes.values_list("indicator", flat=True))
+
     # convert aerodromes to has-map to optimize db calls
-    aerodromes: dict[str, Aerodrome] = {aerodrome.indicator: aerodrome for aerodrome in aerodromes}
+    aerodromes_dict: dict[str, Aerodrome] = {aerodrome.indicator: aerodrome for aerodrome in aerodromes_qs}
 
-    for inx, indicator in enumerate(indicators):
+    # To preserve the order according to the given indicators order
+    aerodromes = list()
+
+    for indicator in indicators:
         if indicator in ("ZZZZ", "AFIL", None) or indicator[:2] != settings.FIR_INDICATOR[:2]:
-            # Indicator is not for a domestic aerodrome
-            aerodrome_four_letters_list.insert(inx, None)
-        elif indicator not in aerodrome_four_letters_list:
+            # Indicator is not for a domestic aerodrome, so no need for futher checks so insert None
+            aerodromes.append(None)
+        elif indicator not in aerodromes_dict:
+            # Seems indicator is miss spelled, unable to do further checks so insert None
             err["logical_error"].append(f"Aerodrome {indicator} does not exist.")
-            aerodrome_four_letters_list.insert(inx, None)
+            aerodromes.append(None)
+        else:
+            aerodromes.append(aerodromes_dict.get(indicator, None))
 
-    return [
-        None if four_letters is None else aerodromes[four_letters]
-        for four_letters in aerodrome_four_letters_list
-    ]
+    return aerodromes
+
+
+def _sid_star_check(sid_star_name: str, type_: str, ad: Aerodrome, err: dict[str, list[str]]) -> None:
+    sid_star = ad.sid_stars.filter(name=sid_star_name).first()
+    if sid_star is None:
+        err["logical_error"].append(f"{type_} {sid_star_name} does not exist.")
+    else:
+        if not sid_star.is_active:
+            err["logical_error"].append(f"{type_} {sid_star_name} is not active.")
+
+        if type_ not in sid_star.type:
+            err["logical_error"].append(f"{sid_star_name}({sid_star.type}) is not of type {type_}.")
 
 
 def aerodromes_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err: dict[str, list[str]]):
@@ -169,7 +185,8 @@ def aerodromes_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]],
                 extra_ad_to_check.append(re.match(AERODROME, data[key.lower()]).groupdict().get("aerodrome"))
 
     aerodromes = _get_aerodromes(
-        [data[key] for key in ("departure_ad", "destination_ad", "alt_ad_1", "alt_ad_2")] + extra_ad_to_check,
+        [data.get(key, None) for key in ("departure_ad", "destination_ad", "alt_ad_1", "alt_ad_2")]
+        + extra_ad_to_check,
         err,
     )
 
@@ -202,20 +219,9 @@ def aerodromes_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]],
                 data.get("rmk", []),
             )
 
-    def _sid_star_check(sid_star_name: str, type_: str, ad: Aerodrome) -> None:
-        sid_star = ad.sid_stars.filter(name=sid_star_name).first()
-        if sid_star is None:
-            err["logical_error"].append(f"{type_} {sid_star_name} does not exist.")
-        else:
-            if not sid_star.is_active:
-                err["logical_error"].append(f"{type_} {sid_star_name} is not active.")
-
-            if type_ not in sid_star.type:
-                err["logical_error"].append(f"{sid_star_name}({sid_star.type}) is not of type {type_}.")
-
     if departure_ad is not None:
-        if domestic_departure and data["sid"] is not None:
-            _sid_star_check(data["sid"], "SID", departure_ad)
+        if domestic_departure and data.get("sid", None) is not None:
+            _sid_star_check(data["sid"], "SID", departure_ad, err)
 
         if not domestic_destination and not (departure_ad.is_international and departure_ad.aur):
             err["logical_error"].append(
@@ -223,8 +229,8 @@ def aerodromes_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]],
             )
 
     if destination_ad is not None:
-        if domestic_destination and data["star"] is not None:
-            _sid_star_check(data["star"], "STAR", destination_ad)
+        if domestic_destination and data.get("star", None) is not None:
+            _sid_star_check(data["star"], "STAR", destination_ad, err)
 
         if not domestic_departure and not (destination_ad.is_international and destination_ad.aur):
             err["logical_error"].append(

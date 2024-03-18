@@ -33,7 +33,7 @@ from django.db.models import Q
 from apps.general.models import FIR
 from apps.points.models import Point
 from apps.routes.models import RouteSection
-from core.analyzers.route_section_valiation import validate_fpl_route_section
+from core.analyzers.route_section_validation import validate_fpl_route_section
 from core.utils.regex_patterns import AERODROME, SIG_POINT
 
 
@@ -56,7 +56,8 @@ def retrieve_point_name_and_add_to_dict(dct: dict, key: str, value: str = ""):
     matched = re.match(SIG_POINT, key)
     if matched is not None:
         point_name = matched.groupdict().get("point", matched.groupdict().get("ref_point", None))
-        # if SIG_POINT is not a POINT or BEARING_DISTANCE then there's no ref_point so point_name is None
+        # if SIG_POINT is not a POINT or BEARING_DISTANCE then there's no `point` or `ref_point` so
+        # point_name is None
         if point_name is not None:
             dct[point_name] = value
 
@@ -70,7 +71,7 @@ def check_points_exists_and_are_active(points, existing_points, data_dict, err_d
             err_dict["logical_error"].append(f"Point {point_actual_name} does not exist{text}.")
             for route_section in data_dict["route"]:
                 if point_reference_in_fpl in (route_section["from"], route_section["to"]):
-                    route_section["section_doesnt_need_check"] = True
+                    route_section["nonessential"] = True
         elif not point_obj.is_active:
             err_dict["logical_error"].append(f"Point {point_actual_name} is not active{text}.")
 
@@ -82,6 +83,7 @@ def analyse_points_used_to_locate_ad_in_item18(
     domestic_destination = data["domestic_destination"]
 
     mentioned_points_as_ad: dict[str, str] = {}  # {point_name: message}
+
     if domestic_departure and data["departure_ad"] in ("ZZZZ", "AFIL"):
         # Possible use of Point or BearingDistance in item 18 for DEP/
         retrieve_point_name_and_add_to_dict(
@@ -107,8 +109,8 @@ def analyse_points_used_to_locate_ad_in_item18(
                 )
 
     existing_mentioned_points_as_ad = {
-            point.indicator: point
-        for point in Point.objects.filter(name__in=mentioned_points_as_ad).prefetch_related("fir")
+        point.indicator: point
+        for point in Point.objects.filter(indicator__in=mentioned_points_as_ad).prefetch_related("fir")
     }
 
     check_points_exists_and_are_active(mentioned_points_as_ad, existing_mentioned_points_as_ad, data, err)
@@ -117,12 +119,6 @@ def analyse_points_used_to_locate_ad_in_item18(
 def check_fir_and_get_its_boundary_points(fir: FIR, err_dict: dict[str, list[str]]):
     if not fir.is_active:
         err_dict["logical_error"].append(f"FIR {fir} is not active (look at EET/).")
-        return
-
-    if fir not in FIR.objects.get(indicator=settings.FIR_INDICATOR).adjacent_firs:
-        err_dict["logical_error"].append(
-            f"FIR {fir} is Nonadjacent to {settings.FIR_INDICATOR} (look at EET/)."
-        )
         return
 
     return fir.points.filter(is_fir_boundary=True)
@@ -209,9 +205,10 @@ def found_boundary_point(
     return False
 
 
-def found_boundary_limit(data, existing_points, existing_sections, err, for_next):
+def found_boundary_limit(data, existing_points, existing_sections, err, for_next: bool):
     """Finds and Limits the flight planed route to the boundary of Our FIR
-    for_next: bool - is used to slice the EET and control the flow of code
+    for_next: bool: looking boundary of previous or next fir -
+    is used to slice the EET and control the flow of code
     """
     # * In python booleans are also integers, so it's possible to use them for list slicing
     # sample: EET/XXXX0000 OBBI0140 OIIX0220
@@ -224,6 +221,7 @@ def found_boundary_limit(data, existing_points, existing_sections, err, for_next
         neighbor_firs_indicators = list(map(lambda string: string[:4], eets[for_next:]))
         neighbor_fir_indicator = neighbor_firs_indicators[(not for_next) * -1]
         neighbor_fir = FIR.objects.filter(indicator=neighbor_fir_indicator).prefetch_related("points").first()
+
     elif not for_next:
         # In case of flights departing from a neighbor FIR they omit the previous FIR in EET, so we check that
         neighbor_fir = (
@@ -299,7 +297,7 @@ def route_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err:
     domestic_destination = data["domestic_destination"]
 
     if not eet_is_correct(data, err) and (not domestic_departure or not domestic_destination):
-        # without correct EET it's not possible to detect route section withing our FIR
+        # without correct EET it's impossible to detect route section withing our FIR
         return
 
     analyse_points_used_to_locate_ad_in_item18(data, err)
@@ -312,7 +310,7 @@ def route_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err:
 
     existing_mentioned_points: dict[str, Point] = {
         point.indicator: point
-        for point in Point.objects.filter(name__in=mentioned_points_in_route).prefetch_related("fir")
+        for point in Point.objects.filter(indicator__in=mentioned_points_in_route).prefetch_related("fir")
     }
 
     # To preserve the order of points as they're mentioned in the FPL
@@ -326,10 +324,10 @@ def route_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err:
     fpl_routes = {
         route_section["via"]
         for route_section in data["route"]
-        if "section_doesnt_need_check" not in route_section or (route_section["via"] not in ("", "DCT"))
+        if "nonessential" not in route_section or (route_section["via"] not in ("", "DCT"))
     }
 
-    existing_sections = RouteSection.objects.filter(route__name__in=fpl_routes).prefetch_related(
+    existing_sections = RouteSection.objects.filter(route__indicator__in=fpl_routes).prefetch_related(
         "route", "point1", "point2"
     )
 
@@ -355,7 +353,7 @@ def route_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err:
     fpl_route_sections = {
         route_section
         for route_section in data["route"]
-        if "section_doesnt_need_check" not in route_section or (route_section["via"] not in ("", "DCT"))
+        if "nonessential" not in route_section or (route_section["via"] not in ("", "DCT"))
     }
 
     fpl_section_and_its_nested_real_sections = {}

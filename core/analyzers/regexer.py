@@ -74,11 +74,11 @@ def _check_item_is_valid_point_or_location(item, previous, res, segments, err):
 
     if matched.groupdict().get("location"):
         previous = {"type": "location", "item": matched.groupdict().get("location")}
-        segments[-1]["section_doesnt_need_check"] = True
+        segments[-1]["nonessential"] = True
         if matched.groupdict().get("ref_point"):
             res["ref_points"].append(matched.groupdict().get("ref_point"))
             # TODO: check if the line below is required ro delete it
-            # segments[-1].pop("section_doesnt_need_check", None)
+            # segments[-1].pop("nonessential", None)
 
     elif matched.groupdict().get("point"):
         previous = {"type": "point", "item": matched.groupdict().get("point")}
@@ -108,7 +108,7 @@ def _check_item_is_valid_route_or_dct_or_ifr_vfr(item, previous, res, segments, 
     elif item == "DCT":
         previous = {"type": "dct", "item": "DCT"}
         segments[-1]["via"] = "DCT"
-        segments[-1]["section_doesnt_need_check"] = True
+        segments[-1]["nonessential"] = True
 
     elif item in ("IFR", "VFR") and re.match(regex_patterns.CHANGE_FLT_RULE, f"{previous['item']} {item}"):
         if res["flight_rule"] not in ("Y", "Z"):
@@ -232,7 +232,7 @@ def route_regex_parse(
             continue
         if previous["type"] == "location":
             # current item can be a location or dct => this means there's no predefined route section used here
-            segments[-1]["section_doesnt_need_check"] = True
+            segments[-1]["nonessential"] = True
             if item == "DCT":
                 previous = {"type": "dct", "item": "DCT"}
                 segments[-1]["via"] = "DCT"

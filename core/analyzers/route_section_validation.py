@@ -50,7 +50,7 @@ def validate_fpl_route_section(fpl_section, db_section: RouteSection, data, err)
 
     # Sample
     # fpl_route_section = {"from": "PON", "to": "URION", "via": "DCT", "speed": "M078", "level": "F330",
-    # "top_level": "F330", "flight_rule": "I", "section_doesnt_need_check": "true"}
+    # "top_level": "F330", "flight_rule": "I", "nonessential": "true"}
 
     # RouteSection Activity Check
     if not db_section.is_active:
