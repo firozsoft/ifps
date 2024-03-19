@@ -66,5 +66,27 @@ class SidStarType(models.TextChoices):
     SID_STAR = "SID_STAR", "SID/STAR"
 
 
+class FlightRules(models.TextChoices):
+    IFR = "I", "I"
+    VFR = "V", "V"
+    IFR_VFR = "Y", "Y"
+    VFR_IFR = "Z", "Z"
+
+
+class FlightType(models.TextChoices):
+    SCHEDULED_AIR_SERVICE = "S", "S"
+    ON_SCHEDULED_AIR_TRANSPORT_OPERATION = "N", "N"
+    GENERAL_AVIATION = "G", "G"
+    MILITARY = "M", "M"
+    OTHER = "X", "X"
+
+
+class WeakturbulenceCategory(models.TextChoices):
+    LIGHT = "L", "L"
+    MEDIUM = "M", "M"
+    HEAVY = "H", "H"
+    SUPER_HEAVY = "J", "J"
+
+
 # def LevelRange() -> NumericRange:
 #     return NumericRange(0, 650)

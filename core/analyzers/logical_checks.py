@@ -3,7 +3,7 @@ from typing import Union
 
 from django.conf import settings
 
-from . import aerodromes_analysis, route_analysis
+from core.analyzers import aerodromes_analysis, route_analysis
 
 
 def logical_check(data: dict[str, Union[bool, str, list[dict[str, str]]]]):

@@ -5,4 +5,5 @@ from apps.general.models import Aircraft
 
 @admin.register(Aircraft)
 class AircraftAdmin(admin.ModelAdmin):
-    search_fields = ("type",)
+    search_fields = ["type", "model", "manufacturer"]
+    list_filter = ["variant", "engine_count"]

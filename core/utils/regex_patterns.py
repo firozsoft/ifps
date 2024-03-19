@@ -7,12 +7,12 @@ This mudole contains RegexPatterns matching the items of flight plan as prescrib
 """
 
 AERODROME = r"^(?![IJXQ])(?P<aerodrome>[A-Z]{4})$"
-FIR = AERODROME.replace("<aerodrome>", "fir")
-
+FIR = AERODROME.replace("<aerodrome>", "<fir></fir>")
+AFTN_ADDRESS = AERODROME.replace("<aerodrome>", "") + r"\w{4}"
 
 # ? ITEM 7: AIRCRAFT IDENTIFICATION (MAXIMUM 7 CHARACTERS)
 # not exceeding 7 alphanumeric characters
-CALLSIGN = r"^[A-Z\d]{2,7}$"
+AIRCRAFT_IDENTIFICATION = r"^[A-Z\d]{2,7}$"
 
 
 # ? ITEM 8: FLIGHT RULES AND TYPE OF FLIGHT (ONE OR TWO CHARACTERS)
@@ -29,6 +29,8 @@ CALLSIGN = r"^[A-Z\d]{2,7}$"
 # M  if military
 # X  if other than any of the defined categories above.
 # TODO: Specify status of a flight following the indicator STS in Item 18, or when necessary to denote other reasons for specific handling by ATS, indicate the reason following the indicator RMK in Item 18.
+FLIGHT_RULE = r"^(?P<flight_rule>[I,V,Y,Z])$"
+FLIGHT_TYPE = r"^(?P<flight_type>[S,N,G,M,X]?)$"
 FLIGHT_RULE_TYPE = r"^(?P<flight_rule>[I,V,Y,Z])(?P<flight_type>[S,N,G,M,X]?)$"
 
 
@@ -38,6 +40,7 @@ FLIGHT_RULE_TYPE = r"^(?P<flight_rule>[I,V,Y,Z])(?P<flight_type>[S,N,G,M,X]?)$"
 # * Type of aircraft (2 to 4 characters)
 # TODO: The appropriate designator as specified in Doc 8643, Aircraft Type Designators, or if no such designator has been assigned, or in case of formation flights comprising more than one type, ZZZZ, and SPECIFY in Item 18, the (numbers and) type(s) of aircraft preceded by TYP/
 # * Wake turbulence category (1 character)
+TYPE_OF_AIRCRAFT = r"^(?P<type>[A-Z\d]{2,4})$"
 AC_NUMBER_TYPE_WAKE = r"^(?P<numbers>\d{0,2})(?P<type>[A-Z\d]{2,4})\/(?P<weak>[H,M,L,J])$"
 
 
@@ -116,7 +119,13 @@ AC_NUMBER_TYPE_WAKE = r"^(?P<numbers>\d{0,2})(?P<type>[A-Z\d]{2,4})\/(?P<weak>[H
 # * Example:  ADE3RV/HB2U2V2G1
 
 # Note 2.— Additional surveillance equipment or capabilities will be listed in Item 18 following the indicator SUR/, as required by the appropriate ATS authority
-EQUIPMENTS_CAPACITIES = r"^(?P<equipments>(N|S|A|B|C|D|E1|E2|E3|F|G|H|I|J[1-7]|K|L|M[1-3]|O|P[1-9]|R|T|U|V|W|X|Y|Z)+)\/(?P<capacities>(A|C|E|H|I|L|P|S|X|B1|B2|U1|U2|V1|V2|D1|G1){0,20})$"
+EQUIPMENTS = r"^(?P<equipments>(N|S)|(A|B|C|D|E1|E2|E3|F|G|H|I|J[1-7]|K|L|M[1-3]|O|P[1-9]|R|T|U|V|W|X|Y|Z)+)$"
+CAPACITIES = r"^(?P<capacities>((N|S)|((A|C|E|H|I|L|P|S|X)?(B1|B2)?(U1|U2)?(V1|V2)?(D1|G1)?){1,20}))$"
+
+EQUIPMENTS_CAPACITIES = r"^{equipments}\/{capacities}$".format(
+    equipments=EQUIPMENTS.replace(r"^", "").replace(r"$", ""),
+    capacities=CAPACITIES.replace(r"^", "").replace(r"$", ""),
+)
 
 
 # ? ITEM 13: DEPARTURE AERODROME AND TIME (8 CHARACTERS)
@@ -146,7 +155,9 @@ SPEED = r"^(?P<speed>(K(0|1)\d{3})|(N0\d{3})|(M(0\d\d|10\d)))$"
 # for uncontrolled VFR flights, the letters VFR.
 LEVEL = r"^(?P<level>(F\d\d[0,5])|(S\d{3}0)|(A\d\d[0,5])|(M\d{4})|(VFR))$"
 
-SPEED_LEVEL = r"^{spd}{lvl}$".format(spd=SPEED.replace(r"^", "").replace(r"$", ""), lvl=LEVEL.replace(r"^", "").replace(r"$", ""))
+SPEED_LEVEL = r"^{spd}{lvl}$".format(
+    spd=SPEED.replace(r"^", "").replace(r"$", ""), lvl=LEVEL.replace(r"^", "").replace(r"$", "")
+)
 
 
 # * (c) Route (including changes of speed, level and/or flight rules)
@@ -171,7 +182,7 @@ POINT = r"^(?!(DCT|IFR|VFR)$)(?P<point>[A-Z]{2,5}$)"
 
 # ? Bearing and distance from a reference point (point which has a designator)
 BEARING_DIST = r"^(?P<bearing_dist>({pnt})(([0-2]\d\d)|(3[0-5]\d))[0-2]\d\d)$".format(
-        pnt=POINT.replace(r"^", "").replace(r"$", "").replace("<point>", "<ref_point>")
+    pnt=POINT.replace(r"^", "").replace(r"$", "").replace("<point>", "<ref_point>")
 )
 
 # ? Points that don't have assigned indicator - referred to as special point
@@ -421,7 +432,7 @@ TALT = DEP.replace("DEP", "TALT", 2)
 
 # fmt: off
 RIF = (
-    rf"\b(?P<RIF>\w+\s(?P<revised_dest_ad>[A-Z]{{4}}))$"
+    r"\b(?P<RIF>\w+\s(?P<revised_dest_ad>[A-Z]{4}))$"
     + r"(?!("
     + r"|".join(_other_switches("RIF"))
     + r"))$"
