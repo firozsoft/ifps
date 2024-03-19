@@ -148,21 +148,21 @@ def _get_aerodromes(indicators: list[str], err: dict[str, list[str]]) -> list[Un
     return aerodromes
 
 
-def _sid_star_check(sid_star_name: str, type_: str, ad: Aerodrome, err: dict[str, list[str]]) -> None:
+def _sid_star_check(sid_star_name: str, type_: str, ad: Aerodrome, exp: dict[str, list[str]]) -> None:
     try:
         sid_star = ad.sid_stars.get(name=sid_star_name)
     except ObjectDoesNotExist:
-        err["logical_error"].append(f"{type_} {sid_star_name} does not exist.")
+        exp["logical_error"].append(f"{type_} {sid_star_name} does not exist.")
     except MultipleObjectsReturned:
-        err["logical_error"].append(f"Pleas inform administration about: {sid_star_name} has duplication.")
-    except Exception as err:
-        raise Exception(f"Pleas inform administration about: {err}")
+        exp["logical_error"].append(f"Pleas inform administration about: {sid_star_name} has duplication.")
+    except Exception as exp:
+        exp["logical_error"].append(f"Pleas inform administration about: {exp}")
     else:
         if not sid_star.is_active:
-            err["logical_error"].append(f"{type_} {sid_star_name} is not active.")
+            exp["logical_error"].append(f"{type_} {sid_star_name} is not active.")
 
         if type_ not in sid_star.type:
-            err["logical_error"].append(f"{sid_star_name}({sid_star.type}) can't be used as {type_}.")
+            exp["logical_error"].append(f"{sid_star_name}({sid_star.type}) can't be used as {type_}.")
 
 
 def aerodromes_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err: dict[str, list[str]]):
