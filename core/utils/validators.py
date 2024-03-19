@@ -1,10 +1,35 @@
 from django.core.validators import RegexValidator
 
 from . import regex_patterns
+
+aftn_address_validator = RegexValidator(
+    regex=regex_patterns.AFTN_ADDRESS,
+    message="AFTN addresses must be 8 characters and not starting with neither of I,J,X,Q.",
+    code="invalid_aftn_address",
+)
+
+aftn_addresses_validator = RegexValidator(
+    regex="(" + regex_patterns.AFTN_ADDRESS + r"\s?)+",
+    message="AFTN addresses must be 8 characters and not starting with neither of I,J,X,Q.",
+    code="invalid_aftn_addresses",
+)
+
+aircraft_identification_validator = RegexValidator(
+    regex=regex_patterns.AIRCRAFT_IDENTIFICATION,
+    message="Aircraft identification must consists 2 to 7 characters.",
+    code="invalid_aircraft_identification",
+)
+
 type_of_aircraft_validator = RegexValidator(
     regex=regex_patterns.TYPE_OF_AIRCRAFT,
     message="Ac. type doesn't fit as specified in Doc 8643 ICAO pulications Aircraft Type Designators.",
     code="invalid_type_of_aircraft",
+)
+
+equipments_validators = RegexValidator(
+    regex=regex_patterns.EQUIPMENTS_CAPACITIES,
+    message="Radio/Nav/Com equipments Or Surveillance equipments doesn't fit as specified in Doc 4444.",
+    code="invalid_equipments",
 )
 
 coordinate_validator = RegexValidator(
@@ -33,8 +58,26 @@ sid_star_name_validator = RegexValidator(
 
 aerodrome_validator = RegexValidator(
     regex=regex_patterns.AERODROME,
-    message="",
+    message="Aerodrome indicator is not valid.",
     code="invalid_aerodrome_indicator",
+)
+
+speed_validator = RegexValidator(
+    regex=regex_patterns.SPEED,
+    message="Speed is not valid syntax.",
+    code="invalid_speed",
+)
+
+level_validator = RegexValidator(
+    regex=regex_patterns.LEVEL,
+    message="Level is not valid syntax.",
+    code="invalid_level",
+)
+
+teet_validator = RegexValidator(
+    regex=r"(?P<teet>\d\d\d\d)",
+    message="TEET must be a 4-digit number, where the first two digits represent hours and the last two represent minutes.",
+    code="invalid_teet",
 )
 
 fir_validator = RegexValidator(

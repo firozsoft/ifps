@@ -10,12 +10,10 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
+from apps.general.forms import FlightPlanForm
 from core.analyzers.logical_checks import logical_check
 from core.analyzers.regexer import regex_parse
-from core.utils.helpers import (
-    get_app_all_models,
-    model_to_excel_bytesio,
-)
+from core.utils.helpers import get_app_all_models, model_to_excel_bytesio
 
 
 class CustomLoginView(LoginView):
@@ -58,8 +56,14 @@ def fpl_scrutinization(request, msg: str) -> JsonResponse:
         return JsonResponse({"internal_error": exp.__repr__()}, status=500)
 
     if err:
-        return JsonResponse(err, status=400)
+        # return JsonResponse(err, status=400)
+        return render(request, "pages/index.html", {"data": json.dumps(err)})
 
+    print(res)
+    # TODO: use data of res (dict) and FlightPlanForm to save a new FPL in database
+    form = FlightPlanForm(res)
+    if form.is_valid():
+        form.save()
     return render(request, "pages/index.html", {"data": json.dumps(res)})
 
 
