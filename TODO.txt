@@ -1,2 +1,4 @@
 - create a user activity tracker -> who did what and who cased the crash, who used the system most and so on
 - create a user dashboard - when wast last login/log out, last activity, number of plans cheked, number of crashes, ...
+
+- to get list of aircraft types from ICAO: `curl -d "" -H "Content-Type: application/json" https://www4.icao.int/doc8643/External/AircraftTypes >> ac_type.json`
