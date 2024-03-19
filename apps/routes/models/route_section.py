@@ -73,7 +73,7 @@ class RouteSection(AbstractBaseModel):
         verbose_name_plural = "Route Sections"
 
     def __str__(self) -> str:
-        return f"{self.route} between {self.point1} and {self.point2}"
+        return f"{self.route} btw {self.point1} & {self.point2}"
 
     def clean(self):
         if all((getattr(self, "point1"), getattr(self, "point2"))):
