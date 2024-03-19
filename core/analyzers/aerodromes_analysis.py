@@ -14,11 +14,12 @@ import re
 from typing import Union
 
 from django.conf import settings
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db.models import Q, QuerySet
 
 from apps.aerodromes.models import Aerodrome
 from apps.general.models.aircraft import Aircraft
-from core.utils.regex_patterns import AERODROME
+from core.utils import regex_patterns
 
 
 def _get_heliport_acceptable_types():
@@ -52,6 +53,7 @@ def _check_aerodrome_operational_hours(
     too_early_or_too_late = op_hours.filter(
         Q(start_time__gt=flight_time) | Q(end_time__lt=flight_time)
     ).fist()
+
     if flight_rule == "VFR":
         too_early_or_too_late = op_hours.filter(
             Q(vfr_start_time__gt=flight_time) | Q(vfr_end_time__lt=flight_time)
@@ -120,9 +122,11 @@ def _analyse(
 def _get_aerodromes(indicators: list[str], err: dict[str, list[str]]) -> list[Union[Aerodrome, None]]:
     """getting dep, dest and alternate aerodromes"""
 
-    aerodromes_qs: QuerySet[Aerodrome] = Aerodrome.objects.filter(indicator__in=indicators).prefetch_related(
-        "dailyoperationalhours", "temporaryclosures", "curfews", "sid_stars"
-    )
+    aerodromes_qs: QuerySet[Aerodrome] = Aerodrome.objects.filter(indicator__in=indicators)
+    # TODO: according Django docs, calling filter on prefetch_related will result in new db querying so using prefetch_related here may just result in useless overhead - check it
+    # .prefetch_related(
+    #     "dailyoperationalhours", "temporaryclosures", "curfews", "sid_stars"
+    # )
 
     # convert aerodromes to has-map to optimize db calls
     aerodromes_dict: dict[str, Aerodrome] = {aerodrome.indicator: aerodrome for aerodrome in aerodromes_qs}
@@ -145,15 +149,20 @@ def _get_aerodromes(indicators: list[str], err: dict[str, list[str]]) -> list[Un
 
 
 def _sid_star_check(sid_star_name: str, type_: str, ad: Aerodrome, err: dict[str, list[str]]) -> None:
-    sid_star = ad.sid_stars.filter(name=sid_star_name).first()
-    if sid_star is None:
+    try:
+        sid_star = ad.sid_stars.get(name=sid_star_name)
+    except ObjectDoesNotExist:
         err["logical_error"].append(f"{type_} {sid_star_name} does not exist.")
+    except MultipleObjectsReturned:
+        err["logical_error"].append(f"Pleas inform administration about: {sid_star_name} has duplication.")
+    except Exception as err:
+        raise Exception(f"Pleas inform administration about: {err}")
     else:
         if not sid_star.is_active:
             err["logical_error"].append(f"{type_} {sid_star_name} is not active.")
 
         if type_ not in sid_star.type:
-            err["logical_error"].append(f"{sid_star_name}({sid_star.type}) is not of type {type_}.")
+            err["logical_error"].append(f"{sid_star_name}({sid_star.type}) can't be used as {type_}.")
 
 
 def aerodromes_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err: dict[str, list[str]]):
@@ -181,8 +190,9 @@ def aerodromes_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]],
     extra_ad_to_check = []
     for key in ("DEP", "DEST", "ALTN", "RALT", "TALT"):
         if key.lower() in data and (domestic_departure or domestic_destination):
-            if re.match(AERODROME, data[key.lower()]) is not None:
-                extra_ad_to_check.append(re.match(AERODROME, data[key.lower()]).groupdict().get("aerodrome"))
+            item18_ad = re.match(regex_patterns.AERODROME, data[key.lower()])
+            if item18_ad is not None:
+                extra_ad_to_check.append(item18_ad.groupdict().get("aerodrome"))
 
     aerodromes = _get_aerodromes(
         [data.get(key, None) for key in ("departure_ad", "destination_ad", "alt_ad_1", "alt_ad_2")]
