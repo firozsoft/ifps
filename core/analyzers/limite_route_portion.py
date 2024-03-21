@@ -106,7 +106,8 @@ def successfully_limited_route_portion(
         )
         return False
 
-    db_section = db_sections.first()
+    # TODO: check using select_related helps or worsen querying
+    db_section = db_sections.select_related("point1", "point2").first()
     boundary_point = db_section.point1 if db_section.point1.is_fir_boundary else db_section.point2
 
     # Using the dict/list mutability feature
