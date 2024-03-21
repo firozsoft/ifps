@@ -55,8 +55,8 @@ class RouteSection(AbstractBaseModel):
     upper_limit_flight_level = FlightLevelField(default=999)
     minimum_rnav_flight_level = FlightLevelField(null=True, blank=True)
     rnav_rnp = models.CharField("RNAV/RNP Type", max_length=50, null=True, blank=True)
-    mag_track = models.DecimalField("Magnetic Track", decimal_places=1, max_digits=4)
-    lateral_limit = models.PositiveSmallIntegerField("Lateral limit (NM)")
+    mag_track = models.DecimalField("Magnetic Track", decimal_places=1, max_digits=4, null=True, blank=True)
+    lateral_limit = models.PositiveSmallIntegerField("Lateral limit (NM)", null=True, blank=True)
     track_coloration = models.BooleanField("Track Correlation", default=True, choices=YesNo)
     domestic_only = models.BooleanField("Domestic Flights Only", default=False, choices=YesNo)
     not_for_over_flights = models.BooleanField("Not For OverFlights", default=False, choices=YesNo)
@@ -68,6 +68,7 @@ class RouteSection(AbstractBaseModel):
         constraints = [
             models.UniqueConstraint(fields=["route", "point1"], name="unique_route_and_point1"),
             models.UniqueConstraint(fields=["route", "point2"], name="unique_route_and_point2"),
+            models.UniqueConstraint(fields=["route", "point1", "point2"], name="unique_route_and_points"),
         ]
         verbose_name = "Route Section"
         verbose_name_plural = "Route Sections"

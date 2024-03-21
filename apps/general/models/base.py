@@ -59,6 +59,7 @@ class BasePoint(BaseModel):
     coordinate = models.CharField(
         validators=[coordinate_validator],
         max_length=15,
+        unique=True,
     )
     latitude = models.DecimalField(
         max_digits=10,
