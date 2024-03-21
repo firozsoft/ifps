@@ -33,7 +33,7 @@ class RouteSection(AbstractBaseModel):
         "points.Point",
         on_delete=models.CASCADE,
         verbose_name="Second Point",
-        related_name="as_p1_route_sections",
+        related_name="as_p2_sections",
     )
     # line = models.LineStringField(null=True, blank=True)
     direction = models.CharField(
