@@ -16,7 +16,7 @@ class BaseRoute(BaseModel):
 
     class Meta:
         abstract = True
-        ordering = ("indicator",)
+        ordering = ["indicator"]
         indexes = [models.Index(fields=["indicator"])]
 
     def __str__(self) -> str:

@@ -27,13 +27,13 @@ class RouteSection(AbstractBaseModel):
         "points.Point",
         on_delete=models.CASCADE,
         verbose_name="First Point",
-        related_name="route_sections_as_p1",
+        related_name="as_p1_sections",
     )
     point2 = models.ForeignKey(
         "points.Point",
         on_delete=models.CASCADE,
         verbose_name="Second Point",
-        related_name="route_sections_as_p2",
+        related_name="as_p1_route_sections",
     )
     # line = models.LineStringField(null=True, blank=True)
     direction = models.CharField(

@@ -15,7 +15,7 @@ class Point(BasePoint):
     class Meta(BasePoint.Meta):
         verbose_name = "Point"
         verbose_name_plural = "Points"
-        ordering = ("indicator",)
+        ordering = ["indicator"]
         indexes = [models.Index(fields=["indicator"])]
 
     def __str__(self) -> str:

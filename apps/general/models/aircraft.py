@@ -20,9 +20,10 @@ class Aircraft(BaseModel):
     weakturbulence_category = models.CharField(max_length=1, choices=WeakturbulenceCategory.choices)
 
     class Meta:
-        ordering = ("type",)
+        ordering = ["type"]
         verbose_name = "Aircraft"
         verbose_name_plural = "Aircraft"
+        indexes = [models.Index(fields=["type"])]
 
     def __str__(self) -> str:
         return f"{self.type} - {self.model} - {self.manufacturer}"

@@ -28,17 +28,29 @@ class BaseModel(AbstractBaseModel):
 
 
 class FIR(BaseModel):
-    indicator = models.CharField("ICAO Four Letters", max_length=4, unique=True, validators=[fir_validator])
-    adjacent_firs = models.ManyToManyField("self")
+    indicator = models.CharField(
+        "ICAO Four Letters",
+        max_length=4,
+        unique=True,
+        validators=[fir_validator],
+    )
     # shape = models.PolygonField(null=True, blank=True)
 
     class Meta:
-        ordering = ("indicator",)
         verbose_name = "FIR"
         verbose_name_plural = "FIRs"
+        ordering = ["indicator"]
+        indexes = [models.Index(fields=["indicator"])]
 
     def __str__(self):
         return self.indicator
+
+    @property
+    def boundary_points(self):
+        return self.points.filter(is_fir_boundary=True)
+
+    def get_common_boundary_points(self, other_fir):
+        return self.boundary_points.filter(pk__in=other_fir.boundary_points.values_list("pk", flat=True))
 
 
 class BasePoint(BaseModel):

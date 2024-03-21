@@ -41,7 +41,7 @@ class Aerodrome(BasePoint):
     class Meta(BasePoint.Meta):
         verbose_name = "Aerodrome"
         verbose_name_plural = "Aerodromes"
-        ordering = ("indicator",)
+        ordering = ["indicator"]
         indexes = [models.Index(fields=["indicator"])]
 
     def __str__(self):
