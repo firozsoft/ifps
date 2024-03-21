@@ -32,7 +32,7 @@ from django.core.exceptions import ValidationError
 from apps.general.models import FIR
 from apps.points.models import Point
 from apps.routes.models import RouteSection
-from core.analyzers.limite_route_portion import successfully_limited_route_portion
+from core.analyzers.limit_route_portion import successfully_limited_route_portion
 from core.analyzers.route_section_validation import validate_fpl_route_section
 from core.utils.regex_patterns import AERODROME, SIG_POINT
 
@@ -176,7 +176,7 @@ def route_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err:
     points_mentioned_in_route = retrieve_point_name_from_fpl_route_section(data)
 
     # In addition to points mentioned in the route section, there might be some points in item18 of the FPL
-    points_used_to_locate_ads_in_item18 = retrieve_points_used_to_locate_ad_in_item18(data, err)
+    points_used_to_locate_ads_in_item18 = retrieve_points_used_to_locate_ad_in_item18(data)
 
     all_existing_points: dict[str, tuple[Point, set[str]]] = {
         point.indicator: (point, set(point.fir.values_list("indicator", flat=True)))
@@ -184,8 +184,8 @@ def route_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err:
             indicator__in=(
                 *points_mentioned_in_route.keys(),
                 *points_used_to_locate_ads_in_item18.keys(),
-            ).prefetch_related("fir")
-        )
+            )
+        ).prefetch_related("fir")
     }
 
     check_points_exists_and_are_active(points_mentioned_in_route, all_existing_points, data, err)
@@ -226,13 +226,17 @@ def route_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err:
 
     route_portion_to_be_checked = copy.deepcopy(data["route"])
 
-    if not domestic_departure and not successfully_limited_route_portion(
-        our_fir, previous_fir, route_portion_to_be_checked, all_existing_points, "Entry", data["eet"], err
-    ):
-        return
-    if not domestic_destination and not successfully_limited_route_portion(
-        our_fir, next_fir, route_portion_to_be_checked, all_existing_points, "Exit", data["eet"], err
-    ):
+    if not domestic_departure:
+        route_portion_to_be_checked = successfully_limited_route_portion(
+            our_fir, previous_fir, route_portion_to_be_checked, all_existing_points, "Entry", data["eet"], err
+        )
+
+    if not domestic_destination:
+        route_portion_to_be_checked = successfully_limited_route_portion(
+            our_fir, next_fir, route_portion_to_be_checked, all_existing_points, "Exit", data["eet"], err
+        )
+
+    if not route_portion_to_be_checked:
         return
 
     # Here route_portion_to_be_checked must only contain the route portion within our FIR

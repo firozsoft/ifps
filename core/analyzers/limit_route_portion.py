@@ -1,6 +1,7 @@
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 
 from apps.general.models.base import FIR
+from apps.routes.models.route_section import RouteSection
 
 
 def successfully_limited_route_portion(
@@ -30,16 +31,13 @@ def successfully_limited_route_portion(
             - Entry fpl route section is the current section containing that point.
             - using neighbor_fir common_boundaries and the route of this section, find boundary point.
             - set that boundary point as fpl_route[0]["from"]
-
-    - NOTE: 'fpl_route' and its sections are mutable, so changes made to them will persist globally.
-
     """
 
     if neighbor_fir is None:
         err["logical_error"].append(
-            f"{entry_or_exit} point to {our_fir} can not be determined using adjacent FIR(1)."
+            f"{entry_or_exit} point to {our_fir} can not be determined based on adjacent FIRs(1)."
         )
-        return False
+        return []
 
     common_boundaries: QuerySet = our_fir.get_common_boundary_points(neighbor_fir)
 
@@ -47,7 +45,7 @@ def successfully_limited_route_portion(
         err["logical_error"].append(
             f"Either {neighbor_fir} is Nonadjacent to {our_fir} or Boundary points can not be determined."
         )
-        return False
+        return []
 
     # for entry point to_or_from must be "from", for exit point it must be "to"
     to_or_from = "to" if entry_or_exit == "Exit" else "from"
@@ -62,8 +60,11 @@ def successfully_limited_route_portion(
         # in case of departures from adjacent FIRs they may omit Previous FIR in EET
         previous_firs_indicators.add(neighbor_fir.indicator)
 
+    # NOTE: enumerate doesn't make a copy of original iterable
+    # NOTE: use shallow copy so altering section will affect the copy list as well
+    fpl_route_copy = fpl_route[::]
     for index, section in enumerate(fpl_route):
-        if point_data := existing_points.get(section[to_or_from], None):
+        if point_data := existing_points.get(section["to"], None):
             point_firs = point_data[1]
             """
             - Find boundary_section to then edit it's to/from point and keep in mind it's mutable
@@ -71,45 +72,39 @@ def successfully_limited_route_portion(
             - Delete nonessential portions of fpl_route where exists
             """
             if entry_or_exit == "Entry" and not previous_firs_indicators.intersection(point_firs):
-                try:
-                    boundary_section, boundary_route = fpl_route[index - 1], fpl_route[index - 1]["via"]
-                    if boundary_route in ("", "DCT"):
-                        continue
-                    fpl_route = fpl_route[index - 1 :]
-                    break
-                except IndexError:
-                    # Incase of departures from adjacent FIRs - No nonessential portions for fpl_route exists
-                    boundary_section, boundary_route = section, fpl_route[index]["via"]
-                    if boundary_route in ("", "DCT"):
-                        continue
-                    break
+                boundary_section, boundary_route = fpl_route[index], fpl_route[index]["via"]
+                if boundary_route in ("", "DCT"):
+                    continue
+                fpl_route_copy = fpl_route[index:]
+                break
 
             if entry_or_exit == "Exit" and next_firs_indicators.intersection(point_firs):
                 boundary_section, boundary_route = fpl_route[index], fpl_route[index]["via"]
                 if boundary_route in ("", "DCT"):
                     continue
-                fpl_route = fpl_route[: index + 1]
+                fpl_route_copy = fpl_route[: index + 1]
                 break
     else:
         err["logical_error"].append(
-            f"{entry_or_exit} point to {our_fir} can not be determined using adjacent FIR(2)."
+            f"{entry_or_exit} point to {our_fir} can not be determined from route data."
         )
-        return False
+        return []
 
-    qs1 = common_boundaries.as_p1_route_sections.filter(route__indicator=boundary_route, point2__fir=our_fir)
-    qs2 = common_boundaries.as_p2_route_sections.filter(route__indicator=boundary_route, point1__fir=our_fir)
-    db_sections = qs1.union(qs2)
+    db_sections = RouteSection.objects.filter(
+        Q(point1__in=common_boundaries, route__indicator=boundary_route, point2__fir=our_fir)
+        | Q(point2__in=common_boundaries, route__indicator=boundary_route, point1__fir=our_fir)
+    ).distinct()
 
     if db_sections.count() != 1:
         err["logical_error"].append(
-            f"{entry_or_exit} point to {our_fir} can not be determined using adjacent FIR(3)."
+            f"{entry_or_exit} point to {our_fir} can not be determined based on adjacent FIR(2)."
         )
-        return False
+        return []
 
     # TODO: check using select_related helps or worsen querying
     db_section = db_sections.select_related("point1", "point2").first()
     boundary_point = db_section.point1 if db_section.point1.is_fir_boundary else db_section.point2
 
     # Using the dict/list mutability feature
-    boundary_section[to_or_from] = boundary_point
-    return True
+    boundary_section[to_or_from] = boundary_point.indicator
+    return fpl_route_copy
