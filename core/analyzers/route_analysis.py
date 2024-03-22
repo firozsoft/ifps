@@ -22,7 +22,6 @@
 """
 import copy
 import re
-from collections import OrderedDict
 from typing import Union
 
 import networkx as nx
@@ -47,57 +46,30 @@ def eet_is_correct(data, err: dict[str, list[str]]) -> bool:
     return True
 
 
-def retrieve_point_name_and_add_to_dict(dct: dict, key: str, value: str = ""):
-    value = value or key
-
-    if re.match(AERODROME, key):
+def retrieve_point_name_and_add_to_set(point_names: set, string: str):
+    if re.match(AERODROME, string):
         # to ignore aerodromes referenced in item 18 as dep, dest, altn, ralt, talt
         return
-    matched = re.match(SIG_POINT, key)
+    matched = re.match(SIG_POINT, string)
     if matched is not None:
-        point_name = matched.groupdict().get("point", matched.groupdict().get("ref_point", None))
-        # if SIG_POINT is not a POINT or BEARING_DISTANCE then there's no `point` or `ref_point` so
-        # point_name is None
+        point_name = matched.groupdict().get("point", None) or matched.groupdict().get("ref_point", None)
         if point_name is not None:
-            dct[point_name] = value
-
-
-def check_points_exists_and_are_active(
-    points: OrderedDict[str, str],
-    existing_points: dict[str, tuple[Point, tuple[FIR]]],
-    data,
-    err,
-):
-    # point_reference_in_fpl = reference for bearing-distance or actual point indicator
-    for point_actual_name, point_reference_in_fpl in points.items():
-        point_data = existing_points.get(point_actual_name, None)
-        text = point_reference_in_fpl if "ITEM18" in point_reference_in_fpl else ""
-        if point_data is None:
-            err["logical_error"].append(f"Point {point_actual_name} does not exist{text}.")
-            for route_section in data["route"]:
-                if point_reference_in_fpl in (route_section["from"], route_section["to"]):
-                    route_section["nonessential"] = True
-        elif not point_data[0].is_active:
-            err["logical_error"].append(f"Point {point_actual_name} is not active{text}.")
+            point_names.add(point_name)
 
 
 def retrieve_points_used_to_locate_ad_in_item18(data):
     domestic_departure = data["domestic_departure"]
     domestic_destination = data["domestic_destination"]
 
-    mentioned_points_as_ad: dict[str, str] = {}  # {point_name: message}
+    mentioned_points_as_ad = set()
 
     if domestic_departure and data["departure_ad"] in ("ZZZZ", "AFIL"):
         # Possible use of Point or BearingDistance in item 18 for DEP/
-        retrieve_point_name_and_add_to_dict(
-            mentioned_points_as_ad, data["dep"], f" (look at ITEM18 DEP/{data['dep']})"
-        )
+        retrieve_point_name_and_add_to_set(mentioned_points_as_ad, data["dep"])
 
     if domestic_destination and data["destination_ad"] == "ZZZZ":
         # Possible use of Point or BearingDistance in item 18 for DEST/
-        retrieve_point_name_and_add_to_dict(
-            mentioned_points_as_ad, data["dest"], f" (look at ITEM18 DEST/{data['dest']})"
-        )
+        retrieve_point_name_and_add_to_set(mentioned_points_as_ad, data["dest"])
 
     if (
         domestic_departure
@@ -107,25 +79,35 @@ def retrieve_points_used_to_locate_ad_in_item18(data):
         # Possible use of Point or BearingDistance in item 18 for keys below
         for key in ("altn", "ralt", "talt"):
             if key in data:
-                retrieve_point_name_and_add_to_dict(
-                    mentioned_points_as_ad, data[key], f" (look at ITEM18 {key.upper()}/{data[key]})"
-                )
+                retrieve_point_name_and_add_to_set(mentioned_points_as_ad, data[key])
     return mentioned_points_as_ad
 
 
-def is_fir_boundary(pair: tuple[str, Point]):
-    point_name, point_object = pair
-    return point_object.is_fir_boundary is True
-
-
 def retrieve_point_name_from_fpl_route_section(data):
-    points_mentioned_in_route: OrderedDict[str, str] = OrderedDict()  # {point_name: message}
+    points_mentioned_in_route = set()
     for route_section in data["route"]:
         for point in (route_section["from"], route_section["to"]):
             # Since data["departure_ad"], data["destination_ad"] included in section of data["route"]
             if point not in (data["departure_ad"], data["destination_ad"]):
-                retrieve_point_name_and_add_to_dict(points_mentioned_in_route, point)
+                retrieve_point_name_and_add_to_set(points_mentioned_in_route, point)
     return points_mentioned_in_route
+
+
+def check_points_exists_and_are_active(
+    points: set[str],
+    existing_points: dict[str, tuple[Point, tuple[FIR]]],
+    data,
+    err,
+):
+    for point_name in points:
+        point_data = existing_points.get(point_name, None)
+        if point_data is None:
+            err["logical_error"].append(f"Point {point_name} does not exist.")
+            for route_section in data["route"]:
+                if point_name in route_section["from"] or point_name in route_section["to"]:
+                    route_section["nonessential"] = True
+        elif not point_data[0].is_active:
+            err["logical_error"].append(f"Point {point_name} is not active.")
 
 
 def find_all_nested_real_sections(fpl_route_section: dict[str, str], db_sections: tuple[str, str, str]):
@@ -192,8 +174,7 @@ def route_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err:
     check_points_exists_and_are_active(points_used_to_locate_ads_in_item18, all_existing_points, data, err)
 
     # * Step 2. Check routes
-    # 1- If boundary_points are mentioned in the flight plan route, so we can limit the route to that portion
-    # 2- Otherwise we have to find the before/after boundary-points
+    # Neighbor FIR and Route of flight to/from that FIR gives us the boundary point to limit route portion
     previous_fir_indicator = next_fir_indicator = None
     if not domestic_departure:
         eets = data["eet"].split(settings.FIR_INDICATOR)
@@ -239,8 +220,8 @@ def route_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err:
     if not route_portion_to_be_checked:
         return
 
-    # Here route_portion_to_be_checked must only contain the route portion within our FIR
-    # also some route-sections of the filled fpl may not need to be checked (due invalid point, dct, etc.)
+    # Here route_portion_to_be_checked only contains the route portion within our FIR
+    # Also some sections of this portion may be omitted due invalid point, dct, etc.
 
     fpl_route_sections = {
         route_section
@@ -256,7 +237,7 @@ def route_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err:
         (sec.route.indicator, sec.point1.indicator, sec.point2.indicator): sec for sec in existing_sections
     }
 
-    # 1. A section from filled flight plan may cover more than one route-section from the database, (2 below)
+    # 1. A section from filled flightplan may encompasses more than one database route-section. (2 below)
     fpl_section_and_its_nested_real_sections = {}
     for fpl_route_section in fpl_route_sections:
         try:
@@ -267,7 +248,7 @@ def route_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err:
             fpl_section_and_its_nested_real_sections[fpl_route_section] = real_sections
 
     for fpl_route_section, real_sections in fpl_section_and_its_nested_real_sections.items():
-        # 2. loop through database route-sections covered by filled-fpl route-section
+        # 2. loop through database route-sections encompassed by filled flightplan route-section
         for section in real_sections:
             # section = (route_name, p1_name, p2_name)
             db_section = existing_sections_dict[section]

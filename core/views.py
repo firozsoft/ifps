@@ -44,22 +44,33 @@ def fpl_scrutinization(request, msg: str) -> JsonResponse:
 
     try:
         res, err = regex_parse(filled_data)
-    except Exception as exp:
-        return JsonResponse({"internal_error": exp.__repr__()}, status=500)
+    except Exception:
+        return JsonResponse(
+            {
+                "internal_error": "Internal Server Error: Please notify the administration. And if possible, "
+                "provide necessary data to assist in reproducing the issue for further investigation."
+            },
+            status=500,
+        )
 
     if err:
         return JsonResponse(err, status=400)
 
     try:
         err = logical_check(res)
-    except Exception as exp:
-        return JsonResponse({"internal_error": exp.__repr__()}, status=500)
+    except Exception:
+        return JsonResponse(
+            {
+                "internal_error": "Internal Server Error: Please notify the administration. And if possible, "
+                "provide necessary data to assist in reproducing the issue for further investigation."
+            },
+            status=500,
+        )
 
     if err:
         # return JsonResponse(err, status=400)
         return render(request, "pages/index.html", {"data": json.dumps(err)})
 
-    print(res)
     # TODO: use data of res (dict) and FlightPlanForm to save a new FPL in database
     form = FlightPlanForm(res)
     if form.is_valid():
@@ -72,10 +83,12 @@ def fpl_scrutinization(request, msg: str) -> JsonResponse:
 def submission(request: HttpRequest) -> JsonResponse:
     msg = request.POST.get(key="message", default=None)
     if not msg:
-        return JsonResponse({"error_message": "field message is missing", "error_code": "msg_not_found"})
+        return JsonResponse(
+            {"error_message": "field message is missing", "error_code": "msg_not_found"}, status=400
+        )
     if msg.startswith("(FPL"):
         return fpl_scrutinization(request, msg)
-    return JsonResponse({"Error": "text must be an AFTN FPL message"})
+    return JsonResponse({"Error": "text must be an AFTN FPL message"}, status=400)
 
 
 @staff_member_required
