@@ -136,7 +136,7 @@ class SuccessfullyLimitedRoutePortionTestCase(TestCase):
             self.eet,
             self.err,
         )
-        self.assertEqual(
+        self.assertDictEqual(
             route[0],
             {
                 "from": "NANPI",
@@ -146,6 +146,7 @@ class SuccessfullyLimitedRoutePortionTestCase(TestCase):
                 "level": "F290",
                 "top_level": "F290",
                 "flight_rule": "I",
+                "from-fir": "OKKK",
             },
         )
 
@@ -199,7 +200,7 @@ class SuccessfullyLimitedRoutePortionTestCase(TestCase):
             self.eet,
             self.err,
         )
-        self.assertEqual(
+        self.assertDictEqual(
             route[0],
             {
                 "from": "NANPI",
@@ -209,6 +210,7 @@ class SuccessfullyLimitedRoutePortionTestCase(TestCase):
                 "level": "F290",
                 "top_level": "F290",
                 "flight_rule": "I",
+                "from-fir": "OKKK",
             },
         )
 
@@ -371,7 +373,7 @@ class SuccessfullyLimitedRoutePortionTestCase(TestCase):
             self.eet,
             self.err,
         )
-        self.assertEqual(
+        self.assertDictEqual(
             route[-1],
             {
                 "from": "SYZ",
@@ -381,6 +383,7 @@ class SuccessfullyLimitedRoutePortionTestCase(TestCase):
                 "level": "F290",
                 "top_level": "F290",
                 "flight_rule": "I",
+                "to-fir": "OPKC",
             },
         )
 
@@ -406,6 +409,10 @@ class SuccessfullyLimitedRoutePortionTestCase(TestCase):
             },
         ]
 
+        ## Enable query counting
+        # from django.db import connection
+        # connection.force_debug_cursor = True
+
         entry_or_exit = "Entry"
         route = successfully_limited_route_portion(
             self.our_fir,
@@ -416,7 +423,7 @@ class SuccessfullyLimitedRoutePortionTestCase(TestCase):
             self.eet,
             self.err,
         )
-        self.assertEqual(
+        self.assertDictEqual(
             route[0],
             {
                 "from": "NANPI",
@@ -426,8 +433,16 @@ class SuccessfullyLimitedRoutePortionTestCase(TestCase):
                 "level": "F290",
                 "top_level": "F290",
                 "flight_rule": "I",
+                "from-fir": "OKKK",
             },
         )
+
+        # Output the number of queries
+        # print(f"Total number of database queries: {len(connection.queries)}")
+        # for query in connection.queries:
+        #     print(query["sql"][:80])
+        ## Disable query counting
+        # connection.force_debug_cursor = False
 
         entry_or_exit = "Exit"
         route = successfully_limited_route_portion(
@@ -439,7 +454,7 @@ class SuccessfullyLimitedRoutePortionTestCase(TestCase):
             self.eet,
             self.err,
         )
-        self.assertEqual(
+        self.assertDictEqual(
             # NOTE: index 0 is on purpose, long route with no point in our FIR results in a single section!
             route[0],
             {
@@ -450,5 +465,7 @@ class SuccessfullyLimitedRoutePortionTestCase(TestCase):
                 "level": "F290",
                 "top_level": "F290",
                 "flight_rule": "I",
+                "from-fir": "OKKK",
+                "to-fir": "OPKC",
             },
         )
