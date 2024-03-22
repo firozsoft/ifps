@@ -90,21 +90,29 @@ def successfully_limited_route_portion(
         )
         return []
 
-    db_sections = RouteSection.objects.filter(
-        Q(point1__in=common_boundaries, route__indicator=boundary_route, point2__fir=our_fir)
-        | Q(point2__in=common_boundaries, route__indicator=boundary_route, point1__fir=our_fir)
-    ).distinct()
+    db_section_points = (
+        RouteSection.objects.filter(
+            Q(point1__in=common_boundaries, route__indicator=boundary_route, point2__fir=our_fir)
+            | Q(point2__in=common_boundaries, route__indicator=boundary_route, point1__fir=our_fir)
+        )
+        .distinct()
+        .values_list(
+            "point1__indicator", "point1__is_fir_boundary", "point2__indicator", "point2__is_fir_boundary"
+        )
+    ).first()
 
-    if db_sections.count() != 1:
+    if db_section_points is None:
         err["logical_error"].append(
-            f"{entry_or_exit} point to {our_fir} can not be determined based on adjacent FIR(2)."
+            f"Unable to determine '{entry_or_exit}' point {to_or_from} {neighbor_fir} on {boundary_route}."
         )
         return []
 
-    # TODO: check using select_related helps or worsen querying
-    db_section = db_sections.select_related("point1", "point2").first()
-    boundary_point = db_section.point1 if db_section.point1.is_fir_boundary else db_section.point2
+    boundary_point = db_section_points[0] if db_section_points[1] else db_section_points[2]
 
     # Using the dict/list mutability feature
-    boundary_section[to_or_from] = boundary_point.indicator
+    # route portion gets limited in the loop before the first/last item gets updated below
+    boundary_section[to_or_from] = boundary_point
+
+    # To provide data for route-scheme checks and avoid extra db querying
+    boundary_section[f"{to_or_from}-fir"] = neighbor_fir.indicator
     return fpl_route_copy
