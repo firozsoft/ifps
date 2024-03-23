@@ -1,6 +1,7 @@
 from django.db.models import Q, QuerySet
 
 from apps.general.models.base import FIR
+from apps.points.models.point import Point
 from apps.routes.models.route_section import RouteSection
 
 
@@ -8,7 +9,7 @@ def successfully_limited_route_portion(
     our_fir: FIR,
     neighbor_fir: FIR,
     fpl_route: list[dict],
-    existing_points: dict,
+    existing_points: dict[str, tuple[Point, QuerySet[str]]],
     entry_or_exit: str,
     eet: str,
     err: dict,
