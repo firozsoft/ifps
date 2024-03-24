@@ -90,10 +90,10 @@ def check_aerodrome_sid_star(sid_star_name: str, type_: str, aerodrome: Aerodrom
 
 def analyse(
     aerodrome: Aerodrome,
-    aircraft_type: str,
-    heliports_acceptable_types: set[str],
     flight_rule: str,
     flight_datetime: datetime,
+    aircraft_type: str,
+    heliports_acceptable_types: set[str],
     err: dict[str, list[str]],
     data_sts: str,
     data_rmk: str,

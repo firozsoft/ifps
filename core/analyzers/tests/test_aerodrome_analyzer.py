@@ -140,8 +140,8 @@ class AerodromeAnalyzerTestCase(TestCase):
 
     def test_missing_alternate_fails(self):
         fpl = {
-            "departure_ad": self.aerodromes.get("oiii"),
-            "destination_ad": self.aerodromes.get("oiss"),
+            "departure_ad": "OIII",
+            "destination_ad": "OISS",
             "alt_ad_1": None,
         }
         err = copy.deepcopy(self.err)
