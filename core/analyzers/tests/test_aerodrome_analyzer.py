@@ -31,7 +31,7 @@ class AerodromeAnalyzerTestCase(TestCase):
             "alt_ad_1": "OIFM",
             "flight_type": "G",
             "flight_rule": "I",
-            "dof": "240324",
+            "dof": datetime.datetime.now().date().strftime("%y%m%d"),
             "eobt": "0800",
             "teet": "0130",
             "aircraft_type": "A319",
@@ -239,6 +239,7 @@ class AerodromeAnalyzerTestCase(TestCase):
         fpl["route"] = [{"flight_rule": "V"}]
         fpl["aircraft_type"] = "B214"
         string = f"({self.oinj_dop.vfr_start_time} & {self.oinj_dop.vfr_end_time})"
+
         # # Enable query counting
         # from django.db import connection
 

@@ -31,12 +31,19 @@ def check_aerodrome_operational_hour(
     flight_rule: str,
     err: dict[str, list[str]],
 ):
-    # flight_date = flight_datetime.date()
+    flight_date = flight_datetime.date()
     flight_time = flight_datetime.time()
 
-    today_operational_hours = aerodrome.dailyoperationalhours.first()
-    if today_operational_hours is None:
+    if len(aerodrome.dailyoperationalhours_list) > 1:
+        err["logical_error"].append(
+            f"Inform administration: {aerodrome} daily operational hours has duplication for {flight_date}."
+        )
         return
+
+    if len(aerodrome.dailyoperationalhours_list) < 1:
+        return
+
+    today_operational_hours = aerodrome.dailyoperationalhours_list.pop()
 
     if flight_rule.upper() == "VFR":
         ad_start, ad_end = today_operational_hours.vfr_start_time, today_operational_hours.vfr_end_time
@@ -59,14 +66,14 @@ def check_aerodrome_operational_hour(
 
 
 def check_aerodrome_temporarily_closure(aerodrome: Aerodrome, err: dict[str, list[str]]):
-    for temp_closure in aerodrome.temporaryclosures.all():
+    for temp_closure in aerodrome.temporaryclosures_list:
         err["logical_error"].append(
             f"{aerodrome} is temporary closed, {temp_closure.start} till {temp_closure.end}."
         )
 
 
 def check_aerodrome_curfew(aerodrome: Aerodrome, data_sts: str, data_rmk: str, err: dict[str, list[str]]):
-    for curfew in aerodrome.curfews.all():
+    for curfew in aerodrome.curfews_list:
         if not any([True for sts in data_sts if sts in curfew.acceptable_sts]) or not any(
             [True for rmk in curfew.acceptable_rmk if rmk in data_rmk]
         ):
@@ -74,10 +81,20 @@ def check_aerodrome_curfew(aerodrome: Aerodrome, data_sts: str, data_rmk: str, e
 
 
 def check_aerodrome_sid_star(sid_star_name: str, type_: str, aerodrome: Aerodrome, err: dict[str, list[str]]):
-    sid_star = aerodrome.sid_stars.first()
-    if sid_star is None:
+    found_sidstars = set()
+    for sidstar in aerodrome.sid_stars_list:
+        if sidstar.indicator == sid_star_name and sidstar.type == type_:
+            found_sidstars.add(sidstar)
+
+    if len(found_sidstars) > 1:
+        err["logical_error"].append(f"Inform administration: more than one {type_} {sid_star_name} exist.")
+        return
+
+    if len(found_sidstars) == 0:
         err["logical_error"].append(f"{type_} {sid_star_name} does not exist.")
         return
+
+    sid_star = found_sidstars.pop()
     if not sid_star.is_active:
         err["logical_error"].append(f"{type_} {sid_star_name} is not active.")
 
@@ -125,6 +142,7 @@ def get_aerodrome_queryset(
             | Q(date=est_arr_datetime.date())
             | Q(date=est_alt_arr_datetime.date())
         ),
+        to_attr="dailyoperationalhours_list",
     )
     temporaryclosures_filtered_prefetch = Prefetch(
         "temporaryclosures",
@@ -133,6 +151,7 @@ def get_aerodrome_queryset(
             | Q(start__lte=est_arr_datetime, end__gte=est_arr_datetime)
             | Q(start__lte=est_alt_arr_datetime, end__gte=est_alt_arr_datetime)
         ),
+        to_attr="temporaryclosures_list",
     )
     curfews_filtered_prefetch = Prefetch(
         "curfews",
@@ -141,8 +160,13 @@ def get_aerodrome_queryset(
             | Q(start__lte=est_arr_datetime, end__gte=est_arr_datetime)
             | Q(start__lte=est_alt_arr_datetime, end__gte=est_alt_arr_datetime)
         ),
+        to_attr="curfews_list",
     )
-    sid_stars_filtered_prefetch = Prefetch("sid_stars", SidStar.objects.filter(indicator__in=sid_star_names))
+    sid_stars_filtered_prefetch = Prefetch(
+        "sid_stars",
+        queryset=SidStar.objects.filter(indicator__in=sid_star_names),
+        to_attr="sid_stars_list",
+    )
 
     aerodromes_qs: QuerySet[Aerodrome] = Aerodrome.objects.filter(indicator__in=indicators).prefetch_related(
         dailyoperationalhours_filtered_prefetch,
