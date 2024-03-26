@@ -45,13 +45,6 @@ class FIR(BaseModel):
     def __str__(self):
         return self.indicator
 
-    @property
-    def boundary_points(self):
-        return self.points.filter(is_fir_boundary=True)
-
-    def get_common_boundary_points(self, other_fir):
-        return self.boundary_points.filter(pk__in=other_fir.boundary_points.values_list("pk", flat=True))
-
 
 class BasePoint(BaseModel):
     """Base Point Model"""

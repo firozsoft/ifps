@@ -40,9 +40,9 @@ def successfully_limited_route_portion(
         )
         return []
 
-    common_boundaries: QuerySet = our_fir.get_common_boundary_points(neighbor_fir)
+    common_boundaries = set(our_fir.boundary_points).intersection(set(neighbor_fir.boundary_points))
 
-    if not common_boundaries.exists():
+    if not common_boundaries:
         err["logical_error"].append(
             f"Either {neighbor_fir} is Nonadjacent to {our_fir} or Boundary points can not be determined."
         )

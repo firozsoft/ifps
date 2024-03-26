@@ -27,7 +27,7 @@ from typing import Union
 import networkx as nx
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db.models import QuerySet
+from django.db.models import Prefetch, Q, QuerySet
 
 from apps.general.models import FIR
 from apps.points.models import Point
@@ -35,6 +35,33 @@ from apps.routes.models import RouteSection
 from core.analyzers.limit_route_portion import successfully_limited_route_portion
 from core.analyzers.route_section_validation import validate_fpl_route_section
 from core.utils.regex_patterns import AERODROME, SIG_POINT
+
+
+def find_all_nested_real_sections(fpl_route_section: dict[str, str], db_sections: tuple[str, str, str]):
+    route, start_point, end_point = (
+        fpl_route_section["via"],
+        fpl_route_section["from"],
+        fpl_route_section["to"],
+    )
+
+    db_route_sections = {tp for tp in db_sections if tp[0] == route}
+
+    # Create an undirected graph
+    G = nx.Graph()
+
+    # Add edges to the graph representing route sections
+    for tp in db_route_sections:
+        G.add_edge(tp[1], tp[2], route=tp[0])
+
+    try:
+        # Use shortest_path to find the only path
+        path = nx.shortest_path(G, source=start_point, target=end_point)
+
+    except nx.NetworkXException:
+        raise ValidationError(message=f"No path found between {start_point} and {end_point} through {route}.")
+
+    # Filter out edges to get the actual sections
+    return [(G[u][v]["route"], u, v) for u, v in zip(path[:-1], path[1:]) if G.has_edge(u, v)]
 
 
 def eet_is_correct(data, err: dict[str, list[str]]) -> bool:
@@ -84,78 +111,80 @@ def retrieve_points_used_to_locate_ad_in_item18(data):
     return mentioned_points_as_ad
 
 
-def retrieve_point_name_from_fpl_route_section(data):
+def retrieve_point_name_from_fpl_route_section(
+    fpl_route: list[dict[str, str]], departure: str, destination: str
+) -> set[str]:
     points_mentioned_in_route = set()
-    for route_section in data["route"]:
+    for route_section in fpl_route:
         for point in (route_section["from"], route_section["to"]):
             # Since data["departure_ad"], data["destination_ad"] included in section of data["route"]
-            if point not in (data["departure_ad"], data["destination_ad"]):
+            if point not in (departure, destination):
                 retrieve_point_name_and_add_to_set(points_mentioned_in_route, point)
     return points_mentioned_in_route
 
 
-def check_points_exists_and_are_active(
-    points: set[str],
-    existing_points: dict[str, tuple[Point, QuerySet[str]]],
-    data,
-    err,
+def check_points_exists(
+    points: set[str], existing_points: dict[str, tuple[Point, QuerySet[str]]], route, err
 ):
     for point_name in points:
         point_data = existing_points.get(point_name, None)
         if point_data is None:
             err["logical_error"].append(f"Point {point_name} does not exist.")
-            for route_section in data["route"]:
-                if point_name in route_section["from"] or point_name in route_section["to"]:
-                    route_section["nonessential"] = True
-        elif not point_data[0].is_active:
-            err["logical_error"].append(f"Point {point_name} is not active.")
+            for section in route:
+                if point_name in section["from"] or point_name in section["to"]:
+                    section["nonessential"] = True
 
 
 def route_portion_within_our_fir_for_nondomestic_flights(
-    data, all_existing_points, route_portion_to_be_checked, err
+    fpl, all_existing_points, route_portion_to_be_checked, err
 ):
     """Limits flight planned route of nondomestic flights to the portions within our FIR"""
-    domestic_departure = data["domestic_departure"]
-    domestic_destination = data["domestic_destination"]
+    domestic_departure = fpl["domestic_departure"]
+    domestic_destination = fpl["domestic_destination"]
 
     # Neighbor FIR and Route of flight to/from that FIR gives us the boundary point to limit route portion
-    previous_fir_indicator = next_fir_indicator = None
+    previous_fir_indicator_2letter, next_fir_indicator_2letter = None, None
+    our_fir_indicator_2letter = settings.FIR_INDICATOR[:2]
+
     if not domestic_departure:
-        eets = data["eet"].split(settings.FIR_INDICATOR)
+        eets = fpl["eet"].split(settings.FIR_INDICATOR)
         try:
-            previous_fir_indicator = eets[0].strip().split()[-1].strip()[:4]
+            previous_fir_indicator_2letter = eets[0].strip().split()[-1].strip()[:2]
         except IndexError:
-            previous_fir_indicator = (
-                FIR.objects.filter(indicator__startswith=data["departure_ad"][:2])
-                .values_list("indicator", flat=True)
-                .first()
-            )
+            previous_fir_indicator_2letter = fpl["departure_ad"][:2]
 
     if not domestic_destination:
-        eets = data["eet"].split(settings.FIR_INDICATOR)
+        eets = fpl["eet"].split(settings.FIR_INDICATOR)
         try:
-            next_fir_indicator = eets[1].strip().split()[1].strip()[:4]
+            next_fir_indicator_2letter = eets[1].strip().split()[1].strip()[:2]
         except IndexError:
-            next_fir_indicator = None
+            next_fir_indicator_2letter = "XQ"  # NOTE: FIR indicators can't be started with I,J,X,Q.
 
-    FIRs = {
-        fir.indicator: fir
-        for fir in FIR.objects.filter(
-            indicator__in=(previous_fir_indicator, settings.FIR_INDICATOR, next_fir_indicator)
-        )
-    }
+    firs_and_their_boundary_points = FIR.objects.filter(
+        Q(indicator__startswith=previous_fir_indicator_2letter)
+        | Q(indicator__startswith=our_fir_indicator_2letter)
+        | Q(indicator__startswith=next_fir_indicator_2letter)
+    ).prefetch_related(
+        Prefetch(
+            "points",
+            queryset=Point.objects.filter(is_fir_boundary=True),
+            to_attr="boundary_points",
+        ),
+    )
+
+    FIRs = {fir.indicator[:2]: fir for fir in firs_and_their_boundary_points}
 
     for _, fir in FIRs.items():
         if not fir.is_active:
             err["logical_error"].append(f"FIR {fir} is not active.")
 
-    our_fir = FIRs.get(settings.FIR_INDICATOR, None)
-    previous_fir = FIRs.get(previous_fir_indicator, None)
-    next_fir = FIRs.get(next_fir_indicator, None)
+    our_fir = FIRs.get(our_fir_indicator_2letter, None)
+    previous_fir = FIRs.get(previous_fir_indicator_2letter, None)
+    next_fir = FIRs.get(next_fir_indicator_2letter, None)
 
     if not domestic_departure:
         route_portion_to_be_checked = successfully_limited_route_portion(
-            our_fir, previous_fir, route_portion_to_be_checked, all_existing_points, "Entry", data["eet"], err
+            our_fir, previous_fir, route_portion_to_be_checked, all_existing_points, "Entry", fpl["eet"], err
         )
         if not route_portion_to_be_checked:
             # Without knowing entry point it's impossible to determine exit point.
@@ -163,39 +192,12 @@ def route_portion_within_our_fir_for_nondomestic_flights(
 
     if not domestic_destination:
         route_portion_to_be_checked = successfully_limited_route_portion(
-            our_fir, next_fir, route_portion_to_be_checked, all_existing_points, "Exit", data["eet"], err
+            our_fir, next_fir, route_portion_to_be_checked, all_existing_points, "Exit", fpl["eet"], err
         )
     return route_portion_to_be_checked
 
 
-def find_all_nested_real_sections(fpl_route_section: dict[str, str], db_sections: tuple[str, str, str]):
-    route, start_point, end_point = (
-        fpl_route_section["via"],
-        fpl_route_section["from"],
-        fpl_route_section["to"],
-    )
-
-    db_route_sections = {tp for tp in db_sections if tp[0] == route}
-
-    # Create an undirected graph
-    G = nx.Graph()
-
-    # Add edges to the graph representing route sections
-    for tp in db_route_sections:
-        G.add_edge(tp[1], tp[2], route=tp[0])
-
-    try:
-        # Use shortest_path to find the only path
-        path = nx.shortest_path(G, source=start_point, target=end_point)
-
-    except nx.NetworkXException:
-        raise ValidationError(message=f"No path found between {start_point} and {end_point} through {route}.")
-
-    # Filter out edges to get the actual sections
-    return [(G[u][v]["route"], u, v) for u, v in zip(path[:-1], path[1:]) if G.has_edge(u, v)]
-
-
-def route_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err: dict[str, list[str]]):
+def route_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], err: dict[str, list[str]]):
     """Analyzes the flight-planned route.
 
     The flight-planned route consists of points and routes (and speed/level changes, etc.).
@@ -203,23 +205,25 @@ def route_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err:
     and routes are used to determine the path to another FIR.
     """
 
-    domestic_departure = data["domestic_departure"]
-    domestic_destination = data["domestic_destination"]
+    domestic_departure = fpl["domestic_departure"]
+    domestic_destination = fpl["domestic_destination"]
 
     is_nondomestic = not domestic_departure or not domestic_destination
 
-    if is_nondomestic and not eet_is_correct(data, err):
+    if is_nondomestic and not eet_is_correct(fpl, err):
         # without correct EET it's impossible to detect route section withing our FIR
         return
 
-    # * Step 1. Check points
-    points_mentioned_in_route = retrieve_point_name_from_fpl_route_section(data)
+    # * Step 1.1. Retrieve route portion within our FIR
+    points_mentioned_in_route = retrieve_point_name_from_fpl_route_section(
+        fpl["route"], fpl["departure_ad"], fpl["destination_ad"]
+    )
 
     # In addition to points mentioned in the route section, there might be some points in item18 of the FPL
-    points_used_to_locate_ads_in_item18 = retrieve_points_used_to_locate_ad_in_item18(data)
+    points_used_to_locate_ads_in_item18 = retrieve_points_used_to_locate_ad_in_item18(fpl)
 
     all_existing_points: dict[str, tuple[Point, QuerySet[str]]] = {
-        point.indicator: (point, point.fir.values_list("indicator", flat=True).distinct())
+        point.indicator: (point, set(fir.indicator for fir in point.fir.all()))
         for point in Point.objects.filter(
             indicator__in=(
                 *points_mentioned_in_route,
@@ -228,21 +232,31 @@ def route_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err:
         ).prefetch_related("fir")
     }
 
-    check_points_exists_and_are_active(points_mentioned_in_route, all_existing_points, data, err)
-    check_points_exists_and_are_active(points_used_to_locate_ads_in_item18, all_existing_points, data, err)
-
-    # * Step 2. Check routes
-    # * Step 2.1. Retrieve/Check route portion within our FIR
-    route_portion_to_be_checked = copy.deepcopy(data["route"])
+    route_portion_to_be_checked = copy.deepcopy(fpl["route"])
 
     if is_nondomestic:
         route_portion_to_be_checked = route_portion_within_our_fir_for_nondomestic_flights(
-            data, all_existing_points, route_portion_to_be_checked, err
+            fpl, all_existing_points, route_portion_to_be_checked, err
         )
 
     if not route_portion_to_be_checked:
         return
 
+    # * Step 1.2. Check existence of points within our FIR
+    fpl_points_in_route_portion_within_our_fir = retrieve_point_name_from_fpl_route_section(
+        route_portion_to_be_checked, fpl["departure_ad"], fpl["destination_ad"]
+    )
+
+    # if is_nondomestic entry & exit points are obtained from database but are not in all_existing_points
+    if not domestic_departure:
+        fpl_points_in_route_portion_within_our_fir.discard(route_portion_to_be_checked[0]["from"])
+    if not domestic_destination:
+        fpl_points_in_route_portion_within_our_fir.discard(route_portion_to_be_checked[-1]["to"])
+
+    for points_list in (fpl_points_in_route_portion_within_our_fir, points_used_to_locate_ads_in_item18):
+        check_points_exists(points_list, all_existing_points, route_portion_to_be_checked, err)
+
+    # * Step 1.2. Check existence of routes within our FIR
     fpl_route_sections = [
         route_section
         for route_section in route_portion_to_be_checked
@@ -251,6 +265,7 @@ def route_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err:
 
     fpl_mentioned_routes = set(section["via"] for section in fpl_route_sections)
 
+    # TODO: this should be done after TOS checks to avoid unnecessary db hits
     existing_sections = RouteSection.objects.filter(route__indicator__in=fpl_mentioned_routes).select_related(
         "route", "point1", "point2"
     )
@@ -284,4 +299,4 @@ def route_analyzer(data: dict[str, Union[bool, str, list[dict[str, str]]]], err:
         for section in real_sections:
             # section = (route_name, p1_name, p2_name)
             db_section = existing_sections_dict[section]
-            validate_fpl_route_section(fpl_route_section, db_section, data, err)
+            validate_fpl_route_section(fpl_route_section, db_section, fpl, err)
