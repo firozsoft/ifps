@@ -1,13 +1,27 @@
-PATH_NOT_FOUND = "No path found between {0} and {1} through {2}."  # start_point, end_point, route
-EET_NOT_FOUND = "ITEM18 EET/ is not found."
-FIR_NOT_FOUND_IN_EET = "The EET/ doesn't mention {0}."  # fir_indicator
-POINT_DOES_NOT_EXISTS = "Point {0} does not exist."  # point_name
-ROUTE_DOES_NOT_EXISTS = "Route {0} does not exist."  # route_name
-BOUNDARY_DETERMINATION_ERROR_NO_ADJACENT_FIRS = "Unable to determine the {0} point for {1}. No adjacent FIRs were found from EET."  # entry_or_exit, our_fir
-BOUNDARY_DETERMINATION_ERROR_NONADJACENT_FIR_OR_NO_BOUNDARY = (
-    "Either {0} is nonadjacent to {1} or boundary points cannot be determined."  # neighbor_fir, our_fir
-)
+AERODROME_CURFEW_TIME = "{0} curfew time, {1} till {2}."  # aerodrome, curfew.start, curfew.end
+AERODROME_DOES_NOT_EXIST = "Aerodrome {} does not exist."  # indicator
+AERODROME_INACTIVE = "Aerodrome {} is not active."  # indicator
+AERODROME_INCOMPATIBLE_FLIGHT_RULE = "{0} does not accept {}."  # aerodrome, flight_rule.upper()
+AERODROME_IS_NOT_INTERNATIONAL_NOR_AUR = "{0} {1} is not international neither available upon request."  # Destination/Departure/Alt,..., destination_ad
+AERODROME_OPERATIONAL_HOURS_DUPLICATION = "Inform administration: {0} daily operational hours has duplication for {1}."  # aerodrome, flight_date # noqa
+AERODROME_TEMP_CLOSURE = "{0} is temporarily closed, from {1} to {2}."  # noqa  # aerodrome, temp_closure.start, temp_closure.end
+AERODROME_TIME_UNACCEPTABLE = "Departure/EST-Arrival time ({0}) at {1} is not in aerorome's operational hours ({2} & {3})."  # flight_time, aerodrome, ad_start, ad_end
+AERODROME_TIME_UNACCEPTABLE_BUT_AUR = "Departure/EST-Arrival time ({0}) at {1} is not in aerorome's operational hours ({2} & {3}). But this aerodrome is available upon request."  # flight_time, aerodrome, ad_start, ad_end
 BOUNDARY_DETERMINATION_ERROR = "{0} point of {1} can not be determined."  # entry_or_exit, our_fir
 BOUNDARY_DETERMINATION_ERROR_FROM_TO_FIR_ON_ROUTE = "Unable to determine {0} point {1} {2} on {3}."  # entry_or_exit, to_or_from, neighbor_fir, boundary_route_indicator
-FIR_IS_NOT_ACTIVE = "FIR {} is not active."  # fir
+BOUNDARY_DETERMINATION_ERROR_NO_ADJACENT_FIRS = "Unable to determine the {0} point for {1}. No adjacent FIRs were found from EET."  # entry_or_exit, our_fir # noqa
+BOUNDARY_DETERMINATION_ERROR_NONADJACENT_FIR_OR_NO_BOUNDARY = "Either {0} is nonadjacent to {1} or boundary points cannot be determined."  # neighbor_fir, our_fir # noqa
+DEST_DEP_ONE_ALT_REQUIRED = "The Destination, Departure and at least one Alternate Aerodromes are mandatory."
+EET_NOT_FOUND = "ITEM18 EET/ is not found."
+FIR_INACTIVE = "FIR {} is not active."  # fir
+FIR_NOT_FOUND_IN_EET = "The EET/ doesn't mention {0}."  # fir_indicator
+HELIPORT_DOES_NOT_ACCEPTS_TYPE = "{0} is heliport and isn't available for {1}."  # aerodrome, aircraft_type
+PATH_NOT_FOUND = "No path found between {0} and {1} through {2}."  # start_point, end_point, route
+POINT_DOES_NOT_EXIST = "Point {0} does not exist."  # point_name
+ROUTE_DOES_NOT_EXIST = "Route {0} does not exist."  # route_name
 ROUTE_PORTION_DETERMINATION_ERROR = "Unable to determine route portion within {}."  # our_fir
+SID_STAR_DOES_NOT_EXIST = "{0} {1} does not exist."  # used_as_type, sid_star_name
+SID_STAR_DUPLICATION = "Inform administration: more than one {0} {1} exist."  # used_as_type, sid_star_name
+SID_STAR_INACTIVE = "{0} is not active."  # sid_star
+SID_STAR_INCOMPATIBLE_TYPE = "{0} can't be used as {1}."  # sid_star, used_as_type
+SID_STAR_NAVAID_INACTIVE = "{0}, nav. aid {1} is not active."  # sid_star, sid_star.nav_aid

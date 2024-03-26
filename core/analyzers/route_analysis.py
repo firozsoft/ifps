@@ -128,7 +128,7 @@ def check_points_exists(
     for point_name in points:
         point_data = existing_points.get(point_name, None)
         if point_data is None:
-            err["logical_error"].append(errors.POINT_DOES_NOT_EXISTS.format(point_name))
+            err["logical_error"].append(errors.POINT_DOES_NOT_EXIST.format(point_name))
             for section in route:
                 if point_name in section["from"] or point_name in section["to"]:
                     section["nonessential"] = True
@@ -208,7 +208,7 @@ def route_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], err: 
     existing_routes = set(tp[0] for tp in existing_sections_dict)
     for mentioned_route in fpl_mentioned_routes:
         if mentioned_route not in existing_routes:
-            err["logical_error"].append(errors.ROUTE_DOES_NOT_EXISTS.format(mentioned_route))
+            err["logical_error"].append(errors.ROUTE_DOES_NOT_EXIST.format(mentioned_route))
 
     ...
     # * Step 2.2. Check route-scheme (TOS) adherence

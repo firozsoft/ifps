@@ -31,3 +31,6 @@ class SidStar(BaseModel):
                 name="unique_sid_star_name_nav_ad",
             ),
         ]
+
+    def __str__(self) -> str:
+        return f"{self.get_type_display()} {self.indicator} {self.aerodrome}"

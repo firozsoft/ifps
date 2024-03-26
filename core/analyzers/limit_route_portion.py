@@ -81,7 +81,7 @@ def set_route_boundaries(
     }
 
     if not possible_boundary_sections:
-        err["logical_error"].append(errors.ROUTE_DOES_NOT_EXISTS.format(boundary_route_indicator))
+        err["logical_error"].append(errors.ROUTE_DOES_NOT_EXIST.format(boundary_route_indicator))
         return []
 
     for section in possible_boundary_sections:
@@ -161,7 +161,7 @@ def normalize_route_portions(fpl, all_existing_points, route_portion_to_be_check
 
         for _, fir in FIRs.items():
             if not fir.is_active:
-                err["logical_error"].append(errors.FIR_IS_NOT_ACTIVE.format(fir))
+                err["logical_error"].append(errors.FIR_INACTIVE.format(fir))
 
         our_fir = FIRs.get(our_fir_indicator_2letters, None)
         previous_fir = FIRs.get(previous_fir_indicator_2letters, None)

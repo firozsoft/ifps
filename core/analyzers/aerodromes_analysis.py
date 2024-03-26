@@ -22,6 +22,7 @@ from apps.aerodromes.models.daily_opr import DailyOperationalHour
 from apps.aerodromes.models.temp_closure import TemporaryClosure
 from apps.general.models.aircraft import Aircraft
 from apps.routes.models.sid_star import SidStar
+from core.analyzers import error_messages
 from core.utils import regex_patterns
 
 
@@ -36,7 +37,7 @@ def check_aerodrome_operational_hour(
 
     if len(aerodrome.dailyoperationalhours_list) > 1:
         err["logical_error"].append(
-            f"Inform administration: {aerodrome} daily operational hours has duplication for {flight_date}."
+            error_messages.AERODROME_OPERATIONAL_HOURS_DUPLICATION.format(aerodrome, flight_date)
         )
         return
 
@@ -53,22 +54,23 @@ def check_aerodrome_operational_hour(
     if ad_start <= flight_time <= ad_end:
         return
 
-    msg = (
-        f"Your departure/arrival time {flight_time} at {aerodrome} is not in it's operational hours "
-        f"({ad_start} & {ad_end})."
-    )
-
     if not aerodrome.aur:
-        err["logical_error"].append(msg)
+        err["logical_error"].append(
+            error_messages.AEROROME_TIME_UNACCEPTABLE.format(flight_time, aerodrome, ad_start, ad_end)
+        )
     else:
         # TODO: instead of error there should be a RMK message that indicates AUR is coordinated.
-        err["logical_error"].append(msg + " But this aerodrome is available upon request.")
+        err["logical_error"].append(
+            error_messages.AERODROME_TIME_UNACCEPTABLE_BUT_AUR.format(
+                flight_time, aerodrome, ad_start, ad_end
+            )
+        )
 
 
 def check_aerodrome_temporarily_closure(aerodrome: Aerodrome, err: dict[str, list[str]]):
     for temp_closure in aerodrome.temporaryclosures_list:
         err["logical_error"].append(
-            f"{aerodrome} is temporary closed, {temp_closure.start} till {temp_closure.end}."
+            error_messages.AERODROME_TEMP_CLOSURE.format(aerodrome, temp_closure.start, temp_closure.end)
         )
 
 
@@ -77,32 +79,40 @@ def check_aerodrome_curfew(aerodrome: Aerodrome, data_sts: str, data_rmk: str, e
         if not any([True for sts in data_sts if sts in curfew.acceptable_sts]) or not any(
             [True for rmk in curfew.acceptable_rmk if rmk in data_rmk]
         ):
-            err["logical_error"].append(f"{aerodrome} curfew time, {curfew.start} till {curfew.end}.")
+            err["logical_error"].append(
+                error_messages.AERODROME_CURFEW_TIME.format(aerodrome, curfew.start, curfew.end)
+            )
 
 
-def check_aerodrome_sid_star(sid_star_name: str, type_: str, aerodrome: Aerodrome, err: dict[str, list[str]]):
+def check_aerodrome_sid_star(
+    sid_star_name: str, used_as_type: str, aerodrome: Aerodrome, err: dict[str, list[str]]
+):
     found_sidstars = set()
     for sidstar in aerodrome.sid_stars_list:
-        if sidstar.indicator == sid_star_name and sidstar.type == type_:
+        if sidstar.indicator == sid_star_name and sidstar.type == used_as_type:
             found_sidstars.add(sidstar)
 
     if len(found_sidstars) > 1:
-        err["logical_error"].append(f"Inform administration: more than one {type_} {sid_star_name} exist.")
+        err["logical_error"].append(error_messages.SID_STAR_DUPLICATION.format(used_as_type, sid_star_name))
         return
 
     if len(found_sidstars) == 0:
-        err["logical_error"].append(f"{type_} {sid_star_name} does not exist.")
+        err["logical_error"].append(
+            error_messages.SID_STAR_DOES_NOT_EXIST.format(used_as_type, sid_star_name)
+        )
         return
 
     sid_star = found_sidstars.pop()
     if not sid_star.is_active:
-        err["logical_error"].append(f"{type_} {sid_star_name} is not active.")
+        err["logical_error"].append(error_messages.SID_STAR_INACTIVE.format(sid_star))
 
     if not sid_star.nav_aid.is_active:
-        err["logical_error"].append(f"{type_} {sid_star_name}, Nav.Aid {sid_star.nav_aid} is not active.")
+        err["logical_error"].append(
+            error_messages.SID_STAR_NAVAID_INACTIVE.format(sid_star, sid_star.nav_aid)
+        )
 
-    if type_ not in sid_star.type:
-        err["logical_error"].append(f"{sid_star_name}({sid_star.type}) can't be used as {type_}.")
+    if used_as_type not in sid_star.type:
+        err["logical_error"].append(error_messages.SID_STAR_INCOMPATIBLE_TYPE.format(sid_star, used_as_type))
 
 
 def analyse(
@@ -120,10 +130,14 @@ def analyse(
     check_aerodrome_curfew(aerodrome, data_sts, data_rmk, err)
 
     if aerodrome.type == "heliport" and aircraft_type not in heliports_acceptable_types:
-        err["logical_error"].append(f"{aerodrome} is Heliport and isn't available for {aircraft_type}.")
+        err["logical_error"].append(
+            error_messages.HELIPORT_DOES_NOT_ACCEPTS_TYPE.format(aerodrome, aircraft_type)
+        )
 
-    if flight_rule not in aerodrome.ifr_vfr:
-        err["logical_error"].append(f"{aerodrome} does not accept {flight_rule.upper()}.")
+    if flight_rule.lower() not in aerodrome.ifr_vfr.lower():
+        err["logical_error"].append(
+            error_messages.AERODROME_INCOMPATIBLE_FLIGHT_RULE.format(aerodrome, flight_rule.upper())
+        )
 
 
 def get_aerodrome_queryset(
@@ -194,9 +208,7 @@ def aerodromes_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], 
         fpl["domestic_destination"] = False
 
     if not all([fpl["departure_ad"], fpl["destination_ad"], fpl["alt_ad_1"]]):
-        err["logical_error"].append(
-            "The Destination, Departure and at least one Alternate Aerodromes are mandatory."
-        )
+        err["logical_error"].append(error_messages.DEST_DEP_ONE_ALT_REQUIRED)
         # if any of these is not found or active, then the rest of the checks could not be done!
         return
 
@@ -247,10 +259,10 @@ def aerodromes_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], 
 
     for indicator in indicators_to_fetch.values():
         if indicator not in exiting_aerodromes:
-            err["logical_error"].append(f"{indicator} does not exists.")
+            err["logical_error"].append(error_messages.AERODROME_DOES_NOT_EXIST.format(indicator))
 
         elif not exiting_aerodromes[indicator].is_active:
-            err["logical_error"].append(f"{indicator} is not active.")
+            err["logical_error"].append(error_messages.AERODROME_INACTIVE.format(indicator))
 
     analyze_arguments = {
         "aircraft_type": aircraft_type,
@@ -270,7 +282,7 @@ def aerodromes_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], 
 
         if not domestic_destination and not (departure_ad.is_international and departure_ad.aur):
             err["logical_error"].append(
-                f"Departure {departure_ad} is not international neither available upon request."
+                error_messages.AERODROME_IS_NOT_INTERNATIONAL_NOR_AUR.format("Departure", departure_ad)
             )
 
     destination_indicator = indicators_to_fetch.pop("destination_ad", None)
@@ -284,7 +296,7 @@ def aerodromes_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], 
         if not domestic_departure and not (destination_ad.is_international and destination_ad.aur):
             # TODO: check if AUR is coordinated
             err["logical_error"].append(
-                f"Destination {destination_ad} is not international neither available upon request."
+                error_messages.AERODROME_IS_NOT_INTERNATIONAL_NOR_AUR.format("Destination", destination_ad)
             )
 
     for indicator in indicators_to_fetch.values():

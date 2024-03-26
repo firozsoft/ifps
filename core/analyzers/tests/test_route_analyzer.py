@@ -312,7 +312,7 @@ class RouteAnalyzerTestCase(TestCase):
         err = {"logical_error": []}
         data["eet"] = "OKKK0030 OIIX0210 OPKR0220 VAHH0330"
         route_analyzer(data, err)
-        self.assertIn(error_messages.ROUTE_DOES_NOT_EXISTS.format("T21"), err["logical_error"])
+        self.assertIn(error_messages.ROUTE_DOES_NOT_EXIST.format("T21"), err["logical_error"])
 
     @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
     def test_fail_due_no_exit_point_no_long_route(self, mock_validate_fpl_route_section):
@@ -375,7 +375,7 @@ class RouteAnalyzerTestCase(TestCase):
 
         route_analyzer(data, err)
 
-        self.assertIn(error_messages.ROUTE_DOES_NOT_EXISTS.format("P57"), err["logical_error"])
+        self.assertIn(error_messages.ROUTE_DOES_NOT_EXIST.format("P57"), err["logical_error"])
         self.assertIn(error_messages.PATH_NOT_FOUND.format("SYZ", "ISN", "P57"), err["logical_error"])
 
     @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
@@ -392,7 +392,7 @@ class RouteAnalyzerTestCase(TestCase):
             err,
             {
                 "logical_error": [
-                    error_messages.POINT_DOES_NOT_EXISTS.format("TRN"),
+                    error_messages.POINT_DOES_NOT_EXIST.format("TRN"),
                     error_messages.PATH_NOT_FOUND.format("SYZ", "TRN", "P574"),
                 ]
             },
