@@ -91,7 +91,9 @@ class RetrievePointsTestCase(TestCase):
         }
 
     def test_retrieve_point_name_from_fpl_route(self):
-        result = retrieve_point_name_from_fpl_route_section(self.data)
+        result = retrieve_point_name_from_fpl_route_section(
+            self.data["route"], self.data["departure_ad"], self.data["destination_ad"]
+        )
         points = set(map(lambda x: x.indicator, self.points))
         points.discard("NON")
         self.assertSetEqual(result, points)
