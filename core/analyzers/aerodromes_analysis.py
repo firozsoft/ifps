@@ -256,7 +256,9 @@ def aerodromes_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], 
                 extra_ad_to_check[key] = item18_ad.groupdict().get("aerodrome")
 
     indicators_to_fetch = {
-        key: fpl[key] for key in ("departure_ad", "destination_ad", "alt_ad_1", "alt_ad_2") if key in fpl
+        key: fpl[key]
+        for key in ("departure_ad", "destination_ad", "alt_ad_1", "alt_ad_2")
+        if key in fpl and fpl.get(key) is not None
     }
 
     indicators_to_fetch.update(extra_ad_to_check)
