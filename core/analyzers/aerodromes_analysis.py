@@ -37,7 +37,9 @@ def check_aerodrome_operational_hour(
 
     if len(aerodrome.dailyoperationalhours_list) > 1:
         err["logical_error"].append(
-            error_messages.AERODROME_OPERATIONAL_HOURS_DUPLICATION.format(aerodrome, flight_date)
+            error_messages.AERODROME_OPERATIONAL_HOURS_DUPLICATION.format(
+                aerodrome, flight_date.strftime("%y%m%d")
+            )
         )
         return
 
@@ -54,9 +56,14 @@ def check_aerodrome_operational_hour(
     if ad_start <= flight_time <= ad_end:
         return
 
+    flight_time, ad_start, ad_end = (
+        flight_time.strftime("%H%m"),
+        ad_start.strftime("%H%m"),
+        ad_end.strftime("%H%m"),
+    )
     if not aerodrome.aur:
         err["logical_error"].append(
-            error_messages.AEROROME_TIME_UNACCEPTABLE.format(flight_time, aerodrome, ad_start, ad_end)
+            error_messages.AERODROME_TIME_UNACCEPTABLE.format(flight_time, aerodrome, ad_start, ad_end)
         )
     else:
         # TODO: instead of error there should be a RMK message that indicates AUR is coordinated.
@@ -67,21 +74,33 @@ def check_aerodrome_operational_hour(
         )
 
 
-def check_aerodrome_temporarily_closure(aerodrome: Aerodrome, err: dict[str, list[str]]):
+def check_aerodrome_temporarily_closure(
+    aerodrome: Aerodrome, flight_datetime: datetime, err: dict[str, list[str]]
+):
     for temp_closure in aerodrome.temporaryclosures_list:
-        err["logical_error"].append(
-            error_messages.AERODROME_TEMP_CLOSURE.format(aerodrome, temp_closure.start, temp_closure.end)
-        )
-
-
-def check_aerodrome_curfew(aerodrome: Aerodrome, data_sts: str, data_rmk: str, err: dict[str, list[str]]):
-    for curfew in aerodrome.curfews_list:
-        if not any([True for sts in data_sts if sts in curfew.acceptable_sts]) or not any(
-            [True for rmk in curfew.acceptable_rmk if rmk in data_rmk]
-        ):
+        if temp_closure.start <= flight_datetime <= temp_closure.end:
             err["logical_error"].append(
-                error_messages.AERODROME_CURFEW_TIME.format(aerodrome, curfew.start, curfew.end)
+                error_messages.AERODROME_TEMP_CLOSURE.format(
+                    aerodrome,
+                    temp_closure.start.strftime("%y%m%d%H%M"),
+                    temp_closure.end.strftime("%y%m%d%H%M"),
+                )
             )
+
+
+def check_aerodrome_curfew(
+    aerodrome: Aerodrome, flight_datetime: datetime, data_sts: str, data_rmk: str, err: dict[str, list[str]]
+):
+    for curfew in aerodrome.curfews_list:
+        if curfew.start <= flight_datetime <= curfew.end:
+            if not any([True for sts in data_sts if sts in curfew.acceptable_sts]) or not any(
+                [True for rmk in curfew.acceptable_rmk if rmk in data_rmk]
+            ):
+                err["logical_error"].append(
+                    error_messages.AERODROME_CURFEW_TIME.format(
+                        aerodrome, curfew.start.strftime("%y%m%d%H%M"), curfew.end.strftime("%y%m%d%H%M")
+                    )
+                )
 
 
 def check_aerodrome_sid_star(
@@ -126,12 +145,12 @@ def analyse(
     data_rmk: str,
 ):
     check_aerodrome_operational_hour(aerodrome, flight_datetime, flight_rule, err)
-    check_aerodrome_temporarily_closure(aerodrome, err)
-    check_aerodrome_curfew(aerodrome, data_sts, data_rmk, err)
+    check_aerodrome_temporarily_closure(aerodrome, flight_datetime, err)
+    check_aerodrome_curfew(aerodrome, flight_datetime, data_sts, data_rmk, err)
 
     if aerodrome.type == "heliport" and aircraft_type not in heliports_acceptable_types:
         err["logical_error"].append(
-            error_messages.HELIPORT_DOES_NOT_ACCEPTS_TYPE.format(aerodrome, aircraft_type)
+            error_messages.AERODROME_INCOMPATIBLE_FLIGHT_TYPE.format(aerodrome, aerodrome.type, aircraft_type)
         )
 
     if flight_rule.lower() not in aerodrome.ifr_vfr.lower():
