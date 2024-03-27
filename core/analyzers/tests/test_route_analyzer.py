@@ -9,7 +9,11 @@ from apps.points.models.point import Point
 from apps.routes.models.base import Route
 from apps.routes.models.route_section import RouteSection
 from core.analyzers import error_messages
-from core.analyzers.route_analysis import route_analyzer
+from core.analyzers.route_analysis import (
+    retrieve_point_name_from_fpl_route_section,
+    retrieve_points_used_to_locate_ad_in_item18,
+    route_analyzer,
+)
 
 OUR_FIR_INDICATOR = settings.FIR_INDICATOR
 
@@ -90,6 +94,8 @@ class RouteAnalyzerTestCase(TestCase):
         non = Point.objects.create(indicator="NON", coordinate="4602N07800W")
         non.fir.add(nonneighbor_fir)
 
+        self.points = (cak, nanpi, syz, isn, boxam, asvib, pg, non)
+
         r1 = Route.objects.create(indicator="G666")
         r2 = Route.objects.create(indicator="A452")
         r3 = Route.objects.create(indicator="T215")
@@ -111,6 +117,28 @@ class RouteAnalyzerTestCase(TestCase):
         # domestic route
         RouteSection.objects.create(route=r4, point1=syz, point2=isn)
         RouteSection.objects.create(route=r5, point1=isn, point2=boxam)
+
+    def test_retrieve_point_name_from_fpl_route(self):
+        result = retrieve_point_name_from_fpl_route_section(
+            self.data["route"], self.data["departure_ad"], self.data["destination_ad"]
+        )
+        self.assertSetEqual(result, {"CAK", "NANPI", "SYZ", "ASVIB", "PG"})
+
+    def test_retrieve_points_used_to_locate_ad_in_item18(self):
+        self.data["domestic_departure"] = True
+        self.data["domestic_destination"] = True
+        self.data["dep"] = "SYZ120030"
+        self.data["dest"] = "YZD020060"
+        self.data["departure_ad"] = "ZZZZ"
+        self.data["destination_ad"] = "ZZZZ"
+        self.data["alt_ad_1"] = "ZZZZ"
+        self.data["alt_ad_2"] = "ZZZZ"
+        self.data["altn"] = "TRN020060"
+        self.data["ralt"] = "DNZ020060"
+
+        result = retrieve_points_used_to_locate_ad_in_item18(self.data)
+
+        self.assertSetEqual(result, {"SYZ", "YZD", "TRN", "DNZ"})
 
     @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
     def test_fail_due_eet_missing_our_fir(self, mock_validate_fpl_route_section):
