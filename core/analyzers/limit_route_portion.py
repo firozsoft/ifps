@@ -86,13 +86,13 @@ def set_route_boundaries(
 
     for section in possible_boundary_sections:
         boundary_point = None
-        if section.point1.is_fir_boundary:
+        if section.point1.is_fir_boundary and section.point1 in neighbor_fir.boundary_points:
             boundary_point = section.point1
 
-        elif section.point2.is_fir_boundary:
+        elif section.point2.is_fir_boundary and section.point2 in neighbor_fir.boundary_points:
             boundary_point = section.point2
 
-        if boundary_point in neighbor_fir.boundary_points:
+        if boundary_point is not None:
             route_portion_to_be_checked[(to_or_from == "to") * -1][to_or_from] = boundary_point.indicator
             # To provide data for route-scheme checks and avoid extra db querying
             route_portion_to_be_checked[(to_or_from == "to") * -1][
@@ -121,15 +121,11 @@ def normalize_route_portions(fpl, all_existing_points, route_portion_to_be_check
 
     domestic_departure = fpl["domestic_departure"]
     domestic_destination = fpl["domestic_destination"]
-
-    # This empty Q gets some filtering conditions if nondomestic otherwise has no effect
-    boundary_setcion_filter = Q()
+    our_fir_indicator_2letters = settings.FIR_INDICATOR[:2]
 
     if not domestic_departure or not domestic_destination:
         # Neighbor FIR and Route of flight to/from that FIR gives us the boundary point to limit route portion
-        common_boundaries_of3firs = set()
         previous_fir_indicator_2letters, next_fir_indicator_2letters = None, None
-        our_fir_indicator_2letters = settings.FIR_INDICATOR[:2]
 
         if not domestic_departure:
             eets = fpl["eet"].split(settings.FIR_INDICATOR)
@@ -181,10 +177,6 @@ def normalize_route_portions(fpl, all_existing_points, route_portion_to_be_check
                 # Without knowing entry point it's impossible to determine exit point.
                 return [], []
 
-            common_boundaries_of3firs = set(our_fir.boundary_points).intersection(
-                set(previous_fir.boundary_points)
-            )
-
         if not domestic_destination:
             route_portion_to_be_checked = get_essential_route_portion(
                 our_fir,
@@ -199,22 +191,8 @@ def normalize_route_portions(fpl, all_existing_points, route_portion_to_be_check
                 # Without knowing entry point it's impossible to determine exit point.
                 return [], []
 
-            common_boundaries_of3firs = common_boundaries_of3firs.union(
-                set(our_fir.boundary_points).intersection(set(next_fir.boundary_points))
-            )
-
         entry_route_indicator = route_portion_to_be_checked[0]["via"]
         exit_route_indicator = route_portion_to_be_checked[-1]["via"]
-        boundary_setcion_filter = Q(route__indicator__in=(entry_route_indicator, exit_route_indicator)) & (
-            Q(
-                point1__in=common_boundaries_of3firs,
-                point2__fir=our_fir,
-            )
-            | Q(
-                point2__in=common_boundaries_of3firs,
-                point1__fir=our_fir,
-            )
-        )
 
     # up to here route_portion_to_be_checked only contains the routes which are crossing/within our FIR
     fpl_mentioned_routes = set(
@@ -223,8 +201,15 @@ def normalize_route_portions(fpl, all_existing_points, route_portion_to_be_check
         if "nonessential" not in section or (section["via"] not in ("", "DCT"))
     )
 
+    # All RouteSection instances of mentioned routes which are within our FIR
     existing_sections = (
-        RouteSection.objects.filter(Q(route__indicator__in=fpl_mentioned_routes) | (boundary_setcion_filter))
+        RouteSection.objects.filter(
+            Q(route__indicator__in=fpl_mentioned_routes)
+            & (
+                Q(point1__fir__indicator__startswith=our_fir_indicator_2letters)
+                | Q(point2__fir__indicator__startswith=our_fir_indicator_2letters)
+            )
+        )
         .distinct()
         .select_related("route", "point1", "point2")
     )
