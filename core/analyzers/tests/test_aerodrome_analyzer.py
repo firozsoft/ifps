@@ -10,6 +10,7 @@ from apps.aerodromes.models.temp_closure import TemporaryClosure
 from apps.points.models.navaid import NavAid
 from apps.points.models.point import Point
 from apps.routes.models.sid_star import SidStar
+from core.analyzers import error_messages
 from core.analyzers.aerodromes_analysis import aerodromes_analyzer
 from core.utils.choices import AerodromeFlightType, AerodromeType, NavAidType, NavAidUseCase, SidStarType
 from create_aircraft import main as create_aircrafts
@@ -31,7 +32,7 @@ class AerodromeAnalyzerTestCase(TestCase):
             "alt_ad_1": "OIFM",
             "flight_type": "G",
             "flight_rule": "I",
-            "dof": datetime.datetime.now().date().strftime("%y%m%d"),
+            "dof": datetime.datetime.today().strftime("%y%m%d"),
             "eobt": "0800",
             "teet": "0130",
             "aircraft_type": "A319",
@@ -78,16 +79,23 @@ class AerodromeAnalyzerTestCase(TestCase):
         self.aerodromes = {"oiii": oiii, "oiss": oiss, "oifm": oifm, "oinj": oinj}
 
         # Create curfew
-        now = datetime.datetime.now()
-        self.curfew = Curfew.objects.create(aerodrome=oiii, start=now, end=now + datetime.timedelta(hours=2))
+        self.curfew = Curfew.objects.create(
+            aerodrome=oiii,
+            start=datetime.datetime.combine(datetime.datetime.today(), datetime.time(hour=22, minute=00)),
+            end=datetime.datetime.combine(datetime.datetime.today(), datetime.time(hour=23, minute=59)),
+        )
 
         # Create temp-closure, daily op-hours
-        TemporaryClosure.objects.create(aerodrome=oiii, start=now, end=now + datetime.timedelta(hours=2))
+        TemporaryClosure.objects.create(
+            aerodrome=oiii,
+            start=datetime.datetime.combine(datetime.datetime.today(), datetime.time(hour=17, minute=00)),
+            end=datetime.datetime.combine(datetime.datetime.today(), datetime.time(hour=19, minute=00)),
+        )
 
         # Create Daily Operational Hours
         self.oiii_dop = DailyOperationalHour.objects.create(
             aerodrome=oiii,
-            date=now.date(),
+            date=datetime.datetime.today(),
             start_time=datetime.time(hour=7, minute=00),
             end_time=datetime.time(hour=23, minute=59),
             vfr_start_time=datetime.time(hour=7, minute=30),
@@ -95,7 +103,7 @@ class AerodromeAnalyzerTestCase(TestCase):
         )
         self.oinj_dop = DailyOperationalHour.objects.create(
             aerodrome=oinj,
-            date=now.date(),
+            date=datetime.datetime.today(),
             start_time=datetime.time(hour=8, minute=00),
             end_time=datetime.time(hour=16, minute=00),
             vfr_start_time=datetime.time(hour=8, minute=30),
@@ -150,11 +158,7 @@ class AerodromeAnalyzerTestCase(TestCase):
 
         self.assertDictEqual(
             err,
-            {
-                "logical_error": [
-                    "The Destination, Departure and at least one Alternate Aerodromes are mandatory."
-                ]
-            },
+            {"logical_error": [error_messages.DEST_DEP_ONE_ALT_REQUIRED]},
         )
 
     def test_fails_due_ad_acceptable_types_and_flight_rules(self):
@@ -168,8 +172,8 @@ class AerodromeAnalyzerTestCase(TestCase):
             err,
             {
                 "logical_error": [
-                    "OINJ is Heliport and isn't available for A319.",
-                    "OINJ does not accept IFR.",
+                    error_messages.AERODROME_INCOMPATIBLE_FLIGHT_TYPE.format("OINJ", "heliport", "A319"),
+                    error_messages.AERODROME_INCOMPATIBLE_FLIGHT_RULE.format("OINJ", "IFR"),
                 ]
             },
         )
@@ -185,8 +189,8 @@ class AerodromeAnalyzerTestCase(TestCase):
             err,
             {
                 "logical_error": [
-                    "OINJ is Heliport and isn't available for A319.",
-                    "OINJ does not accept IFR.",
+                    error_messages.AERODROME_INCOMPATIBLE_FLIGHT_TYPE.format("OINJ", "heliport", "A319"),
+                    error_messages.AERODROME_INCOMPATIBLE_FLIGHT_RULE.format("OINJ", "IFR"),
                 ]
             },
         )
@@ -199,36 +203,60 @@ class AerodromeAnalyzerTestCase(TestCase):
 
         self.assertDictEqual(
             err,
-            {"logical_error": ["OIII is not active."]},
+            {"logical_error": [error_messages.AERODROME_INACTIVE.format("OIII")]},
         )
 
     def test_fails_due_alt_ad_not_active(self):
         self.aerodromes.get("oifm").is_active = False
         self.aerodromes.get("oifm").save(update_fields=["is_active"])
         err = copy.deepcopy(self.err)
+
         aerodromes_analyzer(self.fpl, err)
 
         self.assertDictEqual(
             err,
-            {"logical_error": ["OIFM is not active."]},
+            {"logical_error": [error_messages.AERODROME_INACTIVE.format("OIFM")]},
         )
+
+    def test_fails_due_sid_star_not_exists(self):
+        err = copy.deepcopy(self.err)
+        fpl = copy.deepcopy(self.fpl)
+        fpl["sid"] = "nonexisting_sid"
+        fpl["star"] = "nonexisting_star"
+
+        aerodromes_analyzer(fpl, err)
+
+        self.assertDictEqual(
+            err,
+            {
+                "logical_error": [
+                    error_messages.SID_STAR_DOES_NOT_EXIST.format("SID", "nonexisting_sid"),
+                    error_messages.SID_STAR_DOES_NOT_EXIST.format("STAR", "nonexisting_star"),
+                ]
+            },
+        )
+
+    # NOTE: Time Tests
+    # OIII DOP:0700-2359, VOP:0730-1700, Curfew:2200-2359, TMC:1700-1900
+    # OINJ DOP:0800-1600, VOP:0830-1500
 
     def test_fails_due_ad_opr_hours(self):
         self.fpl["eobt"] = "0600"
         err = copy.deepcopy(self.err)
+
         aerodromes_analyzer(self.fpl, err)
-        string = f"({self.oiii_dop.start_time} & {self.oiii_dop.end_time})"
-        self.assertIn(string, err["logical_error"][0])
+
+        self.assertTrue(err["logical_error"])
+        self.assertIn("is not in aerorome's operational hours", err["logical_error"][0])
 
     def test_fails_due_dep_ad_vfr_opr_hours(self):
         self.fpl["eobt"] = "0700"
         self.fpl["flight_rule"] = "V"
         err = copy.deepcopy(self.err)
-        string = f"({self.oiii_dop.vfr_start_time} & {self.oiii_dop.vfr_end_time})"
 
         aerodromes_analyzer(self.fpl, err)
 
-        self.assertIn(string, err["logical_error"][0])
+        self.assertIn("is not in aerorome's operational hours", err["logical_error"][0])
 
     def test_fails_due_dest_ad_vfr_opr_hours(self):
         err = copy.deepcopy(self.err)
@@ -238,7 +266,6 @@ class AerodromeAnalyzerTestCase(TestCase):
         fpl["flight_rule"] = "V"
         fpl["route"] = [{"flight_rule": "V"}]
         fpl["aircraft_type"] = "B214"
-        string = f"({self.oinj_dop.vfr_start_time} & {self.oinj_dop.vfr_end_time})"
 
         # # Enable query counting
         # from django.db import connection
@@ -254,24 +281,72 @@ class AerodromeAnalyzerTestCase(TestCase):
         # # Disable query counting
         # connection.force_debug_cursor = False
 
-        self.assertIn(string, err["logical_error"][0])
+        self.assertIn("is not in aerorome's operational hours", err["logical_error"][0])
 
-    def test_fails_due_sid_star_not_exists(self):
+    def test_fails_due_dep_ad_temp_closure(self):
+        # Curfew:2200-2359, TMC:1700-1900
+        self.fpl["eobt"] = "1800"
         err = copy.deepcopy(self.err)
-        fpl = copy.deepcopy(self.fpl)
-        fpl["sid"] = "nonexisting_sid"
-        fpl["star"] = "nonexisting_star"
 
-        aerodromes_analyzer(fpl, err)
+        aerodromes_analyzer(self.fpl, err)
 
-        self.assertDictEqual(
-            err,
-            {
-                "logical_error": [
-                    "SID nonexisting_sid does not exist.",
-                    "STAR nonexisting_star does not exist.",
-                ]
-            },
-        )
+        self.assertTrue(err["logical_error"])
+        self.assertIn("temporarily closed", err["logical_error"][0])
 
-    # TODO: more tests. SID/STAR, Curfew, TempClosure
+    def test_fails_due_dest_ad_temp_closure(self):
+        # Curfew:2200-2359, TMC:1700-1900
+        err = copy.deepcopy(self.err)
+        self.fpl["eobt"] = "1600"
+        self.fpl["teet"] = "0130"
+        self.fpl["departure_ad"] = "OISS"
+        self.fpl["destination_ad"] = "OIII"
+
+        aerodromes_analyzer(self.fpl, err)
+
+        self.assertTrue(err["logical_error"])
+        self.assertIn("temporarily closed", err["logical_error"][0])
+
+    def test_pass_ad_temp_closure_not_meet(self):
+        # Curfew:2200-2359, TMC:1700-1900
+        self.fpl["eobt"] = "1659"
+        err = copy.deepcopy(self.err)
+
+        aerodromes_analyzer(self.fpl, err)
+
+        self.assertFalse(err["logical_error"])
+
+    def test_fails_due_dep_ad_curfew(self):
+        # Curfew:2200-2359, TMC:1700-1900
+        self.fpl["eobt"] = "2200"
+        err = copy.deepcopy(self.err)
+
+        aerodromes_analyzer(self.fpl, err)
+
+        self.assertTrue(err["logical_error"])
+        self.assertIn("curfew time", err["logical_error"][0])
+
+    def test_fails_due_dest_ad_curfew(self):
+        # Curfew:2200-2359, TMC:1700-1900
+        err = copy.deepcopy(self.err)
+        self.fpl["eobt"] = "2100"
+        self.fpl["teet"] = "0130"
+        self.fpl["departure_ad"] = "OISS"
+        self.fpl["destination_ad"] = "OIII"
+
+        aerodromes_analyzer(self.fpl, err)
+
+        self.assertTrue(err["logical_error"])
+        self.assertIn("curfew time", err["logical_error"][0])
+
+    def test_pass_dest_ad_curfew_not_meet(self):
+        # Curfew:2200-2359, TMC:1700-1900
+        err = copy.deepcopy(self.err)
+        self.fpl["eobt"] = "2300"
+        self.fpl["teet"] = "0130"
+        self.fpl["departure_ad"] = "OISS"
+        self.fpl["destination_ad"] = "OIII"
+
+        aerodromes_analyzer(self.fpl, err)
+
+        self.assertTrue(err["logical_error"])
+        self.assertIn("is not in aerorome's operational hours", err["logical_error"][0])
