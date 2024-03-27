@@ -53,11 +53,7 @@ DJANGO_APPS = [
     # "django.contrib.gis",
 ]
 
-DEVELOPMENT_APPS = [
-    "debug_toolbar",
-]
-
-INSTALLED_APPS = LOCAL_APPS + DJANGO_APPS + DEVELOPMENT_APPS
+INSTALLED_APPS = LOCAL_APPS + DJANGO_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -69,16 +65,6 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # ---
     "django.contrib.admindocs.middleware.XViewMiddleware",
-]
-
-if DEBUG:
-    MIDDLEWARE += [
-        "debug_toolbar.middleware.DebugToolbarMiddleware",
-    ]
-
-# For security, set up internal IPs that are allowed to view the debug toolbar
-INTERNAL_IPS = [
-    "127.0.0.1",
 ]
 
 TEMPLATES = [
@@ -158,3 +144,13 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # fpl-check required settings
 FIR_INDICATOR = "OIIX"
+
+
+if DEBUG:
+    ALLOWED_HOSTS = "*"
+    INSTALLED_APPS.extend(["debug_toolbar"])
+    MIDDLEWARE.extend(["debug_toolbar.middleware.DebugToolbarMiddleware"])
+    # For security, set up internal IPs that are allowed to view the debug toolbar
+    INTERNAL_IPS = [
+        "127.0.0.1",
+    ]
