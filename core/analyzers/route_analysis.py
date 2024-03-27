@@ -27,9 +27,7 @@ from typing import Union
 import networkx as nx
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db.models import QuerySet
 
-from apps.points.models import Point
 from core.analyzers import error_messages as errors
 from core.analyzers.limit_route_portion import normalize_route_portions
 from core.analyzers.route_section_validation import validate_fpl_route_section
@@ -122,12 +120,9 @@ def retrieve_point_name_from_fpl_route_section(
     return points_mentioned_in_route
 
 
-def check_points_exists(
-    points: set[str], existing_points: dict[str, tuple[Point, QuerySet[str]]], route, err
-):
+def check_points_exists(points: set[str], existing_points: dict[str, set[str]], route, err):
     for point_name in points:
-        point_data = existing_points.get(point_name, None)
-        if point_data is None:
+        if point_name not in existing_points:
             err["logical_error"].append(errors.POINT_DOES_NOT_EXIST.format(point_name))
             for section in route:
                 if point_name in section["from"] or point_name in section["to"]:
@@ -139,12 +134,11 @@ def route_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], err: 
 
     The flight-planned route consists of points and routes (and speed/level changes, etc.).
     - There are the following Queries in this function:
-        1. Points: validate mentioned points existence
-            1.1. Prefetch FIRs to check intersection of points FIRs.
-        2. FIRs: fetching neighbor FIRs
-            2.1. Prefetch boundary points to limit route to the portion using common boundaries.
-        3. RouteSection: validate route-section adherence & limiting route to boundaries if required.
-        4. RouteScheme: validate route-scheme (TOS) adherence
+        1. FIRs: Fetch all mentioned FIRs of EET
+            1.1. Prefetch all points that are mentioned in fpl route for each FIR (point existence check).
+            1.2. Prefetch boundary points of neighbor FIRs to limit route to the portion using common boundaries.
+        2. RouteSection: validate route-section adherence & limiting route to boundaries if required.
+        3. RouteScheme: validate route-scheme (TOS) adherence.
     """
 
     domestic_departure = fpl["domestic_departure"]
@@ -164,19 +158,11 @@ def route_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], err: 
     # In addition to points mentioned in the route section, there might be some points in item18 of the FPL
     points_used_to_locate_ads_in_item18 = retrieve_points_used_to_locate_ad_in_item18(fpl)
 
-    all_existing_points: dict[str, tuple[Point, QuerySet[str]]] = {
-        point.indicator: (point, set(fir.indicator for fir in point.fir.all()))
-        for point in Point.objects.filter(
-            indicator__in=(
-                *points_mentioned_in_route,
-                *points_used_to_locate_ads_in_item18,
-            )
-        ).prefetch_related("fir")
-    }
+    mentioned_points_in_fpl = set(points_mentioned_in_route).union(points_used_to_locate_ads_in_item18)
 
     # using copy.deepcopy to avoid unexpected behaviors due to mutability of lists and dicts in python
-    route_portion_to_be_checked, existing_sections_dict = normalize_route_portions(
-        fpl, all_existing_points, copy.deepcopy(fpl["route"]), err
+    route_portion_to_be_checked, all_existing_points, existing_sections_dict = normalize_route_portions(
+        fpl, mentioned_points_in_fpl, copy.deepcopy(fpl["route"]), err
     )
 
     if not route_portion_to_be_checked:

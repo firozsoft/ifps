@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.db.models import Prefetch, Q, QuerySet
+from django.db.models import Prefetch, Q
 
 from apps.general.models.base import FIR
 from apps.points.models import Point
@@ -11,7 +11,7 @@ def get_essential_route_portion(
     our_fir: FIR,
     neighbor_fir: FIR,
     fpl_route: list[dict],
-    existing_points: dict[str, tuple[Point, QuerySet[str]]],
+    existing_points: dict[str, set[str]],
     entry_or_exit: str,
     eet: str,
     err: dict,
@@ -50,8 +50,8 @@ def get_essential_route_portion(
         previous_firs_indicators.add(neighbor_fir.indicator)
 
     for index, section in enumerate(fpl_route):
-        if point_data := existing_points.get(section["to"], None):
-            point_firs = point_data[1]
+        point_firs = existing_points.get(section["to"], None)
+        if point_firs is not None:
             if entry_or_exit == "Entry" and not previous_firs_indicators.intersection(point_firs):
                 if fpl_route[index]["via"] in ("", "DCT"):
                     continue
@@ -108,7 +108,9 @@ def set_route_boundaries(
         return []
 
 
-def normalize_route_portions(fpl, all_existing_points, route_portion_to_be_checked, err):
+def normalize_route_portions(
+    fpl, mentioned_points_in_fpl, route_portion_to_be_checked, err
+) -> tuple[list[dict], dict[str, set[str]], dict[tuple, RouteSection]]:
     """Drops the unessential portion of flight planned route to our FIR and returns the
     normalized fpl route-sections list along with database route sections instances which are converted to
     dictionary to optimize database querying. Incases of failure to limiting the route the err dict gets
@@ -123,9 +125,9 @@ def normalize_route_portions(fpl, all_existing_points, route_portion_to_be_check
     domestic_destination = fpl["domestic_destination"]
     our_fir_indicator_2letters = settings.FIR_INDICATOR[:2]
 
-    if not domestic_departure or not domestic_destination:
-        # Neighbor FIR and Route of flight to/from that FIR gives us the boundary point to limit route portion
-        previous_fir_indicator_2letters, next_fir_indicator_2letters = None, None
+    firs_indicators_first_2letters = {our_fir_indicator_2letters}
+    if fpl.get("eet", False):
+        firs_indicators_first_2letters.update(eet.strip()[:2] for eet in fpl["eet"].split() if eet)
 
         if not domestic_departure:
             eets = fpl["eet"].split(settings.FIR_INDICATOR)
@@ -133,6 +135,7 @@ def normalize_route_portions(fpl, all_existing_points, route_portion_to_be_check
                 previous_fir_indicator_2letters = eets[0].strip().split()[-1].strip()[:2]
             except IndexError:
                 previous_fir_indicator_2letters = fpl["departure_ad"][:2]
+            firs_indicators_first_2letters.add(previous_fir_indicator_2letters)
 
         if not domestic_destination:
             eets = fpl["eet"].split(settings.FIR_INDICATOR)
@@ -140,25 +143,39 @@ def normalize_route_portions(fpl, all_existing_points, route_portion_to_be_check
                 next_fir_indicator_2letters = eets[1].strip().split()[1].strip()[:2]
             except IndexError:
                 next_fir_indicator_2letters = "XQ"  # NOTE: FIR indicators can't be started with I,J,X,Q.
+            firs_indicators_first_2letters.add(next_fir_indicator_2letters)
 
-        firs_and_their_boundary_points = FIR.objects.filter(
-            Q(indicator__startswith=previous_fir_indicator_2letters)
-            | Q(indicator__startswith=our_fir_indicator_2letters)
-            | Q(indicator__startswith=next_fir_indicator_2letters)
-        ).prefetch_related(
-            Prefetch(
-                "points",
-                queryset=Point.objects.filter(is_fir_boundary=True),
-                to_attr="boundary_points",
-            ),
+    all_firs = FIR.objects.filter(
+        Q(
+            *[("indicator__startswith", first_2letters) for first_2letters in firs_indicators_first_2letters],
+            _connector=Q.OR,
         )
+    ).prefetch_related(
+        Prefetch(
+            "points",
+            queryset=Point.objects.filter(is_fir_boundary=True),
+            to_attr="boundary_points",
+        ),
+        Prefetch(
+            "points",
+            queryset=Point.objects.filter(indicator__in=mentioned_points_in_fpl),
+            to_attr="all_points",
+        ),
+    )
 
-        FIRs = {fir.indicator[:2]: fir for fir in firs_and_their_boundary_points}
+    FIRs = {fir.indicator[:2]: fir for fir in all_firs}
 
-        for _, fir in FIRs.items():
-            if not fir.is_active:
-                err["logical_error"].append(errors.FIR_INACTIVE.format(fir))
+    all_existing_points: dict[str, set[str]] = dict()
+    for _, fir in FIRs.items():
+        if not fir.is_active:
+            err["logical_error"].append(errors.FIR_INACTIVE.format(fir))
 
+        for point in fir.all_points:
+            all_existing_points[point.indicator] = all_existing_points.get(point.indicator, set()).union(
+                [fir.indicator]
+            )
+
+    if not domestic_departure or not domestic_destination:
         our_fir = FIRs.get(our_fir_indicator_2letters, None)
         previous_fir = FIRs.get(previous_fir_indicator_2letters, None)
         next_fir = FIRs.get(next_fir_indicator_2letters, None)
@@ -175,7 +192,7 @@ def normalize_route_portions(fpl, all_existing_points, route_portion_to_be_check
             )
             if not route_portion_to_be_checked:
                 # Without knowing entry point it's impossible to determine exit point.
-                return [], []
+                return [], [], []
 
         if not domestic_destination:
             route_portion_to_be_checked = get_essential_route_portion(
@@ -189,7 +206,7 @@ def normalize_route_portions(fpl, all_existing_points, route_portion_to_be_check
             )
             if not route_portion_to_be_checked:
                 # Without knowing entry point it's impossible to determine exit point.
-                return [], []
+                return [], [], []
 
         entry_route_indicator = route_portion_to_be_checked[0]["via"]
         exit_route_indicator = route_portion_to_be_checked[-1]["via"]
@@ -228,7 +245,7 @@ def normalize_route_portions(fpl, all_existing_points, route_portion_to_be_check
             err,
         )
         if not route_portion_to_be_checked:
-            return [], []
+            return [], [], []
 
     if not domestic_destination:
         route_portion_to_be_checked = set_route_boundaries(
@@ -240,10 +257,10 @@ def normalize_route_portions(fpl, all_existing_points, route_portion_to_be_check
             err,
         )
         if not route_portion_to_be_checked:
-            return [], []
+            return [], [], []
 
     if not existing_sections_dict:
         err["logical_error"].append(errors.ROUTE_PORTION_DETERMINATION_ERROR.format(our_fir))
-        return [], []
+        return [], [], []
 
-    return route_portion_to_be_checked, existing_sections_dict
+    return route_portion_to_be_checked, all_existing_points, existing_sections_dict
