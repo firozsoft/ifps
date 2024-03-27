@@ -75,10 +75,6 @@ def _check_item_is_valid_point_or_location(item, previous, res, segments, err):
     if matched.groupdict().get("location"):
         previous = {"type": "location", "item": matched.groupdict().get("location")}
         segments[-1]["nonessential"] = True
-        if matched.groupdict().get("ref_point"):
-            res["ref_points"].append(matched.groupdict().get("ref_point"))
-            # TODO: check if the line below is required ro delete it
-            # segments[-1].pop("nonessential", None)
 
     elif matched.groupdict().get("point"):
         previous = {"type": "point", "item": matched.groupdict().get("point")}
@@ -173,8 +169,6 @@ def route_regex_parse(
 
     elif item := re.match(regex_patterns.LOCATION, route_items[1]):
         previous = {"type": "location", "item": item.groupdict().get("location")}
-        if item.groupdict().get("ref_point"):
-            res["ref_points"].append(item.groupdict().get("ref_point"))
 
     else:
         err["syntax_error"].append(f"{route_items[1]} must be a valid ATS Route or DCT or an ATS Point")
@@ -309,9 +303,6 @@ def regex_parse(
             other_info.remove(item)
         else:
             last_switch_index = other_info.index(item)
-
-    # to create a list of reference points then doing logical-checks on them
-    regex_parsed_data["ref_points"] = []
 
     for item in other_info[:]:
         for key, pattern in OTHER_INFO_SWITCHES.items():

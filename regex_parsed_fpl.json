@@ -1,0 +1,122 @@
+{
+  "call_sign": "ACF402",
+  "flight_rule": "I",
+  "flight_type": "N",
+  "ac_numbers": "1",
+  "ac_type": "EA30",
+  "ac_weak": "H",
+  "equipments": "S",
+  "capacities": "C",
+  "departure_ad": "EHAM",
+  "eobt": "0940",
+  "destination_ad": "LPPT",
+  "teet": "0230",
+  "alt_ad_1": "LPPR",
+  "alt_ad_2": null,
+  "reg": "FBVGA",
+  "sel": "EJFL",
+  "dof": "240327",
+  "eet": "LPPC0158 OIIX0300",
+  "initial_speed": "K0830",
+  "initial_level": "F290",
+  "sid": "LEK2B",
+  "star": "FATIM1A",
+  "route": [
+    {
+      "from": "EHAM",
+      "to": "LEK",
+      "via": "LEK2B",
+      "speed": "K0830",
+      "level": "F290",
+      "top_level": "F290",
+      "flight_rule": "I"
+    },
+    {
+      "from": "LEK",
+      "to": "XMM",
+      "via": "UA6",
+      "speed": "M078",
+      "level": "F330",
+      "top_level": "F330",
+      "flight_rule": "I"
+    },
+    {
+      "from": "XMM",
+      "to": "PON",
+      "via": "UA6",
+      "speed": "M078",
+      "level": "F330",
+      "top_level": "F330",
+      "flight_rule": "I"
+    },
+    {
+      "from": "PON",
+      "to": "URION130043",
+      "via": "DCT",
+      "speed": "M078",
+      "level": "F330",
+      "top_level": "F330",
+      "flight_rule": "I",
+      "nonessential": true
+    },
+    {
+      "from": "URION130043",
+      "to": "CHW",
+      "via": "DCT",
+      "speed": "M078",
+      "level": "F330",
+      "top_level": "F330",
+      "flight_rule": "I",
+      "nonessential": true
+    },
+    {
+      "from": "CHW",
+      "to": "NTS",
+      "via": "UA5",
+      "speed": "M078",
+      "level": "F330",
+      "top_level": "F330",
+      "flight_rule": "I"
+    },
+    {
+      "from": "NTS",
+      "to": "4611N00412W",
+      "via": "DCT",
+      "speed": "M078",
+      "level": "F330",
+      "top_level": "F330",
+      "flight_rule": "I",
+      "nonessential": true
+    },
+    {
+      "from": "4611N00412W",
+      "to": "STG",
+      "via": "DCT",
+      "speed": "M078",
+      "level": "F330",
+      "top_level": "F330",
+      "flight_rule": "I",
+      "nonessential": true
+    },
+    {
+      "from": "STG",
+      "to": "FATIM",
+      "via": "UA5",
+      "speed": "M078",
+      "level": "F330",
+      "top_level": "F330",
+      "flight_rule": "I"
+    },
+    {
+      "from": "FATIM",
+      "to": "LPPT",
+      "via": "FATIM1A",
+      "speed": "M078",
+      "level": "F330",
+      "top_level": "F330",
+      "flight_rule": "I"
+    }
+  ],
+  "domestic_departure": false,
+  "domestic_destination": false
+}

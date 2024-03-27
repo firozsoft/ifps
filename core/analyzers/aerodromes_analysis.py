@@ -231,7 +231,7 @@ def aerodromes_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], 
         # if any of these is not found or active, then the rest of the checks could not be done!
         return
 
-    aircraft_type = fpl["aircraft_type"]
+    aircraft_type = fpl["ac_type"]
     initial_flight_rule = "ifr" if fpl["flight_rule"] in "IY" else "vfr"
     last_flight_rule = "ifr" if fpl["route"][-1]["flight_rule"] in "IY" else "vfr"
 

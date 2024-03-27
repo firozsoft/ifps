@@ -44,11 +44,11 @@ def fpl_scrutinization(request, msg: str) -> JsonResponse:
 
     try:
         res, err = regex_parse(filled_data)
-    except Exception:
+    except Exception as exp:
         return JsonResponse(
             {
-                "internal_error": "Internal Server Error: Please notify the administration. And if possible, "
-                "provide necessary data to assist in reproducing the issue for further investigation."
+                "Internal Server Error": "Please notify the administration. And if possible, "
+                f"provide necessary data to assist in reproducing the issue for further investigation.\n{exp}"
             },
             status=500,
         )
@@ -58,11 +58,11 @@ def fpl_scrutinization(request, msg: str) -> JsonResponse:
 
     try:
         err = logical_check(res)
-    except Exception:
+    except Exception as exp:
         return JsonResponse(
             {
-                "internal_error": "Internal Server Error: Please notify the administration. And if possible, "
-                "provide necessary data to assist in reproducing the issue for further investigation."
+                "Internal Server Error": " Please notify the administration. And if possible, "
+                f"provide necessary data to assist in reproducing the issue for further investigation.\n{exp}"
             },
             status=500,
         )
@@ -74,7 +74,8 @@ def fpl_scrutinization(request, msg: str) -> JsonResponse:
     # TODO: use data of res (dict) and FlightPlanForm to save a new FPL in database
     form = FlightPlanForm(res)
     if form.is_valid():
-        form.save()
+        # form.save()
+        print(form.cleaned_data)
     return render(request, "pages/index.html", {"data": json.dumps(res)})
 
 
