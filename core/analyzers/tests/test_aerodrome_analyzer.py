@@ -35,7 +35,7 @@ class AerodromeAnalyzerTestCase(TestCase):
             "dof": datetime.datetime.today().strftime("%y%m%d"),
             "eobt": "0800",
             "teet": "0130",
-            "aircraft_type": "A319",
+            "ac_type": "A319",
             "route": [{"flight_rule": "I"}],
         }
 
