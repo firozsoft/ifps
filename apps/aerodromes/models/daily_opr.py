@@ -30,6 +30,9 @@ class DailyOperationalHour(models.Model):
             ),
         ]
 
+    def __str__(self) -> str:
+        return f'Operational Hours: {self.aerodrome}-{self.date.strftime("%y%m%d")}-{self.start_time.strftime("%H%M")}-{self.end_time.strftime("%H%M")}'
+
     def clean(self):
         if self.start_time > self.end_time:
             raise ValidationError(

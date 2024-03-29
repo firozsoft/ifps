@@ -26,7 +26,7 @@ class AerodromeProperties(AbstractBaseModel):
         ]
 
     def __str__(self):
-        return f"{self.aerodrome} - {self.start} - {self.end}"
+        return f"{self.__class__._meta.verbose_name}: {self.aerodrome} - {self.start.strftime("%y%m%d %H%M")} - {self.end.strftime("%y%m%d %H%M")}"
 
     def clean(self):
         if self.start > self.end:
