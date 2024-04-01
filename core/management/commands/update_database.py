@@ -10,7 +10,7 @@ from apps.aerodromes.models import Aerodrome, DailyOperationalHour
 from apps.general.models import FIR
 from apps.points.models import NavAid, Point
 from apps.routes.models import Route, RouteScheme, RouteSection, SidStar
-from core.utils.helpers import dms2dd
+from core.utils.helpers import dms_to_decimal_degrees
 
 AERODROMES = "./resources/Aerodrome.xlsx"
 POINTS_FIRS = "./resources/Point.xlsx"
@@ -68,7 +68,7 @@ class Command(BaseCommand):
         # self.create_route_schemes()
 
     def _get_geo_coordinate(self, coordinate: str):
-        latitude, longitude = dms2dd(coordinate)
+        latitude, longitude = dms_to_decimal_degrees(coordinate)
         # location = GEOSGeometry(
         #     f"POINT({longitude} {latitude})",
         #     srid=4326,

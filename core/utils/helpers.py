@@ -1,8 +1,10 @@
-"""This module contains Helper functions"""
+"""Helper functions module"""
+
 import io
 import re
 from decimal import Decimal, getcontext
 from itertools import product
+from typing import Union
 
 import pandas as pd
 from django.apps import apps as django_all_apps
@@ -13,7 +15,8 @@ from django.forms import model_to_dict
 from core.utils.choices import NavAidType, NavAidUseCase
 
 
-def levels_to_fl_int(row_flight_levels):
+def levels_to_fl_int(row_flight_levels: str) -> int:
+    """Converts flight level to integer"""
     meter = 1
     feet = 3.281 * meter
     if row_flight_levels[0] in ("S", "M"):
@@ -21,10 +24,10 @@ def levels_to_fl_int(row_flight_levels):
     return int(row_flight_levels[1:])
 
 
-def dms2dd(coordinate: str) -> tuple[Decimal, Decimal]:
+def dms_to_decimal_degrees(coordinate: str) -> tuple[Decimal, Decimal]:
     """
     Convert degrees or degrees+minutes or degrees+minutes+seconds to decimal-degrees.
-    46N078W -> (46 78) or 4620N07805W -> (46.333333 78.083333)
+    Example: 46N078W -> (46 78) or 4620N07805W -> (46.333333 78.083333)
     """
     pattern = r"^(?P<latitude>(\d{2}|\d{4}|\d{6})(N|S))(?P<longitude>(\d{3}|\d{5}|\d{7})(W|E))$"
     try:
@@ -48,17 +51,14 @@ def dms2dd(coordinate: str) -> tuple[Decimal, Decimal]:
     return convertor(*lat), convertor(*long)
 
 
-def get_geo_coordinate(coordinate: str):
-    latitude, longitude = dms2dd(coordinate)
-    # location = GEOSGeometry(
-    #     f"POINT({longitude} {latitude})",
-    #     srid=4326,
-    # )
-    # return latitude, longitude, location
+def get_geo_coordinate(coordinate: str) -> tuple[Decimal, Decimal]:
+    """Get geographic coordinate"""
+    latitude, longitude = dms_to_decimal_degrees(coordinate)
     return latitude, longitude
 
 
 def generate_routes_from_route_scheme_text(string: str) -> list[str]:
+    """Generate routes from route scheme text"""
     return list(map(" ".join, product(*map(lambda s: s.split("/"), string.split()))))
 
 
@@ -81,7 +81,9 @@ def get_app_all_models(app_name: str) -> dict[str, models.Model]:
     return all_models
 
 
-def get_model_class_and_fields(model_name) -> tuple:
+def get_model_class_and_fields(
+    model_name: str,
+) -> tuple[models.Model, list[models.Field], list[str], list[str]]:
     """
     Retrieve the model class and its fields given a model name.
 
@@ -94,16 +96,10 @@ def get_model_class_and_fields(model_name) -> tuple:
     Raises:
         LookupError: If the specified model does not exist.
     """
-
-    # Retrieve all models from the specified app
     model_names_and_classes = get_app_all_models("apps.")
-
-    # Check if the specified model exists
-    if model_name not in model_names_and_classes:
+    model_class = model_names_and_classes.get(model_name, None)
+    if model_class is None:
         raise LookupError(f"No model with name '{model_name}'.")
-
-    # Get the model class
-    model_class = model_names_and_classes.get(model_name)
 
     # Get all editable and non-auto-created fields of the model
     model_fields = [
@@ -121,15 +117,15 @@ def get_model_class_and_fields(model_name) -> tuple:
     return model_class, model_fields, expected_fields, required_fields
 
 
-def validate_excel_data(df: pd.DataFrame, expected_columns: list[str], required_columns: list[str]):
+def validate_excel_data(df: pd.DataFrame, expected_columns: list[str], required_columns: list[str]) -> None:
     """
     Checks if all expected columns are present in the given DataFrame
     and also ensures there are no empty values in any required columns.
 
     Args:
         df (pd.DataFrame): The DataFrame containing the data to validate.
-        expected_columns (list of str): List of expected column names.
-        required_columns (list of str): List of required column names.
+        expected_columns (list[str]): List of expected column names.
+        required_columns (list[str]): List of required column names.
 
     Returns:
         none: no return value.
@@ -149,16 +145,20 @@ def validate_excel_data(df: pd.DataFrame, expected_columns: list[str], required_
         raise ValidationError(f"Required column(s) {null_cols} have empty values.")
 
 
-def get_model_field_by_uppercased_verbose_name(model_fields, uppercased_verbose_name):
-    for mfield in model_fields:
-        if mfield.verbose_name.upper() == uppercased_verbose_name:
-            return mfield
+def get_model_field_by_uppercased_verbose_name(
+    model_fields: list[models.Field], uppercased_verbose_name: str
+) -> models.Field | None:
+    """Get model field by verbose name"""
+    for field in model_fields:
+        if field.verbose_name.upper() == uppercased_verbose_name:
+            return field
+    return None
 
 
-def field_value_human_readable(field, value):
+def field_value_human_readable(field: models.Field, value: Union[str, list[str]]) -> Union[str, list[str]]:
+    """Convert field value to human-readable format"""
     if isinstance(value, list):
-        value = [str(item) for item in value]
-        return value
+        return ",".join([str(item) for item in value])
 
     if isinstance(field, models.CharField) and field.choices:
         for choice_value, choice_label in field.choices:
@@ -171,38 +171,37 @@ def field_value_human_readable(field, value):
     return value
 
 
-def field_value_codeword(field, human_readable_value) -> str | models.QuerySet:
+def field_value_codeword(
+    field: models.Field, human_readable_value: Union[str, list[str]]
+) -> Union[str, models.QuerySet]:
+    """Convert human-readable value to model value"""
     if isinstance(field, models.CharField) and field.choices:
         for choice_value, choice_label in field.choices:
             if choice_label == human_readable_value:
                 return choice_value
 
     if isinstance(field, models.ForeignKey):
-        dunder_str = map(str.strip, human_readable_value.split("-"))
-        if len(dunder_str) == 3:
-            # Only for NavAid the __str__ returns "indicator - type - use_case"
-            name, type_display, use_case_display = dunder_str
-            type = [
+        parts = map(str.strip, human_readable_value.split("-"))
+        if len(parts) == 3:
+            name, type_display, use_case_display = parts
+            type = next(
                 choice_value
                 for choice_value, choice_label in NavAidType.choices
                 if choice_label == type_display
-            ].pop()
-            use_case = [
+            )
+            use_case = next(
                 choice_value
                 for choice_value, choice_label in NavAidUseCase.choices
                 if choice_label == use_case_display
-            ].pop()
+            )
             return field.related_model.objects.filter(indicator=name, type=type, use_case=use_case)
-        return field.related_model.objects.filter(indicator=dunder_str)
+        return field.related_model.objects.filter(indicator=parts)
     return human_readable_value
 
 
 def model_to_excel_bytesio(model_name: str) -> io.BytesIO:
-    # Get the model class and fields
-    model_class, model_fields, expected_fields_for_excel, required_fields = get_model_class_and_fields(
-        model_name
-    )
-
+    """Convert model data to Excel file"""
+    model_class, model_fields, expected_fields_for_excel, _ = get_model_class_and_fields(model_name)
     exportable_fields = [model_field.name for model_field in model_fields]
 
     # Retrieve data from the database
@@ -213,6 +212,7 @@ def model_to_excel_bytesio(model_name: str) -> io.BytesIO:
         model_field.name: model_field.verbose_name.upper() for model_field in model_fields
     }
     field_name_to_obj = {model_field.name: model_field for model_field in model_fields}
+
     data = [
         {
             field_name_to_vbname[field]: field_value_human_readable(field_name_to_obj[field], value)

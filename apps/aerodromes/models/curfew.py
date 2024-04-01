@@ -11,19 +11,17 @@ class Curfew(AerodromeProperties):
     # Fields that could be in STS
     hosp = models.BooleanField("Hospital", choices=YesNo, default=True)
     head = models.BooleanField("Head Flight", choices=YesNo, default=True)
-    sar = models.BooleanField("SAR(search and rescue)", choices=YesNo, default=True)
-    ffr = models.BooleanField("Fire-Fighting", choices=YesNo, default=True)
+    sar = models.BooleanField("Search and Rescue (SAR)", choices=YesNo, default=True)
+    ffr = models.BooleanField("Fire Fighting", choices=YesNo, default=True)
     hazmat = models.BooleanField("Hazardous Materials", choices=YesNo, default=True)
     med_evac = models.BooleanField("Medical Evacuation", choices=YesNo, default=True)
     # Fields that could be in RMK
     sm = models.BooleanField("SM Flight", choices=YesNo, default=True)
-    emergency = models.BooleanField("Emergency", choices=YesNo, default=True)
-    scramble = models.BooleanField("Scramble", choices=YesNo, default=True)
+    emergency = models.BooleanField(choices=YesNo, default=True)
+    scramble = models.BooleanField(choices=YesNo, default=True)
     delayed_sch_flight = models.BooleanField("Delayed Schedule Flight", choices=YesNo, default=True)
     military_il76 = models.BooleanField("Military IL76", choices=YesNo, default=True)
-    curfew_coordinated = models.BooleanField(
-        "Curfew Coordinated", choices=YesNo, default=True
-    )
+    curfew_coordinated = models.BooleanField(choices=YesNo, default=True)
 
     class Meta(AerodromeProperties.Meta):
         verbose_name = "Curfew"

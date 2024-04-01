@@ -1,7 +1,7 @@
 from django.db import models
 
 from core.utils.choices import YesNo
-from core.utils.helpers import dms2dd
+from core.utils.helpers import dms_to_decimal_degrees
 from core.utils.validators import coordinate_validator, fir_validator
 
 # from django.contrib.gis.geos import GEOSGeometry
@@ -86,7 +86,7 @@ class BasePoint(BaseModel):
 
     def save(self, *args, **kwargs):
         """save the model."""
-        self.latitude, self.longitude = dms2dd(self.coordinate)
+        self.latitude, self.longitude = dms_to_decimal_degrees(self.coordinate)
         # self.location = GEOSGeometry(
         #     f"POINT({self.longitude} {self.latitude})",
         #     srid=4326,

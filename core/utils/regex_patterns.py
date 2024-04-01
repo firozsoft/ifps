@@ -133,7 +133,7 @@ EQUIPMENTS_CAPACITIES = r"^{equipments}\/{capacities}$".format(
 # Insert all estimated elapsed times in 4 figures (hours and minutes)
 # TODO: ZZZZ/AFIL and SPECIFY, in Item 18, the name and location of the aerodrome preceded by DEP/
 DEPARTURE_AD_TIME = r"^({ad}|AFIL|ZZZZ)(?P<eobt>((0|1)[0-9]|2[0-3])[0-5][0-9])$".format(
-    ad=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<dep_ad>")
+    ad=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<departure_ad>")
 )
 
 
@@ -236,7 +236,7 @@ CRUISE_CLIMB = r"^(?P<cruiseclimb>C\/{sigp}\/{splvl}({lvl}|PLUS))$".format(
 # the ICAO four-letter location indicator(s) of not more than two destination alternate aerodromes, or
 # ZZZZ and SPECIFY in Item 18 the name and location of the destination alternate aerodrome(s), preceded by ALTN/
 DEST_AD_TEET_ALTS = r"^(?P<dest_teet_alt>({ad0})(?P<teet>\d\d\d\d)(\s{ad1})?(\s{ad2})?)$".format(
-    ad0=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<dest_ad>"),
+    ad0=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<destination_ad>"),
     ad1=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<alt1>"),
     ad2=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<alt2>"),
 )
@@ -273,13 +273,13 @@ def _other_switches(switch: str) -> set[str]:
     return OTHER_INFO_SWITCHES - {switch}
 
 
-RNAV_SPC = r"^(?P<RNAV_SPC>(A1|B[1-6]|C[1-4]|D[1-4]){1,4})$"
+RNAV_SPC = r"^(?P<rnav_specification>(A1|B[1-6]|C[1-4]|D[1-4]){1,4})$"
 
-RNP_SPC = r"^(?P<RNP_SPC>(L1|O[1-4]|S[1-2]|T[1-2]){1,4})$"
+RNP_SPC = r"^(?P<rnp_specification>(L1|O[1-4]|S[1-2]|T[1-2]){1,4})$"
 
 # fmt: off
 STS = (
-    r"^STS\/(?P<STS>(ALTRV|ATFMX|FFR|FLTCK|HAZMAT|HEAD|HOSP|HUM|MARSA|med_evac|NONRVSM|SAR|STATE)+)"
+    r"^STS\/(?P<STS>((ALTRV|ATFMX|FFR|FLTCK|HAZMAT|HEAD|HOSP|HUM|MARSA|MEDEVAC|NONRVSM|SAR|STATE)\s?)+)"
     + r"(?!("
     + r"|".join(_other_switches("STS"))
     + r"))$"
@@ -295,7 +295,7 @@ PBN = (
 
 # fmt: off
 NAV = (
-    r"^NAV\/(?P<NAV>(?P<nav_key>SBAS|GBAS|ABAS|DGNSS|RTK|WARTK|PPP)(\s(?P=nav_key))?)"
+    r"^NAV\/(?P<NAV>((SBAS|GBAS|ABAS|DGNSS|RTK|WARTK|PPP)\s?)+)"
     + r"(?!("
     + r"|".join(_other_switches("NAV"))
     + r"))$"
