@@ -278,19 +278,17 @@ def aerodromes_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], 
     Returns:
         None
     """
-    # Determine if departure is domestic or international
-    fpl["domestic_departure"] = (
-        fpl["departure_ad"].startswith(settings.FIR_INDICATOR[:2])
-        or "eet" not in fpl
-        or settings.FIR_INDICATOR not in fpl["eet"]
-    )
+    fpl["domestic_departure"] = True
+    if not fpl["departure_ad"].startswith(settings.FIR_INDICATOR[:2]) or (
+        "eet" in fpl.keys() and settings.FIR_INDICATOR in fpl["eet"]
+    ):
+        fpl["domestic_departure"] = False
 
-    # Determine if destination is domestic or international
-    fpl["domestic_destination"] = (
-        fpl["destination_ad"].startswith(settings.FIR_INDICATOR[:2])
-        or "eet" not in fpl
-        or len(fpl["eet"].split(settings.FIR_INDICATOR)[1]) == 4
-    )
+    fpl["domestic_destination"] = True
+    if not fpl["destination_ad"].startswith(settings.FIR_INDICATOR[:2]) or (
+        "eet" in fpl.keys() and len(fpl["eet"].split(settings.FIR_INDICATOR)[1].strip()) > 4
+    ):
+        fpl["domestic_destination"] = False
 
     # Check if required aerodromes are provided
     if not all([fpl["departure_ad"], fpl["destination_ad"], fpl["alt_ad_1"]]):

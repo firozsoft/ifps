@@ -221,10 +221,9 @@ def normalize_route_portions(
 
     if not domestic_departure or not domestic_destination:
         our_fir = FIRs.get(our_fir_indicator_2letters, None)
-        previous_fir = FIRs.get(previous_fir_indicator_2letters, None)
-        next_fir = FIRs.get(next_fir_indicator_2letters, None)
 
         if not domestic_departure:
+            previous_fir = FIRs.get(previous_fir_indicator_2letters, None)
             route_portion_to_be_checked = get_essential_route_portion(
                 our_fir,
                 previous_fir,
@@ -239,6 +238,7 @@ def normalize_route_portions(
                 return [], {}, {}
 
         if not domestic_destination:
+            next_fir = FIRs.get(next_fir_indicator_2letters, None)
             route_portion_to_be_checked = get_essential_route_portion(
                 our_fir,
                 next_fir,
