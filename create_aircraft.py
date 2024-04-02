@@ -2,7 +2,7 @@ import json
 
 from apps.general.models import Aircraft
 
-command = """curl -d "" -H "Content-Type: application/json" https://www4.icao.int/doc8643/External/AircraftTypes >> ac_type.json"""
+command = """curl -d "" -H "Content-Type: application/json" https://www4.icao.int/doc8643/External/AircraftTypes >> type_of_aircraft.json"""
 
 
 def main():
@@ -19,7 +19,7 @@ def main():
 
     objects = list()
     cleaned_objects = list()
-    with open("./ac_type.json", "r") as fl:
+    with open("./type_of_aircraft.json", "r") as fl:
         for ac in json.load(fl):
             objects.append(Aircraft(**{rename[key]: value for key, value in ac.items() if key in rename}))
     for obj in objects:

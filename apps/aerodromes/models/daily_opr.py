@@ -9,7 +9,6 @@ class DailyOperationalHour(models.Model):
 
     aerodrome = models.ForeignKey(
         "aerodromes.Aerodrome",
-        verbose_name="Aerodrome",
         related_name="%(class)ss",
         on_delete=models.CASCADE,
     )

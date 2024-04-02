@@ -8,13 +8,11 @@ from core.utils.choices import NavAidType, NavAidUseCase
 
 class NavAid(Point):
     type = models.CharField(
-        "Type",
         max_length=8,
         choices=NavAidType.choices,
         help_text=f"Choices: {', '.join(tp[1] for tp in NavAidType.choices)}",
     )
     use_case = models.CharField(
-        "Use Case",
         max_length=20,
         choices=NavAidUseCase.choices,
         help_text=f"Choices: {', '.join(tp[1] for tp in NavAidUseCase.choices)}",

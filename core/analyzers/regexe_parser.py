@@ -291,15 +291,17 @@ def route_regex_parse(
     # previous['type'] == 'route' | 'dct' | 'point' | 'location'
     for item in rest_of_route_items:
         # NOTE: _update_segments must only be called if item is a SIG_POINT not for DCT or ROUTE or IFR/VFR or etc.
-        if previous is None:
-            return
         if previous["type"] in ("route", "sid"):
             # current item can be a point that has an assigned indicator (point, change speed-level, cruise-climb)
             previous = _check_item_is_valid_point_with_indicator(item, previous, segments, err)
+            if previous is None:
+                return
             _update_segments(segments, previous["item"])
         elif previous["type"] == "dct":
             # current item can be a sig-point
             previous = _check_item_is_valid_point_or_location(item, previous, segments, err)
+            if previous is None:
+                return
             _update_segments(segments, previous["item"])
         elif previous["type"] == "point":
             # current item can be a route or dct or IFR/VFR
@@ -312,6 +314,8 @@ def route_regex_parse(
                 segments[-1]["via"] = "DCT"
             elif matched := re.match(regex_patterns.LOCATION, item):
                 previous = {"type": "location", "item": matched.groupdict().get("location")}
+                if previous is None:
+                    return
                 _update_segments(segments, previous["item"])
             else:
                 err["syntax_error"].append(
@@ -325,7 +329,7 @@ def route_regex_parse(
     res["route"] = segments
 
 
-def regex_parse(
+def parser(
     row_data: dict[str, str],
 ) -> tuple[dict[str, Union[str, list[dict[str, str]]]], Union[dict[str, str], None]]:
     """
@@ -342,12 +346,16 @@ def regex_parse(
     errors = None
     err = {"syntax_error": []}
 
-    # Validate call sign
-    call_sign = re.match(regex_patterns.AIRCRAFT_IDENTIFICATION, row_data["call_sign"])
-    if not call_sign:
-        err["syntax_error"].append(f"Invalid call-sign ({row_data['call_sign']}).")
+    # Validate callsign
+    aircraft_identification = re.match(
+        regex_patterns.AIRCRAFT_IDENTIFICATION, row_data["aircraft_identification"]
+    )
+    if not aircraft_identification:
+        err["syntax_error"].append(
+            f"Invalid aircraft identification ({row_data['aircraft_identification']})."
+        )
     else:
-        regex_parsed_data["call_sign"] = call_sign.group()
+        regex_parsed_data["aircraft_identification"] = aircraft_identification.group()
 
     # Validate flight rule/type
     flt_rule_type = re.match(regex_patterns.FLIGHT_RULE_TYPE, row_data["flt_rule_type"])
@@ -364,13 +372,15 @@ def regex_parse(
         regex_parsed_data.update(numbers_type_weak.groupdict())
 
     # Validate equipments/capacities
-    equp_cpct = re.match(regex_patterns.EQUIPMENTS_CAPACITIES, row_data["equipments_and_capacities"])
-    if not equp_cpct:
+    equipments_capacities = re.match(
+        regex_patterns.EQUIPMENTS_CAPACITIES, row_data["equipments_and_capacities"]
+    )
+    if not equipments_capacities:
         err["syntax_error"].append(
             f"Invalid equipments/capacities ({row_data['equipments_and_capacities']})."
         )
     else:
-        regex_parsed_data.update(equp_cpct.groupdict())
+        regex_parsed_data.update(equipments_capacities.groupdict())
 
     # Validate departure aerodrome and time
     dep_ad_time = re.match(regex_patterns.DEPARTURE_AD_TIME, row_data["dep_ad_time"])
@@ -403,12 +413,17 @@ def regex_parse(
             if item.startswith(f"{key}/"):
                 matched = re.match(pattern, item)
                 if matched is not None:
-                    regex_parsed_data.update(matched.groupdict())
+                    if key not in regex_parsed_data:
+                        regex_parsed_data.update(matched.groupdict())
+                    else:
+                        regex_parsed_data[key] = [regex_parsed_data[key], matched.group()]
                 else:
                     err["syntax_error"].append(f"Invalid {item} in ITEM18 (Other information).")
                 break
         else:
             err["syntax_error"].append(f"{item} is not valid syntax for ITEM18 (Other information).")
+
+    regex_parsed_data = {key.lower(): value for key, value in regex_parsed_data.items()}
 
     if regex_parsed_data["departure_ad"] in ("ZZZZ", "AFIL"):
         if "dep" not in regex_parsed_data:
@@ -452,9 +467,9 @@ def regex_parse(
         err["syntax_error"].append("Missing DOF/ switch in ITEM18.")
     else:
         try:
-            datetime.strptime(regex_parsed_data[key.lower()], "%y%m%d")
+            datetime.strptime(regex_parsed_data["dof"], "%y%m%d")
         except ValueError:
-            err["syntax_error"].append(f"DOF ({regex_parsed_data[key.lower()]}) is not valid (YYMMDD).")
+            err["syntax_error"].append(f"DOF ({regex_parsed_data["dof"]}) is not valid (YYMMDD).")
 
     # Parse Route
     route_regex_parse(row_data, regex_parsed_data, err)

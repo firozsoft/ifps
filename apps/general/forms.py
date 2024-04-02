@@ -5,9 +5,9 @@ from apps.general.models import BasePoint, FlightPlan
 from apps.general.models.aircraft import Aircraft
 
 
-def aircraft_types():
-    ac_types = ["ZZZZ"] + sorted(Aircraft.objects.values_list("type", flat=True))
-    return zip(ac_types, ac_types)
+def get__all_type_of_aircraft():
+    type_of_aircraft = ["ZZZZ"] + sorted(Aircraft.objects.values_list("type", flat=True))
+    return zip(type_of_aircraft, type_of_aircraft)
 
 
 class BasePointForm(forms.ModelForm):
@@ -16,10 +16,10 @@ class BasePointForm(forms.ModelForm):
         fields = "__all__"
 
     def clean(self):
-        super().clean()
         cd = self.cleaned_data
-        if cd["is_fir_boundary"] and cd["fir"].count() < 2:
+        if cd.get("is_fir_boundary", False) and cd.get("fir", FlightPlan.objects.none()).count() != 2:
             self.add_error("fir", "FIR boundary points must have two FIRs.")
+        return super().clean()
 
 
 class FlightPlanForm(forms.ModelForm):
@@ -38,7 +38,7 @@ class FlightPlanForm(forms.ModelForm):
         disabled=True,
         required=False,
     )
-    type_of_aircraft = forms.ChoiceField(choices=aircraft_types)
+    type_of_aircraft = forms.ChoiceField(choices=get__all_type_of_aircraft)
 
     class Meta:
         model = FlightPlan

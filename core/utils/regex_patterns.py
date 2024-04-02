@@ -30,8 +30,8 @@ AIRCRAFT_IDENTIFICATION = r"^[A-Z\d]{2,7}$"
 # X  if other than any of the defined categories above.
 # TODO: Specify status of a flight following the indicator STS in Item 18, or when necessary to denote other reasons for specific handling by ATS, indicate the reason following the indicator RMK in Item 18.
 FLIGHT_RULE = r"^(?P<flight_rule>[I,V,Y,Z])$"
-FLIGHT_TYPE = r"^(?P<flight_type>[S,N,G,M,X]?)$"
-FLIGHT_RULE_TYPE = r"^(?P<flight_rule>[I,V,Y,Z])(?P<flight_type>[S,N,G,M,X]?)$"
+TYPE_OF_FLIGHT = r"^(?P<type_of_flight>[S,N,G,M,X]?)$"
+FLIGHT_RULE_TYPE = r"^(?P<flight_rule>[I,V,Y,Z])(?P<type_of_flight>[S,N,G,M,X]?)$"
 
 
 # ? ITEM 9: NUMBER AND TYPE OF AIRCRAFT AND WAKE TURBULENCE CATEGORY
@@ -41,7 +41,7 @@ FLIGHT_RULE_TYPE = r"^(?P<flight_rule>[I,V,Y,Z])(?P<flight_type>[S,N,G,M,X]?)$"
 # TODO: The appropriate designator as specified in Doc 8643, Aircraft Type Designators, or if no such designator has been assigned, or in case of formation flights comprising more than one type, ZZZZ, and SPECIFY in Item 18, the (numbers and) type(s) of aircraft preceded by TYP/
 # * Wake turbulence category (1 character)
 TYPE_OF_AIRCRAFT = r"^(?P<type>[A-Z\d]{2,4})$"
-AC_NUMBER_TYPE_WAKE = r"^(?P<numbers>\d{0,2})(?P<type>[A-Z\d]{2,4})\/(?P<weak>[H,M,L,J])$"
+AC_NUMBER_TYPE_WAKE = r"^(?P<number_of_aircraft>\d{0,2})(?P<type_of_aircraft>[A-Z\d]{2,4})\/(?P<weakturbulence_category>[H,M,L,J])$"
 
 
 # ? ITEM 10: EQUIPMENT AND CAPABILITIES
@@ -221,7 +221,7 @@ CHANGE_FLT_RULE = r"^(?P<change_flt_rule>({sigp}(\/{splvl})?)\s+(VFR|IFR))$".for
 # letter C followed by an oblique stroke (/), a point as in 2 above followed by an oblique stroke, the speed, lower level, upper level or the word PLUS
 # C/SIG_POINT/SPEED_LEVEL(LEVEL|PLUS)
 # Examples:  C/48N050W/M082F290F350, C/48N050W/M082F290PLUS, C/LN011032/M220F580F620
-CRUISE_CLIMB = r"^(?P<cruiseclimb>C\/{sigp}\/{splvl}({lvl}|PLUS))$".format(
+CRUISE_CLIMB = r"^(?P<cruise_climb>C\/{sigp}\/{splvl}({lvl}|PLUS))$".format(
     sigp=SIG_POINT.replace(r"^", "").replace(r"$", ""),
     splvl=SPEED_LEVEL.replace(r"^", "").replace(r"$", ""),
     lvl=LEVEL.replace(r"^", "").replace(r"$", "").replace("level", "top_level"),
@@ -237,8 +237,8 @@ CRUISE_CLIMB = r"^(?P<cruiseclimb>C\/{sigp}\/{splvl}({lvl}|PLUS))$".format(
 # ZZZZ and SPECIFY in Item 18 the name and location of the destination alternate aerodrome(s), preceded by ALTN/
 DEST_AD_TEET_ALTS = r"^(?P<dest_teet_alt>({ad0})(?P<teet>\d\d\d\d)(\s{ad1})?(\s{ad2})?)$".format(
     ad0=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<destination_ad>"),
-    ad1=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<alt1>"),
-    ad2=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<alt2>"),
+    ad1=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<alt_ad_1>"),
+    ad2=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<alt_ad_2>"),
 )
 
 # ? ITEM 18: OTHER INFORMATION

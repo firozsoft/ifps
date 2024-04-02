@@ -37,7 +37,6 @@ class RouteSection(AbstractBaseModel):
     )
     # line = models.LineStringField(null=True, blank=True)
     direction = models.CharField(
-        "Direction",
         max_length=7,
         choices=Direction.choices,
         default=Direction.TO_FROM,
@@ -55,12 +54,12 @@ class RouteSection(AbstractBaseModel):
     upper_limit_flight_level = FlightLevelField(default=999)
     minimum_rnav_flight_level = FlightLevelField(null=True, blank=True)
     rnav_rnp = models.CharField("RNAV/RNP Type", max_length=50, null=True, blank=True)
-    mag_track = models.DecimalField("Magnetic Track", decimal_places=1, max_digits=4, null=True, blank=True)
-    lateral_limit = models.PositiveSmallIntegerField("Lateral limit (NM)", null=True, blank=True)
-    track_coloration = models.BooleanField("Track Correlation", default=True, choices=YesNo)
-    domestic_only = models.BooleanField("Domestic Flights Only", default=False, choices=YesNo)
-    not_for_over_flights = models.BooleanField("Not For OverFlights", default=False, choices=YesNo)
-    remark = models.TextField("Remarks", null=True, blank=True)
+    mag_track = models.DecimalField(decimal_places=1, max_digits=4, null=True, blank=True)
+    lateral_limit = models.PositiveSmallIntegerField("Lateral limit(NM)", null=True, blank=True)
+    track_coloration = models.BooleanField(default=True, choices=YesNo)
+    domestic_flights_only = models.BooleanField(default=False, choices=YesNo)
+    not_for_over_flights = models.BooleanField(default=False, choices=YesNo)
+    remark = models.TextField(null=True, blank=True)
 
     class Meta:
         ordering = ("route",)

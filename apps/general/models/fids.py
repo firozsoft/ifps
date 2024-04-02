@@ -4,25 +4,24 @@ from .base import AbstractBaseModel
 
 
 class FIDSData(AbstractBaseModel):
-    """To store FIDS data related to a call sign"""
+    """To store FIDS data related to a callsign"""
 
-    call_sign = models.CharField("call_sign", max_length=50)
-    ac_type = models.ForeignKey(
+    aircraft_identification = models.CharField(max_length=50)
+    type_of_aircraft = models.ForeignKey(
         "general.Aircraft",
-        verbose_name="Aircraft Type",
         null=True,
         on_delete=models.SET_NULL,
     )
-    dep = models.CharField("Departure", max_length=50)
-    dest = models.CharField("Destination", max_length=50)
-    depart_time = models.DateTimeField("Depart time", null=True, blank=True)
-    arrival = models.DateTimeField("Arrival", null=True, blank=True)
+    departure = models.CharField(max_length=50)
+    destination = models.CharField(max_length=50)
+    departure_time = models.DateTimeField(null=True, blank=True)
+    arrival = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.call_sign} - {self.ac_type}"
+        return f"{self.aircraft_identification} - {self.type_of_aircraft}"
 
     class Meta:
-        ordering = ("call_sign",)
-        indexes = [models.Index(fields=["call_sign", "ac_type"])]
+        ordering = ("aircraft_identification",)
+        indexes = [models.Index(fields=["aircraft_identification", "type_of_aircraft"])]
         verbose_name = "FIDS Data"
         verbose_name_plural = "FIDS Data"

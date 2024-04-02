@@ -12,7 +12,7 @@ from django.views.decorators.http import require_http_methods
 
 from apps.general.forms import FlightPlanForm
 from core.analyzers.logical_checks import logical_check
-from core.analyzers.regexer import regex_parse
+from core.analyzers.regexe_parser import parser
 from core.utils.helpers import get_app_all_models, model_to_excel_bytesio
 
 
@@ -31,7 +31,7 @@ def fpl_scrutinization(request, msg: str) -> JsonResponse:
 
     filled_data = {
         # "msg_type": parts[0], #-> (FPL
-        "call_sign": parts[1],
+        "aircraft_identification": parts[1],
         "flt_rule_type": parts[2],
         "numbers_type_weak": parts[3],
         "equipments_and_capacities": parts[4],
@@ -42,40 +42,15 @@ def fpl_scrutinization(request, msg: str) -> JsonResponse:
         # 'extra': parts[9]
     }
 
-    try:
-        res, err = regex_parse(filled_data)
-    except Exception as exp:
-        return JsonResponse(
-            {
-                "Internal Server Error": "Please notify the administration. And if possible, "
-                f"provide necessary data to assist in reproducing the issue for further investigation.\n{exp}"
-            },
-            status=500,
-        )
-
+    res, err = parser(filled_data)
     if err:
         return JsonResponse(err, status=400)
 
-    try:
-        err = logical_check(res)
-    except Exception as exp:
-        return JsonResponse(
-            {
-                "Internal Server Error": " Please notify the administration. And if possible, "
-                f"provide necessary data to assist in reproducing the issue for further investigation.\n{exp}"
-            },
-            status=500,
-        )
-
+    err = logical_check(res)
     if err:
         # return JsonResponse(err, status=400)
         return render(request, "pages/index.html", {"data": json.dumps(err)})
 
-    # TODO: use data of res (dict) and FlightPlanForm to save a new FPL in database
-    form = FlightPlanForm(res)
-    if form.is_valid():
-        # form.save()
-        print(form.cleaned_data)
     return render(request, "pages/index.html", {"data": json.dumps(res)})
 
 

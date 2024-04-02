@@ -7,7 +7,6 @@ from core.utils.validators import point_name_validator
 
 class Point(BasePoint):
     indicator = models.CharField(
-        "Indicator",
         max_length=5,
         validators=[point_name_validator],
     )

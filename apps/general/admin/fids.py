@@ -5,4 +5,4 @@ from apps.general.models import FIDSData
 
 @admin.register(FIDSData)
 class FIDSAdmin(admin.ModelAdmin):
-    autocomplete_fields = ("ac_type",)
+    autocomplete_fields = ("type_of_aircraft",)

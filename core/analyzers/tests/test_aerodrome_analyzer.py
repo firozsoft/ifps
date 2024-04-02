@@ -35,7 +35,7 @@ class AerodromeAnalyzerTestCase(TestCase):
             "dof": datetime.datetime.today().strftime("%y%m%d"),
             "eobt": "0800",
             "teet": "0130",
-            "ac_type": "A319",
+            "type_of_aircraft": "A319",
             "route": [{"flight_rule": "I"}],
         }
 
@@ -111,7 +111,7 @@ class AerodromeAnalyzerTestCase(TestCase):
         )
 
         # Create some points for sid/star
-        moxur = Point.objects.create(indicator="MOXUR", coordinate="4602N07805W")
+        moxur = Point.objects.create(indicator="MOXUR", coordinate="4602N07815W")
         dhn = Point.objects.create(indicator="DHN", coordinate="4602N07806W")
 
         # Create some nav.aids for sid/star
@@ -172,7 +172,7 @@ class AerodromeAnalyzerTestCase(TestCase):
             err,
             {
                 "logical_error": [
-                    error_messages.AERODROME_INCOMPATIBLE_FLIGHT_TYPE.format("OINJ", "heliport", "A319"),
+                    error_messages.AERODROME_INCOMPATIBLE_TYPE_OF_AIRCRAFT.format("OINJ", "heliport", "A319"),
                     error_messages.AERODROME_INCOMPATIBLE_FLIGHT_RULE.format("OINJ", "IFR"),
                 ]
             },
@@ -189,7 +189,7 @@ class AerodromeAnalyzerTestCase(TestCase):
             err,
             {
                 "logical_error": [
-                    error_messages.AERODROME_INCOMPATIBLE_FLIGHT_TYPE.format("OINJ", "heliport", "A319"),
+                    error_messages.AERODROME_INCOMPATIBLE_TYPE_OF_AIRCRAFT.format("OINJ", "heliport", "A319"),
                     error_messages.AERODROME_INCOMPATIBLE_FLIGHT_RULE.format("OINJ", "IFR"),
                 ]
             },
@@ -265,7 +265,7 @@ class AerodromeAnalyzerTestCase(TestCase):
         fpl["destination_ad"] = "OINJ"
         fpl["flight_rule"] = "V"
         fpl["route"] = [{"flight_rule": "V"}]
-        fpl["aircraft_type"] = "B214"
+        fpl["type_of_aircraft"] = "B214"
 
         # # Enable query counting
         # from django.db import connection

@@ -7,7 +7,6 @@ from apps.general.models.base import AbstractBaseModel
 class AerodromeProperties(AbstractBaseModel):
     aerodrome = models.ForeignKey(
         "aerodromes.Aerodrome",
-        verbose_name="Aerodrome",
         related_name="%(class)ss",
         on_delete=models.CASCADE,
         db_index=True,

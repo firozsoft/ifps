@@ -47,9 +47,9 @@ class FlightPlan(models.Model):
         max_length=1,
         choices=WeakturbulenceCategory.choices,
     )
-    equipment = models.CharField(
+    equipments_and_capacities = models.CharField(
         max_length=250,
-        validators=[validators.equipments_validators],
+        validators=[validators.equipments_and_capacities_validators],
     )
     departure_aerodrome = models.CharField(
         max_length=4,
@@ -69,7 +69,7 @@ class FlightPlan(models.Model):
         max_length=4,
         validators=[validators.aerodrome_validator],
     )
-    total_eet = models.CharField(
+    teet = models.CharField(
         verbose_name="TEET",
         max_length=4,
         validators=[validators.teet_validator],

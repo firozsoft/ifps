@@ -17,24 +17,24 @@ class RouteScheme(BaseModel):
         null=True,
         blank=True,
     )
-    ac_type = models.ForeignKey(
-        "general.Aircraft", verbose_name="Aircraft Type", on_delete=models.CASCADE, null=True, blank=True
+    type_of_aircraft = models.ForeignKey(
+        "general.Aircraft",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
     )
     flight_nature = models.CharField(
-        "Flight Nature",
         max_length=10,
         choices=RouteSchemeFlightNature.choices,
         help_text=f"Choices: {', '.join(tp[1] for tp in RouteSchemeFlightNature.choices)}",
     )
     approved_levels = models.CharField(
-        verbose_name="Approved Levels",
         max_length=250,
         null=True,
         blank=True,
         help_text="Comma separated list of flight levels(e.g: 010, 120, 310).",
     )
     not_approved_levels = models.CharField(
-        verbose_name="Not Approved Levels",
         max_length=250,
         null=True,
         blank=True,

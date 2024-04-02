@@ -148,7 +148,7 @@ def analyse(
     aerodrome: Aerodrome,
     flight_rule: str,
     flight_datetime: datetime,
-    aircraft_type: str,
+    type_of_aircraft: str,
     heliports_acceptable_types: set[str],
     err: dict[str, list[str]],
     data_sts: str,
@@ -161,7 +161,7 @@ def analyse(
         aerodrome (Aerodrome): The aerodrome to analyze.
         flight_rule (str): The flight rule (IFR or VFR).
         flight_datetime (datetime): The datetime of the flight.
-        aircraft_type (str): The type of aircraft.
+        type_of_aircraft (str): The type of aircraft.
         heliports_acceptable_types (Set[str]): Acceptable types for heliports.
         err (Dict[str, List[str]]): Dictionary to store error messages.
         data_sts (str): Status information related to the flight.
@@ -178,9 +178,11 @@ def analyse(
     check_aerodrome_curfew(aerodrome, flight_datetime, data_sts, data_rmk, err)
 
     # Check if aircraft type is compatible with heliport
-    if aerodrome.type == "heliport" and aircraft_type not in heliports_acceptable_types:
+    if aerodrome.type == "heliport" and type_of_aircraft not in heliports_acceptable_types:
         err["logical_error"].append(
-            error_messages.AERODROME_INCOMPATIBLE_FLIGHT_TYPE.format(aerodrome, aerodrome.type, aircraft_type)
+            error_messages.AERODROME_INCOMPATIBLE_TYPE_OF_AIRCRAFT.format(
+                aerodrome, aerodrome.type, type_of_aircraft
+            )
         )
 
     # Check if flight rule is compatible with the aerodrome
@@ -296,7 +298,7 @@ def aerodromes_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], 
         return
 
     # Extract flight details
-    aircraft_type = fpl["ac_type"]
+    type_of_aircraft = fpl["type_of_aircraft"]
     initial_flight_rule = "ifr" if fpl["flight_rule"] in "IY" else "vfr"
     last_flight_rule = "ifr" if fpl["route"][-1]["flight_rule"] in "IY" else "vfr"
 
@@ -360,7 +362,7 @@ def aerodromes_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], 
 
     # Arguments for analysis
     analyze_arguments = {
-        "aircraft_type": aircraft_type,
+        "type_of_aircraft": type_of_aircraft,
         "heliports_acceptable_types": heliports_acceptable_types,
         "err": err,
         "data_sts": fpl.get("sts", []),

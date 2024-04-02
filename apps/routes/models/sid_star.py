@@ -6,13 +6,13 @@ from core.utils.validators import sid_star_name_validator
 
 
 class SidStar(BaseModel):
-    indicator = models.CharField("Indicator", max_length=7, validators=[sid_star_name_validator])
-    plain_language_name = models.CharField("Plain Language Name", max_length=50, null=True, blank=True)
+    indicator = models.CharField(max_length=7, validators=[sid_star_name_validator])
+    plain_language_name = models.CharField(max_length=50, null=True, blank=True)
     aerodrome = models.ForeignKey("aerodromes.Aerodrome", on_delete=models.CASCADE, related_name="sid_stars")
     point = models.ForeignKey("points.Point", on_delete=models.CASCADE)
     nav_aid = models.ForeignKey(
         "points.NavAid",
-        verbose_name="Nav.Aid",
+        verbose_name="Navigation Aid",
         related_name="sid_star",
         on_delete=models.CASCADE,
     )

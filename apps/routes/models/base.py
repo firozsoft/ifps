@@ -8,7 +8,6 @@ class BaseRoute(BaseModel):
     """Abstract Route Model"""
 
     indicator = models.CharField(
-        "Indicator",
         max_length=6,
         unique=True,
         validators=[route_name_validator],

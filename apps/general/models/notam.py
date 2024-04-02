@@ -17,25 +17,19 @@ class NotamManager(models.Manager):
 
 
 class Notam(AbstractBaseModel):
-    number = models.CharField("Number", max_length=50, unique=True)
-    qcode = models.CharField("Q Code", max_length=50)
-    type = models.CharField(
-        "Type",
-        choices=NotamType.choices,
-        default=NotamType.NEW,
-        max_length=11,
-    )
+    number = models.CharField(max_length=50, unique=True)
+    q_code = models.CharField(max_length=50)
+    type = models.CharField(choices=NotamType.choices, default=NotamType.NEW, max_length=11)
     relevant = models.ForeignKey(
         "self",
-        verbose_name="Relevant",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
         help_text="The NOTAM to be Replaced/Cancelled.",
     )
-    start_date = models.DateTimeField("Start")
-    end_date = models.DateTimeField("End", null=True, blank=True)
-    content = models.TextField("Content")
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField(null=True, blank=True)
+    content = models.TextField()
 
     objects = NotamManager()
 
