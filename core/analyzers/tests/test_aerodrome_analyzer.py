@@ -39,9 +39,6 @@ class AerodromeAnalyzerTestCase(TestCase):
             "route": [{"flight_rule": "I"}],
         }
 
-        # Create Aircrafts as required for Heliports acceptable types
-        create_aircrafts()
-
         # Create some aerodromes
         oiii = Aerodrome.objects.create(
             indicator="OIII",
@@ -162,6 +159,8 @@ class AerodromeAnalyzerTestCase(TestCase):
         )
 
     def test_fails_due_ad_acceptable_types_and_flight_rules(self):
+        # Create Aircrafts as required for Heliports acceptable types
+        create_aircrafts()
         err = copy.deepcopy(self.err)
         fpl = copy.deepcopy(self.fpl)
         fpl["destination_ad"] = "OINJ"
@@ -179,6 +178,8 @@ class AerodromeAnalyzerTestCase(TestCase):
         )
 
     def test_fails_due_alt_ad_acceptable_types_and_flight_rules(self):
+        # Create Aircrafts as required for Heliports acceptable types
+        create_aircrafts()
         err = copy.deepcopy(self.err)
         fpl = copy.deepcopy(self.fpl)
         fpl["alt_ad_1"] = "OINJ"
