@@ -1,3 +1,4 @@
+import copy
 import io
 import json
 import zipfile
@@ -5,12 +6,15 @@ from datetime import datetime
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
+from django.views.generic.edit import CreateView
 
 from apps.general.forms import FlightPlanForm
+from apps.general.models.fpl import FlightPlan
 from core.analyzers.logical_checks import logical_check
 from core.analyzers.regexe_parser import parser
 from core.utils.helpers import get_app_all_models, model_to_excel_bytesio
@@ -19,6 +23,44 @@ from core.utils.helpers import get_app_all_models, model_to_excel_bytesio
 class CustomLoginView(LoginView):
     template_name = "pages/login.html"
     success_url = "/"
+
+
+class FlightPlanCreateView(LoginRequiredMixin, CreateView):
+    model = FlightPlan
+    form_class = FlightPlanForm
+    template_name = "pages/fpl.html"
+
+    def form_valid(self, form):
+        row_data = copy.deepcopy(form.changed_data)
+        row_data["flt_rule_type"] = row_data["flight_rule"] + row_data["type_of_flight"]
+        row_data["numbers_type_weak"] = (
+            row_data["number_of_aircraft"]
+            + row_data["type_of_aircraft"]
+            + row_data["weakturbulence_category"]
+        )
+        row_data["dep_ad_time"] = row_data["departure_aerodrome"] + row_data["departure_time"]
+        row_data["route"] = row_data["cruising_speed"] + row_data["cruising_level"] + " " + row_data["route"]
+        row_data["dest_teet_alts"] = (
+            row_data["destination_aerodrome"]
+            + row_data["teet"]
+            + " "
+            + row_data["alternate_aerodrome"]
+            + " "
+            + row_data["secind_alternate_aerodrome"]
+        )
+        row_data["others"] = "DOF/" + row_data["date_of_flight"] + row_data["other_information"]
+
+        res, err = parser(row_data)
+        if err:
+            form.add_error(err)
+            return self.form_invalid(form)
+
+        err = logical_check(res)
+        if err:
+            form.add_error(err)
+            return self.form_invalid(form)
+
+        return super().form_valid(form)
 
 
 def fpl_scrutinization(request, msg: str) -> JsonResponse:
