@@ -9,6 +9,12 @@
     <form action="{% url "fpl-submission" %}" method="post">
       {% csrf_token %}
       {{ form.as_p }}
+
+      <div class="text-center mb-3">
+        <button data-mdb-ripple-init type="submit" class="btn btn-primary mx-auto">Submit</button>
+        <button data-mdb-ripple-init type="reset" class="btn btn-warning mx-auto">Reset</button>
+      </div>
+
     </form>
   </div>
   {% if data %}{{ data }}{% endif %}

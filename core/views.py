@@ -16,7 +16,7 @@ from django.views.generic.edit import CreateView
 from apps.general.forms import FlightPlanForm
 from apps.general.models.fpl import FlightPlan
 from core.analyzers.logical_checks import logical_check
-from core.analyzers.regexe_parser import parser
+from core.analyzers.regex_parser import parser
 from core.utils.helpers import get_app_all_models, model_to_excel_bytesio
 
 
@@ -117,11 +117,10 @@ def export_models(request: HttpRequest) -> HttpResponse:
     """
     model_names = get_app_all_models("apps.")
 
-    # Create a BytesIO object to store the ZIP archive
-    zip_buffer = io.BytesIO()
-
     timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
 
+    # Create a BytesIO object to store the ZIP archive
+    zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
         for model_name in model_names:
             excel_buffer = model_to_excel_bytesio(model_name)
