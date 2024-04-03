@@ -51,12 +51,6 @@ def dms_to_decimal_degrees(coordinate: str) -> tuple[Decimal, Decimal]:
     return convertor(*lat), convertor(*long)
 
 
-def get_geo_coordinate(coordinate: str) -> tuple[Decimal, Decimal]:
-    """Get geographic coordinate"""
-    latitude, longitude = dms_to_decimal_degrees(coordinate)
-    return latitude, longitude
-
-
 def generate_routes_from_route_scheme_text(string: str) -> list[str]:
     """Generate routes from route scheme text"""
     return list(map(" ".join, product(*map(lambda s: s.split("/"), string.split()))))
@@ -77,7 +71,11 @@ def get_app_all_models(app_name: str) -> dict[str, models.Model]:
         for model in django_all_apps.get_models()
         if model._meta.app_config.name.startswith(app_name)
     }
-    all_models.pop("route", None)
+    all_models = {
+        key: value
+        for key, value in all_models.items()
+        if key not in ("route", "aircraft", "fidsdata", "flightplan", "notam")
+    }
     return all_models
 
 
@@ -112,7 +110,7 @@ def get_model_class_and_fields(
     expected_fields = [field.verbose_name.upper() for field in model_fields]
 
     # Extract verbose names of the required fields
-    required_fields = [field.verbose_name.upper() for field in model_fields if field.null is not True]
+    required_fields = [field.verbose_name.upper() for field in model_fields if not field.null]
 
     return model_class, model_fields, expected_fields, required_fields
 
@@ -181,7 +179,7 @@ def field_value_codeword(
                 return choice_value
 
     if isinstance(field, models.ForeignKey):
-        parts = map(str.strip, human_readable_value.split("-"))
+        parts = [string.strip() for string in human_readable_value.split("-")]
         if len(parts) == 3:
             name, type_display, use_case_display = parts
             type = next(

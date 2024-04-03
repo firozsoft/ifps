@@ -7,3 +7,6 @@ class TemporaryClosure(AerodromeProperties):
     class Meta(AerodromeProperties.Meta):
         verbose_name = "Temporary Closure"
         verbose_name_plural = "Temporary Closures"
+
+    def __str__(self) -> str:
+        return f'Curfew: {self.aerodrome}-{self.start.strftime("%y%m%d %H%M")}-{self.end.strftime("%y%m%d %H%M")}'

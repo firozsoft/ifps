@@ -28,7 +28,7 @@
 
             {% if model.add_url %}
               <td>
-                <a href="{{ model.add_url }}" class="addlink">{% translate 'Add' %}</a>
+                <a href="{{ model.add_url }}" class="addlink">{% translate "Add" %}</a>
               </td>
             {% else %}
               <td></td>
@@ -37,11 +37,11 @@
             {% if model.admin_url and show_changelinks %}
               {% if model.view_only %}
                 <td>
-                  <a href="{{ model.admin_url }}" class="viewlink">{% translate 'View' %}</a>
+                  <a href="{{ model.admin_url }}" class="viewlink">{% translate "View" %}</a>
                 </td>
               {% else %}
                 <td>
-                  <a href="{{ model.admin_url }}" class="changelink">{% translate 'Change' %}</a>
+                  <a href="{{ model.admin_url }}" class="changelink">{% translate "Change" %}</a>
                 </td>
               {% endif %}
             {% elif show_changelinks %}
@@ -51,7 +51,7 @@
             {% if model|is_exportable %}
               <td>
                 <a href="{% url "export_model" model.object_name|lower %}"
-                   class="viewlink">{% translate 'Export' %}</a>
+                   class="viewlink">{% translate "Export" %}</a>
               </td>
             {% endif %}
 
@@ -61,5 +61,5 @@
     </div>
   {% endfor %}
 {% else %}
-  <p>{% translate 'You don’t have permission to view or edit anything.' %}</p>
+  <p>{% translate "You don’t have permission to view or edit anything." %}</p>
 {% endif %}

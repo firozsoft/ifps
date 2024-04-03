@@ -15,8 +15,8 @@ class DailyOperationalHour(models.Model):
     date = models.DateField()
     start_time = models.TimeField()
     end_time = models.TimeField()
-    vfr_start_time = models.TimeField("VFR Start Time", null=True, blank=True)
-    vfr_end_time = models.TimeField("VFR End Time", null=True, blank=True)
+    vfr_start_time = models.TimeField("VFR start time", null=True, blank=True)
+    vfr_end_time = models.TimeField("VFR end time", null=True, blank=True)
 
     class Meta:
         ordering = ("aerodrome", "date")
