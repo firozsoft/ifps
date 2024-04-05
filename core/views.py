@@ -127,7 +127,7 @@ def export_models(request: HttpRequest) -> HttpResponse:
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
         for model_name in model_names:
             excel_buffer = model_to_excel_bytesio(model_name)
-            zip_file.writestr(f"{model_name}-{timestamp}.xlsx", excel_buffer.getvalue())
+            zip_file.writestr(f"{model_name}.xlsx", excel_buffer.getvalue())
 
     # Create an HttpResponse with the ZIP archive content
     response = HttpResponse(zip_buffer.getvalue(), content_type="application/zip")

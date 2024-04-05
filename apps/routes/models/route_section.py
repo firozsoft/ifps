@@ -62,7 +62,7 @@ class RouteSection(AbstractBaseModel):
     remark = models.TextField(null=True, blank=True)
 
     class Meta:
-        ordering = ("route",)
+        ordering = ("route", "point1", "point2")
         indexes = [models.Index(fields=["route", "point1", "point2"])]
         constraints = [
             models.UniqueConstraint(fields=["route", "point1"], name="unique_route_and_point1"),

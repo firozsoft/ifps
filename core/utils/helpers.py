@@ -189,24 +189,31 @@ def field_value_human_readable(field: models.Field, value: Union[str, list[str]]
             if choice_value == value:
                 return choice_label
 
-    if isinstance(field, models.ForeignKey):
-        if value:
-            return str(field.related_model.objects.get(pk=value))
+    if isinstance(field, models.ForeignKey) and value:
+        return str(field.related_model.objects.get(pk=value))
+
     return value
 
 
-def field_value_codeword(
-    field: models.Field, human_readable_value: Union[str, list[str]]
+def convert_human_readable_value_to_db_value(
+    field: models.Field, human_readable_value: str
 ) -> Union[str, models.QuerySet]:
-    """Convert human-readable value to model value"""
+    """Convert human-readable value to model value
+
+    Raises ValidationError if human-readable value is not valid
+    """
     if isinstance(field, models.CharField) and field.choices:
         for choice_value, choice_label in field.choices:
             if choice_label == human_readable_value:
                 return choice_value
 
     if isinstance(field, models.ForeignKey):
+        # str method for importable/exportable models is just the indicator NavAid model which is 3 parts
         parts = [string.strip() for string in human_readable_value.split("-")]
-        if len(parts) == 3:
+        fields = {}
+        if len(parts) == 1:
+            fields["indicator"] = next(parts)
+        elif len(parts) == 3:
             name, type_display, use_case_display = parts
             type = next(
                 choice_value
@@ -218,8 +225,17 @@ def field_value_codeword(
                 for choice_value, choice_label in NavAidUseCase.choices
                 if choice_label == use_case_display
             )
-            return field.related_model.objects.filter(indicator=name, type=type, use_case=use_case)
-        return field.related_model.objects.filter(indicator=parts)
+            fields = dict(indicator=name, type=type, use_case=use_case)
+
+        try:
+            return field.related_model.objects.get(**fields)
+        except Exception:
+            raise ValidationError(f"{field.related_model} with {fields} does not exists.")
+
+    if isinstance(field, models.ManyToManyField):
+        indicators = [string.strip() for string in human_readable_value.split(",")]
+        return field.related_model.objects.filter(indicator__in=indicators)
+
     return human_readable_value
 
 

@@ -2,3 +2,6 @@ django-debug-toolbar
 djlint
 ipython
 ruff
+model_bakery
+django-extensions
+jupyter

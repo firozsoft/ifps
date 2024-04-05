@@ -148,7 +148,12 @@ FIR_INDICATOR = "OIIX"
 
 if DEBUG:
     ALLOWED_HOSTS = ["*"]
-    INSTALLED_APPS.extend(["debug_toolbar"])
+    INSTALLED_APPS.extend(
+        [
+            "debug_toolbar",
+            "django_extensions",
+        ]
+    )
     MIDDLEWARE.extend(["debug_toolbar.middleware.DebugToolbarMiddleware"])
     # For security, set up internal IPs that are allowed to view the debug toolbar
     INTERNAL_IPS = [

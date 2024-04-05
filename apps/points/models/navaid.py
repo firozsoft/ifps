@@ -19,8 +19,8 @@ class NavAid(Point):
     )
 
     class Meta(BasePoint.Meta):
-        verbose_name = "Nav. Aid"
-        verbose_name_plural = "Nav. Aids"
+        verbose_name = "NavAid"
+        verbose_name_plural = "NavAids"
         ordering = ["indicator"]
 
     def __str__(self):
