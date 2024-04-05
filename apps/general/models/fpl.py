@@ -80,6 +80,8 @@ class FlightPlan(models.Model):
     )
     second_alternate_aerodrome = models.CharField(
         max_length=4,
+        null=True,
+        blank=True,
         validators=[validators.aerodrome_validator],
     )
     other_information = models.TextField()
