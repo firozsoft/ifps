@@ -7,8 +7,8 @@ This mudole contains RegexPatterns matching the items of flight plan as prescrib
 """
 
 AERODROME = r"^(?![IJXQ])(?P<aerodrome>[A-Z]{4})$"
-FIR = AERODROME.replace("<aerodrome>", "<fir></fir>")
-AFTN_ADDRESS = AERODROME.replace("<aerodrome>", "") + r"\w{4}"
+FIR = r"^(?![IJXQ])(?P<fir>[A-Z]{4})$"
+AFTN_ADDRESS = r"^(?![IJXQ])[A-Z]{8}$"
 
 # ? ITEM 7: AIRCRAFT IDENTIFICATION (MAXIMUM 7 CHARACTERS)
 # not exceeding 7 alphanumeric characters

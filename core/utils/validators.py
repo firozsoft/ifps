@@ -9,7 +9,7 @@ aftn_address_validator = RegexValidator(
 )
 
 aftn_addresses_validator = RegexValidator(
-    regex="(" + regex_patterns.AFTN_ADDRESS + r"\s?)+",
+    regex=r"^(?![IJXQ])[A-Z]{8}(\s(?![IJXQ])[A-Z]{8})*$",
     message="AFTN addresses must be a space-separated list of 8-character strings, with each address not starting with I, J, X, or Q.",
     code="invalid_aftn_addresses",
 )
@@ -75,7 +75,7 @@ level_validator = RegexValidator(
 )
 
 teet_validator = RegexValidator(
-    regex=r"(?P<teet>\d\d\d\d)",
+    regex=r"\d\d\d\d",
     message="TEET must be a 4-digit number representing hours and minutes.",
     code="invalid_teet",
 )
