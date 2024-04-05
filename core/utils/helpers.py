@@ -14,6 +14,14 @@ from django.forms import model_to_dict
 
 from core.utils.choices import NavAidType, NavAidUseCase
 
+MODELS_REQUIRING_FILTERING_FOR_EXPORT = [
+    "aircraft",
+    "fidsdata",
+    "flightplan",
+    "notam",
+    "route",
+]
+
 
 def levels_to_fl_int(row_flight_levels: str) -> int:
     """Converts flight level to integer"""
@@ -56,7 +64,7 @@ def generate_routes_from_route_scheme_text(string: str) -> list[str]:
     return list(map(" ".join, product(*map(lambda s: s.split("/"), string.split()))))
 
 
-def get_app_all_models(app_name: str) -> dict[str, models.Model]:
+def get_app_all_exportable_models(app_name: str) -> dict[str, models.Model]:
     """
     Retrieve all models from the specified app.
 
@@ -71,16 +79,30 @@ def get_app_all_models(app_name: str) -> dict[str, models.Model]:
         for model in django_all_apps.get_models()
         if model._meta.app_config.name.startswith(app_name)
     }
+    return all_models
+
+
+def get_app_all_exportable_models_with_restriction(app_name: str) -> dict[str, models.Model]:
+    """
+    Retrieve all models from the specified app except those have restrictions to export all instances.
+
+    Args:
+        app_name (str): The name of the app.
+
+    Returns:
+        dict: A dictionary mapping model names to model classes.
+    """
     all_models = {
         key: value
-        for key, value in all_models.items()
-        if key not in ("route", "aircraft", "fidsdata", "flightplan", "notam")
+        for key, value in get_app_all_exportable_models(app_name).items()
+        if key not in MODELS_REQUIRING_FILTERING_FOR_EXPORT
     }
     return all_models
 
 
 def get_model_class_and_fields(
     model_name: str,
+    qs: models.QuerySet = None,
 ) -> tuple[models.Model, list[models.Field], list[str], list[str]]:
     """
     Retrieve the model class and its fields given a model name.
@@ -94,7 +116,11 @@ def get_model_class_and_fields(
     Raises:
         LookupError: If the specified model does not exist.
     """
-    model_names_and_classes = get_app_all_models("apps.")
+    if qs is None:
+        model_names_and_classes = get_app_all_exportable_models_with_restriction("apps.")
+    else:
+        model_names_and_classes = get_app_all_exportable_models("apps.")
+
     model_class = model_names_and_classes.get(model_name, None)
     if model_class is None:
         raise LookupError(f"No model with name '{model_name}'.")
@@ -197,9 +223,9 @@ def field_value_codeword(
     return human_readable_value
 
 
-def model_to_excel_bytesio(model_name: str) -> io.BytesIO:
+def model_to_excel_bytesio(model_name: str, qs: models.QuerySet = None) -> io.BytesIO:
     """Convert model data to Excel file"""
-    model_class, model_fields, expected_fields_for_excel, _ = get_model_class_and_fields(model_name)
+    model_class, model_fields, expected_fields_for_excel, _ = get_model_class_and_fields(model_name, qs)
     exportable_fields = [model_field.name for model_field in model_fields]
 
     # Retrieve data from the database
@@ -211,12 +237,14 @@ def model_to_excel_bytesio(model_name: str) -> io.BytesIO:
     }
     field_name_to_obj = {model_field.name: model_field for model_field in model_fields}
 
+    queryset = qs or model_class.objects.all()
+
     data = [
         {
             field_name_to_vbname[field]: field_value_human_readable(field_name_to_obj[field], value)
             for field, value in model_to_dict(instance, fields=exportable_fields).items()
         }
-        for instance in model_class.objects.all()
+        for instance in queryset
     ]
 
     # Create a DataFrame from the data

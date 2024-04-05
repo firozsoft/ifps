@@ -53,6 +53,10 @@
                 <a href="{% url "export_model" model.object_name|lower %}"
                    class="viewlink">{% translate "Export" %}</a>
               </td>
+            {% else %}
+              <td>
+                <span class="hidelink" style="color:gray;">{% translate "Export" %}</span>
+              </td>
             {% endif %}
 
           </tr>

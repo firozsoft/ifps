@@ -17,7 +17,10 @@ from apps.general.forms import FlightPlanForm
 from apps.general.models.fpl import FlightPlan
 from core.analyzers.logical_checks import logical_check
 from core.analyzers.regex_parser import parser
-from core.utils.helpers import get_app_all_models, model_to_excel_bytesio
+from core.utils.helpers import (
+    get_app_all_exportable_models_with_restriction,
+    model_to_excel_bytesio,
+)
 
 
 class CustomLoginView(LoginView):
@@ -115,7 +118,7 @@ def export_models(request: HttpRequest) -> HttpResponse:
     It exports the data of all models of this project to Excel files and returns
     a ZIP archive containing the Excel files as an HTTP response.
     """
-    model_names = get_app_all_models("apps.")
+    model_names = get_app_all_exportable_models_with_restriction("apps.")
 
     timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
 
