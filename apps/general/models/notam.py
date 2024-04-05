@@ -40,7 +40,7 @@ class Notam(AbstractBaseModel):
         verbose_name_plural = "NOTAMs"
 
     def __str__(self) -> str:
-        return f"{self.number}"
+        return self.number
 
     def clean(self):
         super().clean()

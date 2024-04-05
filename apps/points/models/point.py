@@ -18,7 +18,7 @@ class Point(BasePoint):
         indexes = [models.Index(fields=["indicator"])]
 
     def __str__(self) -> str:
-        return f"{self.indicator}"
+        return self.indicator
 
     def clean(self) -> None:
         super().clean()

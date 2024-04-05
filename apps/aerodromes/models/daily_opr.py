@@ -1,10 +1,11 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from apps.general.models.base import AbstractBaseModel
 from core.utils.choices import AerodromeFlightType
 
 
-class DailyOperationalHour(models.Model):
+class DailyOperationalHour(AbstractBaseModel):
     """Operational Hours of an Aerodrome which is seperated for VFR or IFR flight"""
 
     aerodrome = models.ForeignKey(

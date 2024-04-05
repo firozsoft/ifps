@@ -27,9 +27,6 @@ class Curfew(AerodromeProperties):
         verbose_name = "Curfew"
         verbose_name_plural = "Curfews"
 
-    def __str__(self) -> str:
-        return f'Curfew: {self.aerodrome}-{self.start.strftime("%y%m%d %H%M")}-{self.end.strftime("%y%m%d %H%M")}'
-
     @property
     def acceptable_sts(self):
         """Curfew for flights with STS filled with one of the following switches will be ignored"""

@@ -45,4 +45,4 @@ class Aerodrome(BasePoint):
         indexes = [models.Index(fields=["indicator"])]
 
     def __str__(self):
-        return f"{self.indicator}"
+        return self.indicator

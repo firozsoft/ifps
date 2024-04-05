@@ -19,7 +19,7 @@ class BaseRoute(BaseModel):
         indexes = [models.Index(fields=["indicator"])]
 
     def __str__(self) -> str:
-        return f"{self.indicator}"
+        return self.indicator
 
 
 class Route(BaseRoute):
