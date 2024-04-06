@@ -33,7 +33,7 @@ equipments_and_capacities_validators = RegexValidator(
 )
 
 coordinate_validator = RegexValidator(
-    regex=rf"({regex_patterns.COR_DEGREES})|({regex_patterns.COR_DEG_MINS})",
+    regex=regex_patterns.COORDINATE,
     message="Coordinate must be in either DM format (7 characters) or DMS format (11 characters), e.g., 46N078W or 4602N07805W.",
     code="invalid_coordinate",
 )

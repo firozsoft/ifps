@@ -171,11 +171,8 @@ SPEED_LEVEL = r"^{spd}{lvl}$".format(
 # unless both points are defined by geographical coordinate or by bearing and distance.
 # ? USE ONLY the conventions in (1) to (5) below and SEPARATE each sub-item by a space.
 
-# ? Degrees only (7 characters)
-COR_DEGREES = r"^(?P<degrees>(([0-8]\d)|90)(N|S)((0\d\d)|(1[0-7]\d)|180)(E|W))$"
-
-# ? Degrees and minutes (11 characters)
-COR_DEG_MINS = r"^(?P<deg_min>(([0-8]\d)|90)[0-5]\d(N|S)((0\d\d)|(1[0-7]\d)|180)[0-5]\d(E|W))$"
+# ? Degrees only (7 characters) or degrees and minutes (11 characters)
+COORDINATE = r"^(?P<coordinate>(([0-8]\d)|90)([0-5]\d)?(N|S)((0\d\d)|(1[0-7]\d)|180)([0-5]\d)?(E|W))$"
 
 # ? The coded designator (2 to 5 characters) assigned to the point (e.g. LN, MAY, HADDY)
 POINT = r"^(?!(DCT|IFR|VFR)$)(?P<point>[A-Z]{2,5}$)"
@@ -186,10 +183,9 @@ BEARING_DIST = r"^(?P<bearing_dist>({pnt})(([0-2]\d\d)|(3[0-5]\d))[0-2]\d\d)$".f
 )
 
 # ? Points that don't have assigned indicator - referred to as special point
-LOCATION = r"^(?P<location>({brd})|({deg})|({degmin}))$".format(
+LOCATION = r"^(?P<location>({brd})|({coordinate}))$".format(
     brd=BEARING_DIST.replace(r"^", "").replace(r"$", ""),
-    deg=COR_DEGREES.replace(r"^", "").replace(r"$", ""),
-    degmin=COR_DEG_MINS.replace(r"^", "").replace(r"$", ""),
+    coordinate=COORDINATE.replace(r"^", "").replace(r"$", ""),
 )
 
 # * 1- ATS route (2 to 7 characters) ! 7 characters only for SID/STAR

@@ -184,7 +184,7 @@ def convert_human_readable_value_to_db_value(
         parts = [string.strip() for string in human_readable_value.split("-")]
         fields = {}
         if len(parts) == 1:
-            fields["indicator"] = next(parts)
+            fields["indicator"] = parts[0]
         elif len(parts) == 3:
             name, type_display, use_case_display = parts
             type = next(
@@ -226,6 +226,9 @@ def model_to_excel_bytesio(model_name: str, qs: models.QuerySet = None) -> io.By
     field_name_to_obj = {model_field.name: model_field for model_field in model_fields}
 
     queryset = qs or model_class.objects.all()
+
+    if queryset.model._meta.model_name == "point":
+        queryset = queryset.exclude(id__in=NavAid.objects.values_list("id", flat=True))
 
     data = [
         {
