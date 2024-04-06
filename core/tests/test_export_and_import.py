@@ -186,7 +186,7 @@ class TestExportAndImport(TestCase):
 
     def test_import_all_models(self):
         extract_dir = Path(zipfile_extactor())
-        out = self.call_command("--rebuild", resources=extract_dir)
+        out = self.call_command(resources=extract_dir)
         self.assertEqual(
-            out.splitlines()[-1], BaseCommand().style.SUCCESS("Data has been rebuilt successfully.")
+            out.splitlines()[-1], BaseCommand().style.SUCCESS("Data has been uploaded successfully.")
         )

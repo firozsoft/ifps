@@ -139,3 +139,5 @@ dmypy.json
 create-database.txt
 
 /exports
+core/tests/exported_data.zip
+core/tests/exported_data/
