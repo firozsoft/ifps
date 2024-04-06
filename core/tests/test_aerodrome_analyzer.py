@@ -130,14 +130,14 @@ class AerodromeAnalyzerTestCase(TestCase):
             aerodrome=oiii,
             indicator="MOXUR1A",
             point=moxur,
-            nav_aid=vr,
+            navaid=vr,
             type=SidStarType.STAR,
         )
         dhn1v = SidStar.objects.create(
             aerodrome=oiii,
             indicator="DHN1V",
             point=dhn,
-            nav_aid=dhn,
+            navaid=dhn,
             type=SidStarType.SID,
         )
 
