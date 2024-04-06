@@ -1,7 +1,7 @@
 from django.db import models
 
+from apps.general.utils.helpers import dms_to_decimal_degrees
 from core.utils.choices import YesNo
-from core.utils.helpers import dms_to_decimal_degrees
 from core.utils.validators import coordinate_validator, fir_validator
 
 # from django.contrib.gis.geos import GEOSGeometry
