@@ -5,7 +5,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
 
-from apps.general.models import AbstractBaseModel
+from apps.general.models.base import AbstractBaseModel
 from core.utils.choices import Direction, YesNo
 
 

@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from apps.general.admin import BasePointAdmin
-from apps.points.models import NavAid
+from apps.points.models.navaid import NavAid
 
 
 @admin.register(NavAid)

@@ -2,8 +2,8 @@ from django.contrib import admin
 from django.db import models
 from django.forms import Textarea, TextInput
 
-from apps.aerodromes.models import Aerodrome
-from apps.general.models import FIR
+from apps.aerodromes.models.aerodrome import Aerodrome
+from apps.general.models.base import FIR
 
 
 class AerodromeInline(admin.TabularInline):

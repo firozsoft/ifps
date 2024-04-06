@@ -16,7 +16,7 @@ from typing import Union
 from django.conf import settings
 from django.db.models import Prefetch, Q, QuerySet
 
-from apps.aerodromes.models import Aerodrome
+from apps.aerodromes.models.aerodrome import Aerodrome
 from apps.aerodromes.models.curfew import Curfew
 from apps.aerodromes.models.daily_opr import DailyOperationalHour
 from apps.aerodromes.models.temp_closure import TemporaryClosure
@@ -138,10 +138,8 @@ def check_aerodrome_sid_star(
     if not sid_star.is_active:
         err["logical_error"].append(error_messages.SID_STAR_INACTIVE.format(sid_star))
 
-    if not sid_star.nav_aid.is_active:
-        err["logical_error"].append(
-            error_messages.SID_STAR_NAVAID_INACTIVE.format(sid_star, sid_star.nav_aid)
-        )
+    if not sid_star.navaid.is_active:
+        err["logical_error"].append(error_messages.SID_STAR_NAVAID_INACTIVE.format(sid_star, sid_star.navaid))
 
 
 def analyse(

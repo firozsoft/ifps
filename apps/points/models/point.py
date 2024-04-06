@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from apps.general.models import BasePoint
+from apps.general.models.base import BasePoint
 from core.utils.validators import point_name_validator
 
 
@@ -11,7 +11,7 @@ class Point(BasePoint):
         validators=[point_name_validator],
     )
 
-    class Meta(BasePoint.Meta):
+    class Meta:
         verbose_name = "Point"
         verbose_name_plural = "Points"
         ordering = ["indicator"]

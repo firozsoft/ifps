@@ -1,7 +1,7 @@
 from django.core.validators import MinLengthValidator
 from django.db import models
 
-from apps.general.models import BasePoint
+from apps.general.models.base import BasePoint
 from core.utils.choices import AerodromeFlightType, AerodromeType, YesNo
 
 
@@ -38,7 +38,7 @@ class Aerodrome(BasePoint):
     is_international = models.BooleanField(verbose_name="Is International", choices=YesNo, default=True)
     aur = models.BooleanField("Available Upon Request", choices=YesNo, default=True)
 
-    class Meta(BasePoint.Meta):
+    class Meta:
         verbose_name = "Aerodrome"
         verbose_name_plural = "Aerodromes"
         ordering = ["indicator"]

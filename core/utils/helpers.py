@@ -12,6 +12,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.forms import model_to_dict
 
+from apps.points.models.navaid import NavAid
 from core.utils.choices import NavAidType, NavAidUseCase
 
 MODELS_REQUIRING_FILTERING_FOR_EXPORT = [

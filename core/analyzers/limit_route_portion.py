@@ -2,8 +2,8 @@ from django.conf import settings
 from django.db.models import Prefetch, Q
 
 from apps.general.models.base import FIR
-from apps.points.models import Point
-from apps.routes.models import RouteSection
+from apps.points.models.point import Point
+from apps.routes.models.route_section import RouteSection
 from core.analyzers import error_messages as errors
 
 

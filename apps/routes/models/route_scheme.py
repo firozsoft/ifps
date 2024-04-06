@@ -1,6 +1,6 @@
 from django.db import models
 
-from apps.general.models import BaseModel
+from apps.general.models.base import BaseModel
 from core.utils.choices import RouteSchemeFlightNature, YesNo
 from core.utils.validators import rs_dest_list
 

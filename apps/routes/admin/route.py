@@ -1,7 +1,7 @@
 # from django.contrib.gis import admin
 from django.contrib import admin
 
-from apps.routes.models import Route
+from apps.routes.models.base import Route
 
 
 @admin.register(Route)

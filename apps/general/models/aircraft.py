@@ -1,9 +1,8 @@
 from django.db import models
 
+from apps.general.models.base import BaseModel
 from core.utils import validators
 from core.utils.choices import WeakturbulenceCategory
-
-from .base import BaseModel
 
 
 class Aircraft(BaseModel):

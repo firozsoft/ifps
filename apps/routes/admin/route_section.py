@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.routes.models import RouteSection
+from apps.routes.models.route_section import RouteSection
 
 
 @admin.register(RouteSection)

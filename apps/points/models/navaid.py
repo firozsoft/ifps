@@ -1,7 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from apps.general.models import BasePoint
 from apps.points.models.point import Point
 from core.utils.choices import NavAidType, NavAidUseCase
 
@@ -18,7 +17,7 @@ class NavAid(Point):
         help_text=f"Choices: {', '.join(tp[1] for tp in NavAidUseCase.choices)}",
     )
 
-    class Meta(BasePoint.Meta):
+    class Meta(Point.Meta):
         verbose_name = "NavAid"
         verbose_name_plural = "NavAids"
         ordering = ["indicator"]

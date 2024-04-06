@@ -1,12 +1,10 @@
 # from django.contrib.gis import admin
 from django.contrib import admin
 
-from apps.aerodromes.models import (
-    Aerodrome,
-    Curfew,
-    DailyOperationalHour,
-    TemporaryClosure,
-)
+from apps.aerodromes.models.aerodrome import Aerodrome
+from apps.aerodromes.models.curfew import Curfew
+from apps.aerodromes.models.daily_opr import DailyOperationalHour
+from apps.aerodromes.models.temp_closure import TemporaryClosure
 from apps.general.admin import BasePointAdmin
 
 

@@ -23,4 +23,4 @@ ROUTE_PORTION_DETERMINATION_ERROR = "Unable to determine route portion within {}
 SID_STAR_DOES_NOT_EXIST = "{0} {1} does not exist."  # used_as_type, sid_star_name
 SID_STAR_DUPLICATION = "Inform administration: more than one {0} {1} exist."  # used_as_type, sid_star_name
 SID_STAR_INACTIVE = "{0} is not active."  # sid_star
-SID_STAR_NAVAID_INACTIVE = "{0}, nav. aid {1} is not active."  # sid_star, sid_star.nav_aid
+SID_STAR_NAVAID_INACTIVE = "{0}, nav. aid {1} is not active."  # sid_star, sid_star.navaid

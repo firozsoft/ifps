@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.general.models import FIDSData
+from apps.general.models.fids import FIDSData
 
 
 @admin.register(FIDSData)

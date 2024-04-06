@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.general.models import Notam
+from apps.general.models.notam import Notam
 
 
 @admin.register(Notam)

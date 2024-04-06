@@ -1,6 +1,6 @@
 import json
 
-from apps.general.models import Aircraft
+from apps.general.models.aircraft import Aircraft
 
 command = """curl -d "" -H "Content-Type: application/json" https://www4.icao.int/doc8643/External/AircraftTypes >> type_of_aircraft.json"""
 

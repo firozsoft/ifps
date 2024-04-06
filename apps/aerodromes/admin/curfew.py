@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from apps.aerodromes.models import AerodromeProperties, Curfew
+from apps.aerodromes.models.base import AerodromeProperties
+from apps.aerodromes.models.curfew import Curfew
 
 from .base import AerodromePropertiesAdmin
 

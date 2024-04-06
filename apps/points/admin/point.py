@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from apps.general.admin import BasePointAdmin
-from apps.points.models import Point
+from apps.points.models.point import Point
 
 
 @admin.register(Point)

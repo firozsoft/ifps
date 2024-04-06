@@ -1,8 +1,9 @@
 from django import forms
 from django.utils import timezone
 
-from apps.general.models import BasePoint, FlightPlan
 from apps.general.models.aircraft import Aircraft
+from apps.general.models.base import BasePoint
+from apps.general.models.fpl import FlightPlan
 
 
 def get__all_type_of_aircraft():

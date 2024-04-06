@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.general.models import Aircraft
+from apps.general.models.aircraft import Aircraft
 
 
 @admin.register(Aircraft)

@@ -5,7 +5,7 @@ from django.db.models import QuerySet
 from django.http import HttpResponse
 
 from apps.general.forms import FlightPlanForm
-from apps.general.models import FlightPlan
+from apps.general.models.fpl import FlightPlan
 from core.utils.helpers import model_to_excel_bytesio
 
 

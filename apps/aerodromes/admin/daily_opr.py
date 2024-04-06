@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.aerodromes.models import DailyOperationalHour
+from apps.aerodromes.models.daily_opr import DailyOperationalHour
 
 from .base import AerodromePropertiesAdmin
 

@@ -1,6 +1,6 @@
 from django.db import models
 
-from apps.general.models import BaseModel
+from apps.general.models.base import BaseModel
 from core.utils.choices import SidStarType, YesNo
 from core.utils.validators import sid_star_name_validator
 
@@ -9,7 +9,7 @@ class SidStar(BaseModel):
     indicator = models.CharField(max_length=7, validators=[sid_star_name_validator])
     aerodrome = models.ForeignKey("aerodromes.Aerodrome", on_delete=models.CASCADE, related_name="sid_stars")
     point = models.ForeignKey("points.Point", on_delete=models.CASCADE)
-    nav_aid = models.ForeignKey(
+    navaid = models.ForeignKey(
         "points.NavAid",
         verbose_name="Navigation Aid",
         related_name="sid_star",
@@ -26,7 +26,7 @@ class SidStar(BaseModel):
         indexes = [models.Index(fields=["indicator"])]
         constraints = [
             models.UniqueConstraint(
-                fields=["indicator", "nav_aid", "aerodrome"],
+                fields=["indicator", "navaid", "aerodrome"],
                 name="unique_sid_star_name_nav_ad",
             ),
         ]
