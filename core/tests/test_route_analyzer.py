@@ -140,7 +140,7 @@ class RouteAnalyzerTestCase(TestCase):
 
         self.assertSetEqual(result, {"SYZ", "YZD", "TRN", "DNZ"})
 
-    @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
+    @mock.patch("core.analyzers.route_analyzer.validate_fpl_route_section")
     def test_fail_due_eet_missing_our_fir(self, mock_validate_fpl_route_section):
         mock_validate_fpl_route_section.side_effect = None
         data = copy.deepcopy(self.data)
@@ -151,7 +151,7 @@ class RouteAnalyzerTestCase(TestCase):
             err, {"integrity_error": [error_messages.FIR_NOT_FOUND_IN_EET.format(OUR_FIR_INDICATOR)]}
         )
 
-    @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
+    @mock.patch("core.analyzers.route_analyzer.validate_fpl_route_section")
     def test_fail_due_eet_missing_previous_fir_dep_not_in_adjacent(self, mock_validate_fpl_route_section):
         mock_validate_fpl_route_section.side_effect = None
         data = copy.deepcopy(self.data)
@@ -170,7 +170,7 @@ class RouteAnalyzerTestCase(TestCase):
             },
         )
 
-    @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
+    @mock.patch("core.analyzers.route_analyzer.validate_fpl_route_section")
     def test_fail_due_eet_missing_next_fir(self, mock_validate_fpl_route_section):
         mock_validate_fpl_route_section.side_effect = None
         data = copy.deepcopy(self.data)
@@ -188,7 +188,7 @@ class RouteAnalyzerTestCase(TestCase):
             },
         )
 
-    @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
+    @mock.patch("core.analyzers.route_analyzer.validate_fpl_route_section")
     def test_pass_eet_missing_previous_fir_but_dep_in_adjacent_fir(self, mock_validate_fpl_route_section):
         mock_validate_fpl_route_section.side_effect = None
         data = copy.deepcopy(self.data)
@@ -197,7 +197,7 @@ class RouteAnalyzerTestCase(TestCase):
         route_analyzer(data, err)
         self.assertDictEqual(err, {"integrity_error": []})
 
-    @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
+    @mock.patch("core.analyzers.route_analyzer.validate_fpl_route_section")
     def test_pass_long_route(self, mock_validate_fpl_route_section):
         mock_validate_fpl_route_section.side_effect = None
 
@@ -233,7 +233,7 @@ class RouteAnalyzerTestCase(TestCase):
 
         self.assertDictEqual(err, {"integrity_error": []})
 
-    @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
+    @mock.patch("core.analyzers.route_analyzer.validate_fpl_route_section")
     def test_fail_due_long_route_no_point_and_local_route(self, mock_validate_fpl_route_section):
         mock_validate_fpl_route_section.side_effect = None
 
@@ -262,7 +262,7 @@ class RouteAnalyzerTestCase(TestCase):
             err["integrity_error"],
         )
 
-    @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
+    @mock.patch("core.analyzers.route_analyzer.validate_fpl_route_section")
     def test_fail_due_long_route_no_point_wrong_reginal_route_to_enter(self, mock_validate_fpl_route_section):
         mock_validate_fpl_route_section.side_effect = None
 
@@ -291,7 +291,7 @@ class RouteAnalyzerTestCase(TestCase):
             err["integrity_error"],
         )
 
-    @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
+    @mock.patch("core.analyzers.route_analyzer.validate_fpl_route_section")
     def test_fail_due_long_route_no_point_wrong_reginal_route_to_exit(self, mock_validate_fpl_route_section):
         mock_validate_fpl_route_section.side_effect = None
 
@@ -320,7 +320,7 @@ class RouteAnalyzerTestCase(TestCase):
             err["integrity_error"],
         )
 
-    @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
+    @mock.patch("core.analyzers.route_analyzer.validate_fpl_route_section")
     def test_fail_due_long_nonexisting_route(self, mock_validate_fpl_route_section):
         mock_validate_fpl_route_section.side_effect = None
 
@@ -342,7 +342,7 @@ class RouteAnalyzerTestCase(TestCase):
         route_analyzer(data, err)
         self.assertIn(error_messages.ROUTE_DOES_NOT_EXIST.format("T21"), err["integrity_error"])
 
-    @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
+    @mock.patch("core.analyzers.route_analyzer.validate_fpl_route_section")
     def test_fail_due_no_exit_point_no_long_route(self, mock_validate_fpl_route_section):
         mock_validate_fpl_route_section.side_effect = None
 
@@ -384,7 +384,7 @@ class RouteAnalyzerTestCase(TestCase):
             },
         )
 
-    @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
+    @mock.patch("core.analyzers.route_analyzer.validate_fpl_route_section")
     def test_pass_domestic_flight(self, mock_validate_fpl_route_section):
         mock_validate_fpl_route_section.side_effect = None
 
@@ -393,7 +393,7 @@ class RouteAnalyzerTestCase(TestCase):
         route_analyzer(data, err)
         self.assertDictEqual(err, {"integrity_error": []})
 
-    @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
+    @mock.patch("core.analyzers.route_analyzer.validate_fpl_route_section")
     def test_fail_due_domestic_flight_nonexisting_route(self, mock_validate_fpl_route_section):
         mock_validate_fpl_route_section.side_effect = None
 
@@ -406,7 +406,7 @@ class RouteAnalyzerTestCase(TestCase):
         self.assertIn(error_messages.ROUTE_DOES_NOT_EXIST.format("P57"), err["integrity_error"])
         self.assertIn(error_messages.PATH_NOT_FOUND.format("SYZ", "ISN", "P57"), err["integrity_error"])
 
-    @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
+    @mock.patch("core.analyzers.route_analyzer.validate_fpl_route_section")
     def test_fail_due_domestic_flight_nonexisting_point(self, mock_validate_fpl_route_section):
         mock_validate_fpl_route_section.side_effect = None
 
@@ -426,7 +426,7 @@ class RouteAnalyzerTestCase(TestCase):
             },
         )
 
-    @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
+    @mock.patch("core.analyzers.route_analyzer.validate_fpl_route_section")
     def test_fail_due_domestic_flight_wrong_route(self, mock_validate_fpl_route_section):
         mock_validate_fpl_route_section.side_effect = None
 
@@ -438,7 +438,7 @@ class RouteAnalyzerTestCase(TestCase):
 
         self.assertIn(error_messages.PATH_NOT_FOUND.format("SYZ", "ISN", "G666"), err["integrity_error"])
 
-    @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
+    @mock.patch("core.analyzers.route_analyzer.validate_fpl_route_section")
     def test_fail_due_domestic_flight_wrong_point(self, mock_validate_fpl_route_section):
         mock_validate_fpl_route_section.side_effect = None
 
