@@ -1,9 +1,9 @@
 from django.core.validators import RegexValidator
 
-from . import regex_patterns
+from core.utils import patterns
 
 aftn_address_validator = RegexValidator(
-    regex=regex_patterns.AFTN_ADDRESS,
+    regex=patterns.AFTN_ADDRESS,
     message="AFTN addresses must be 8 characters long and should not start with I, J, X, or Q.",
     code="invalid_aftn_address",
 )
@@ -15,61 +15,61 @@ aftn_addresses_validator = RegexValidator(
 )
 
 aircraft_identification_validator = RegexValidator(
-    regex=regex_patterns.AIRCRAFT_IDENTIFICATION,
+    regex=patterns.AIRCRAFT_IDENTIFICATION,
     message="Aircraft identification must be between 2 and 7 characters long.",
     code="invalid_aircraft_identification",
 )
 
 type_of_aircraft_validator = RegexValidator(
-    regex=regex_patterns.TYPE_OF_AIRCRAFT,
+    regex=patterns.TYPE_OF_AIRCRAFT,
     message="Aircraft type does not conform to ICAO Aircraft Type Designators (Doc 8643).",
     code="invalid_type_of_aircraft",
 )
 
 equipments_and_capacities_validators = RegexValidator(
-    regex=regex_patterns.EQUIPMENTS_CAPACITIES,
+    regex=patterns.EQUIPMENTS_CAPACITIES,
     message="Equipment specification does not conform to ICAO Doc 4444.",
     code="invalid_equipments",
 )
 
 coordinate_validator = RegexValidator(
-    regex=regex_patterns.COORDINATE,
+    regex=patterns.COORDINATE,
     message="Coordinate must be in either DM format (7 characters) or DMS format (11 characters), e.g., 46N078W or 4602N07805W.",
     code="invalid_coordinate",
 )
 
 point_name_validator = RegexValidator(
-    regex=regex_patterns.POINT,
+    regex=patterns.POINT,
     message="ATS point name must consist of 2 to 5 alphabetical characters.",
     code="invalid_point_name",
 )
 
 route_name_validator = RegexValidator(
-    regex=regex_patterns.ROUTE,
+    regex=patterns.ROUTE,
     message="Route name must consist of 1 to 3 alphabetical characters followed by 1 to 3 numeric characters.",
     code="invalid_route_name",
 )
 
 sid_star_name_validator = RegexValidator(
-    regex=regex_patterns.SID_STAR,
+    regex=patterns.SID_STAR,
     message="SID/STAR name must consist of 2 to 5 alphabetical characters followed by 1 digit and another alphabetical character.",
     code="invalid_sid_star_name",
 )
 
 aerodrome_validator = RegexValidator(
-    regex=regex_patterns.AERODROME,
+    regex=patterns.AERODROME,
     message="Aerodrome indicator is not valid.",
     code="invalid_aerodrome_indicator",
 )
 
 speed_validator = RegexValidator(
-    regex=regex_patterns.SPEED,
+    regex=patterns.SPEED,
     message="Speed is not in a valid format.",
     code="invalid_speed",
 )
 
 level_validator = RegexValidator(
-    regex=regex_patterns.LEVEL,
+    regex=patterns.LEVEL,
     message="Level is not in a valid format.",
     code="invalid_level",
 )
@@ -81,7 +81,7 @@ teet_validator = RegexValidator(
 )
 
 fir_validator = RegexValidator(
-    regex=regex_patterns.AERODROME,
+    regex=patterns.AERODROME,
     message="FIR indicator is not valid.",
     code="invalid_fir_indicator",
 )

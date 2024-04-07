@@ -1,13 +1,25 @@
+"""This is a helper module that contains methods in order to normalize the flight planned route by
+dropping the portions that are not within our FIR and also finding and setting the entry/exit points
+to/from our FIR.
+
+Except for flight that are condocting as domestic flights (both departure and destination aerodromes within
+our FIR) for other 3 possible case (domestic dep, domestic dest, transiting flights) this normalization is
+required.
+
+In order to optimizing database queries the method of this module will fetch and store required data using
+enhanced Prefetch and select_related and store the result to dict/list to avoid future db hit.
+"""
+
 from django.conf import settings
 from django.db.models import Prefetch, Q
 
 from apps.general.models.base import FIR
 from apps.points.models.point import Point
 from apps.routes.models.route_section import RouteSection
-from core.analyzers import error_messages as errors
+from core.utils import error_messages as errors
 
 
-def get_essential_route_portion(
+def _get_essential_route_portion(
     our_fir: FIR,
     neighbor_fir: FIR,
     fpl_route: list[dict],
@@ -42,7 +54,7 @@ def get_essential_route_portion(
 
     # Check if neighbor FIR is valid
     if neighbor_fir is None:
-        err["logical_error"].append(
+        err["integrity_error"].append(
             errors.BOUNDARY_DETERMINATION_ERROR_NO_ADJACENT_FIRS.format(entry_or_exit, our_fir)
         )
         return []
@@ -50,7 +62,7 @@ def get_essential_route_portion(
     # Find common boundaries between our FIR and neighbor FIR
     common_boundaries = set(our_fir.boundary_points).intersection(set(neighbor_fir.boundary_points))
     if not common_boundaries:
-        err["logical_error"].append(
+        err["integrity_error"].append(
             errors.BOUNDARY_DETERMINATION_ERROR_NONADJACENT_FIR_OR_NO_BOUNDARY.format(neighbor_fir, our_fir)
         )
         return []
@@ -78,11 +90,11 @@ def get_essential_route_portion(
                 return fpl_route[: index + 1]
 
     # No essential portion found, add error
-    err["logical_error"].append(errors.BOUNDARY_DETERMINATION_ERROR.format(entry_or_exit, our_fir))
+    err["integrity_error"].append(errors.BOUNDARY_DETERMINATION_ERROR.format(entry_or_exit, our_fir))
     return []
 
 
-def set_route_boundaries(
+def _set_route_boundaries(
     route_portion_to_be_checked,
     existing_sections_dict,
     neighbor_fir,
@@ -119,7 +131,7 @@ def set_route_boundaries(
     ]
 
     if not possible_boundary_sections:
-        err["logical_error"].append(errors.ROUTE_DOES_NOT_EXIST.format(boundary_route_indicator))
+        err["integrity_error"].append(errors.ROUTE_DOES_NOT_EXIST.format(boundary_route_indicator))
         return []
 
     for section in possible_boundary_sections:
@@ -135,7 +147,7 @@ def set_route_boundaries(
             route_portion_to_be_checked[to_or_from_index][f"{to_or_from}-fir"] = neighbor_fir.indicator
             return route_portion_to_be_checked
 
-    err["logical_error"].append(
+    err["integrity_error"].append(
         errors.BOUNDARY_DETERMINATION_ERROR_FROM_TO_FIR_ON_ROUTE.format(
             entry_or_exit, to_or_from, neighbor_fir, boundary_route_indicator
         )
@@ -143,7 +155,7 @@ def set_route_boundaries(
     return []
 
 
-def normalize_route_portions(
+def normalizer(
     fpl: dict, mentioned_points_in_fpl: list[str], route_portion_to_be_checked: list[dict], err: dict
 ) -> tuple[list[dict], dict[str, set[str]], dict[tuple, RouteSection]]:
     """
@@ -215,7 +227,7 @@ def normalize_route_portions(
     all_existing_points: dict[str, set[str]] = dict()
     for _, fir in FIRs.items():
         if not fir.is_active:
-            err["logical_error"].append(errors.FIR_INACTIVE.format(fir))
+            err["integrity_error"].append(errors.FIR_INACTIVE.format(fir))
         for point in fir.all_points:
             all_existing_points.setdefault(point.indicator, set()).add(fir.indicator)
 
@@ -224,7 +236,7 @@ def normalize_route_portions(
 
         if not domestic_departure:
             previous_fir = FIRs.get(previous_fir_indicator_2letters, None)
-            route_portion_to_be_checked = get_essential_route_portion(
+            route_portion_to_be_checked = _get_essential_route_portion(
                 our_fir,
                 previous_fir,
                 route_portion_to_be_checked,
@@ -239,7 +251,7 @@ def normalize_route_portions(
 
         if not domestic_destination:
             next_fir = FIRs.get(next_fir_indicator_2letters, None)
-            route_portion_to_be_checked = get_essential_route_portion(
+            route_portion_to_be_checked = _get_essential_route_portion(
                 our_fir,
                 next_fir,
                 route_portion_to_be_checked,
@@ -275,7 +287,7 @@ def normalize_route_portions(
     }
 
     if not domestic_departure:
-        route_portion_to_be_checked = set_route_boundaries(
+        route_portion_to_be_checked = _set_route_boundaries(
             route_portion_to_be_checked,
             existing_sections_dict,
             previous_fir,
@@ -287,7 +299,7 @@ def normalize_route_portions(
             return [], {}, {}
 
     if not domestic_destination:
-        route_portion_to_be_checked = set_route_boundaries(
+        route_portion_to_be_checked = _set_route_boundaries(
             route_portion_to_be_checked,
             existing_sections_dict,
             next_fir,
@@ -299,7 +311,7 @@ def normalize_route_portions(
             return [], {}, {}
 
     if not existing_sections_dict:
-        err["logical_error"].append(errors.ROUTE_PORTION_DETERMINATION_ERROR.format(our_fir))
+        err["integrity_error"].append(errors.ROUTE_PORTION_DETERMINATION_ERROR.format(our_fir))
         return [], {}, {}
 
     return route_portion_to_be_checked, all_existing_points, existing_sections_dict

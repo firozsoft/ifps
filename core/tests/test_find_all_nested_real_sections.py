@@ -4,7 +4,7 @@ from django.test import TestCase
 from apps.points.models.point import Point
 from apps.routes.models.base import Route
 from apps.routes.models.route_section import RouteSection
-from core.analyzers.route_analysis import find_all_nested_real_sections
+from core.analyzers.route_analyzer import find_all_nested_real_sections
 
 
 class FindRealRouteSectionsTestCase(TestCase):

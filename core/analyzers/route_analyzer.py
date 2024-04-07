@@ -20,6 +20,7 @@
     * if flight is departed from an adjacent FIR in the EET it have to start with our FIR so the previous FIR
     have to be determined using the first two letters of the departure Ad. and the FIR queryset from database.
 """
+
 import copy
 import re
 from typing import Union
@@ -28,10 +29,10 @@ import networkx as nx
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
-from core.analyzers import error_messages as errors
-from core.analyzers.limit_route_portion import normalize_route_portions
-from core.analyzers.route_section_validation import validate_fpl_route_section
-from core.utils.regex_patterns import AERODROME, SIG_POINT
+from core.analyzers.route_normalizer import normalizer
+from core.analyzers.route_sections_analyzer import validate_fpl_route_section
+from core.utils import error_messages as errors
+from core.utils.patterns import AERODROME, SIG_POINT
 
 
 def find_all_nested_real_sections(fpl_route_section: dict[str, str], db_sections: tuple[str, str, str]):
@@ -51,7 +52,7 @@ def find_all_nested_real_sections(fpl_route_section: dict[str, str], db_sections
         G.add_edge(tp[1], tp[2], route=tp[0])
 
     try:
-        # Use shortest_path to find the only path
+        # Use shortest_path to find the path
         path = nx.shortest_path(G, source=start_point, target=end_point)
 
     except nx.NetworkXException:
@@ -63,10 +64,10 @@ def find_all_nested_real_sections(fpl_route_section: dict[str, str], db_sections
 
 def eet_is_correct(data, err: dict[str, list[str]]) -> bool:
     if not data["eet"]:
-        err["logical_error"].append(errors.EET_NOT_FOUND)
+        err["integrity_error"].append(errors.EET_NOT_FOUND)
         return False
     if settings.FIR_INDICATOR not in data["eet"] and not data["domestic_departure"]:
-        err["logical_error"].append(errors.FIR_NOT_FOUND_IN_EET.format(settings.FIR_INDICATOR))
+        err["integrity_error"].append(errors.FIR_NOT_FOUND_IN_EET.format(settings.FIR_INDICATOR))
         return False
     return True
 
@@ -123,7 +124,7 @@ def retrieve_point_name_from_fpl_route_section(
 def check_points_exists(points: set[str], existing_points: dict[str, set[str]], route, err):
     for point_name in points:
         if point_name not in existing_points:
-            err["logical_error"].append(errors.POINT_DOES_NOT_EXIST.format(point_name))
+            err["integrity_error"].append(errors.POINT_DOES_NOT_EXIST.format(point_name))
             for section in route:
                 if point_name in section["from"] or point_name in section["to"]:
                     section["nonessential"] = True
@@ -161,7 +162,7 @@ def route_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], err: 
     mentioned_points_in_fpl = set(points_mentioned_in_route).union(points_used_to_locate_ads_in_item18)
 
     # using copy.deepcopy to avoid unexpected behaviors due to mutability of lists and dicts in python
-    route_portion_to_be_checked, all_existing_points, existing_sections_dict = normalize_route_portions(
+    route_portion_to_be_checked, all_existing_points, existing_sections_dict = normalizer(
         fpl, mentioned_points_in_fpl, copy.deepcopy(fpl["route"]), err
     )
 
@@ -194,7 +195,7 @@ def route_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], err: 
     existing_routes = set(tp[0] for tp in existing_sections_dict)
     for mentioned_route in fpl_mentioned_routes:
         if mentioned_route not in existing_routes:
-            err["logical_error"].append(errors.ROUTE_DOES_NOT_EXIST.format(mentioned_route))
+            err["integrity_error"].append(errors.ROUTE_DOES_NOT_EXIST.format(mentioned_route))
 
     ...
     # * Step 2.2. Check route-scheme (TOS) adherence
@@ -207,7 +208,7 @@ def route_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], err: 
         try:
             real_sections = find_all_nested_real_sections(fpl_route_section, existing_sections_dict)
         except ValidationError as exp:
-            err["logical_error"].append(exp.message)
+            err["integrity_error"].append(exp.message)
         else:
             fpl_section_and_its_nested_real_sections.append((fpl_route_section, real_sections))
 

@@ -22,13 +22,13 @@ MODELS_REQUIRING_FILTERING_FOR_EXPORT = [
 ]
 
 
-def levels_to_fl_int(row_flight_levels: str) -> int:
-    """Converts flight level to integer"""
-    meter = 1
-    feet = 3.281 * meter
-    if row_flight_levels[0] in ("S", "M"):
-        return int(row_flight_levels[1:]) * feet
-    return int(row_flight_levels[1:])
+def feet_to_flight_level(altitude_feet: float):
+    return round(altitude_feet / 100)
+
+
+def meters_to_flight_level(altitude_meters: float):
+    altitude_feet = altitude_meters * 3.28084
+    return feet_to_flight_level(altitude_feet)
 
 
 def generate_routes_from_route_scheme_text(string: str) -> list[str]:

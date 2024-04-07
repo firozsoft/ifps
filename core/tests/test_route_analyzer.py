@@ -8,12 +8,12 @@ from apps.general.models.base import FIR
 from apps.points.models.point import Point
 from apps.routes.models.base import Route
 from apps.routes.models.route_section import RouteSection
-from core.analyzers import error_messages
-from core.analyzers.route_analysis import (
+from core.analyzers.route_analyzer import (
     retrieve_point_name_from_fpl_route_section,
     retrieve_points_used_to_locate_ad_in_item18,
     route_analyzer,
 )
+from core.utils import error_messages
 
 OUR_FIR_INDICATOR = settings.FIR_INDICATOR
 
@@ -144,25 +144,25 @@ class RouteAnalyzerTestCase(TestCase):
     def test_fail_due_eet_missing_our_fir(self, mock_validate_fpl_route_section):
         mock_validate_fpl_route_section.side_effect = None
         data = copy.deepcopy(self.data)
-        err = {"logical_error": []}
+        err = {"integrity_error": []}
         data["eet"] = "OKKK0030 OPKR0220 VAHH0330"
         route_analyzer(data, err)
         self.assertDictEqual(
-            err, {"logical_error": [error_messages.FIR_NOT_FOUND_IN_EET.format(OUR_FIR_INDICATOR)]}
+            err, {"integrity_error": [error_messages.FIR_NOT_FOUND_IN_EET.format(OUR_FIR_INDICATOR)]}
         )
 
     @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
     def test_fail_due_eet_missing_previous_fir_dep_not_in_adjacent(self, mock_validate_fpl_route_section):
         mock_validate_fpl_route_section.side_effect = None
         data = copy.deepcopy(self.data)
-        err = {"logical_error": []}
+        err = {"integrity_error": []}
         data["eet"] = "OIIX0100 OPKR0220 VAHH0330"
         data["departure_ad"] = "LTFM"
         route_analyzer(data, err)
         self.assertDictEqual(
             err,
             {
-                "logical_error": [
+                "integrity_error": [
                     error_messages.BOUNDARY_DETERMINATION_ERROR_NO_ADJACENT_FIRS.format(
                         "Entry", OUR_FIR_INDICATOR
                     )
@@ -174,13 +174,13 @@ class RouteAnalyzerTestCase(TestCase):
     def test_fail_due_eet_missing_next_fir(self, mock_validate_fpl_route_section):
         mock_validate_fpl_route_section.side_effect = None
         data = copy.deepcopy(self.data)
-        err = {"logical_error": []}
+        err = {"integrity_error": []}
         data["eet"] = "OKKK0030 OIIX0100 VAHH0330"
         route_analyzer(data, err)
         self.assertDictEqual(
             err,
             {
-                "logical_error": [
+                "integrity_error": [
                     error_messages.BOUNDARY_DETERMINATION_ERROR_NONADJACENT_FIR_OR_NO_BOUNDARY.format(
                         "VAHH", OUR_FIR_INDICATOR
                     )
@@ -192,10 +192,10 @@ class RouteAnalyzerTestCase(TestCase):
     def test_pass_eet_missing_previous_fir_but_dep_in_adjacent_fir(self, mock_validate_fpl_route_section):
         mock_validate_fpl_route_section.side_effect = None
         data = copy.deepcopy(self.data)
-        err = {"logical_error": []}
+        err = {"integrity_error": []}
         data["eet"] = "OIIX0100 OPKR0220 VAHH0330"
         route_analyzer(data, err)
-        self.assertDictEqual(err, {"logical_error": []})
+        self.assertDictEqual(err, {"integrity_error": []})
 
     @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
     def test_pass_long_route(self, mock_validate_fpl_route_section):
@@ -214,7 +214,7 @@ class RouteAnalyzerTestCase(TestCase):
                 "via": "T215",
             },
         ]
-        err = {"logical_error": []}
+        err = {"integrity_error": []}
         data["eet"] = "OIIX0210 OPKR0220 VAHH0330"
 
         # # Enable query counting
@@ -231,7 +231,7 @@ class RouteAnalyzerTestCase(TestCase):
         # # Disable query counting
         # connection.force_debug_cursor = False
 
-        self.assertDictEqual(err, {"logical_error": []})
+        self.assertDictEqual(err, {"integrity_error": []})
 
     @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
     def test_fail_due_long_route_no_point_and_local_route(self, mock_validate_fpl_route_section):
@@ -250,7 +250,7 @@ class RouteAnalyzerTestCase(TestCase):
                 "via": "P574",
             },
         ]
-        err = {"logical_error": []}
+        err = {"integrity_error": []}
         data["eet"] = "OKKK0030 OIIX0210 OPKR0220 VAHH0330"
 
         route_analyzer(data, err)
@@ -259,7 +259,7 @@ class RouteAnalyzerTestCase(TestCase):
             error_messages.BOUNDARY_DETERMINATION_ERROR_FROM_TO_FIR_ON_ROUTE.format(
                 "Entry", "from", "OKKK", "P574"
             ),
-            err["logical_error"],
+            err["integrity_error"],
         )
 
     @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
@@ -279,7 +279,7 @@ class RouteAnalyzerTestCase(TestCase):
                 "via": "A452",
             },
         ]
-        err = {"logical_error": []}
+        err = {"integrity_error": []}
         data["eet"] = "OKKK0030 OIIX0210 OPKR0220 VAHH0330"
 
         route_analyzer(data, err)
@@ -288,7 +288,7 @@ class RouteAnalyzerTestCase(TestCase):
             error_messages.BOUNDARY_DETERMINATION_ERROR_FROM_TO_FIR_ON_ROUTE.format(
                 "Entry", "from", "OKKK", "A452"
             ),
-            err["logical_error"],
+            err["integrity_error"],
         )
 
     @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
@@ -308,7 +308,7 @@ class RouteAnalyzerTestCase(TestCase):
                 "via": "G666",
             },
         ]
-        err = {"logical_error": []}
+        err = {"integrity_error": []}
         data["eet"] = "OKKK0030 OIIX0210 OPKR0220 VAHH0330"
 
         route_analyzer(data, err)
@@ -317,7 +317,7 @@ class RouteAnalyzerTestCase(TestCase):
             error_messages.BOUNDARY_DETERMINATION_ERROR_FROM_TO_FIR_ON_ROUTE.format(
                 "Exit", "to", "OPKR", "G666"
             ),
-            err["logical_error"],
+            err["integrity_error"],
         )
 
     @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
@@ -337,10 +337,10 @@ class RouteAnalyzerTestCase(TestCase):
                 "via": "T21",
             },
         ]
-        err = {"logical_error": []}
+        err = {"integrity_error": []}
         data["eet"] = "OKKK0030 OIIX0210 OPKR0220 VAHH0330"
         route_analyzer(data, err)
-        self.assertIn(error_messages.ROUTE_DOES_NOT_EXIST.format("T21"), err["logical_error"])
+        self.assertIn(error_messages.ROUTE_DOES_NOT_EXIST.format("T21"), err["integrity_error"])
 
     @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
     def test_fail_due_no_exit_point_no_long_route(self, mock_validate_fpl_route_section):
@@ -359,7 +359,7 @@ class RouteAnalyzerTestCase(TestCase):
                 "via": "T215",
             },
         ]
-        err = {"logical_error": []}
+        err = {"integrity_error": []}
         data["eet"] = "OIIX0210 OPKR0220 VAHH0330"
         # # Enable query counting
         # from django.db import connection
@@ -378,7 +378,7 @@ class RouteAnalyzerTestCase(TestCase):
         self.assertDictEqual(
             err,
             {
-                "logical_error": [
+                "integrity_error": [
                     error_messages.BOUNDARY_DETERMINATION_ERROR.format("Exit", OUR_FIR_INDICATOR)
                 ]
             },
@@ -389,9 +389,9 @@ class RouteAnalyzerTestCase(TestCase):
         mock_validate_fpl_route_section.side_effect = None
 
         data = copy.deepcopy(self.data_domestic)
-        err = {"logical_error": []}
+        err = {"integrity_error": []}
         route_analyzer(data, err)
-        self.assertDictEqual(err, {"logical_error": []})
+        self.assertDictEqual(err, {"integrity_error": []})
 
     @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
     def test_fail_due_domestic_flight_nonexisting_route(self, mock_validate_fpl_route_section):
@@ -399,12 +399,12 @@ class RouteAnalyzerTestCase(TestCase):
 
         data = copy.deepcopy(self.data_domestic)
         data["route"][0]["via"] = "P57"
-        err = {"logical_error": []}
+        err = {"integrity_error": []}
 
         route_analyzer(data, err)
 
-        self.assertIn(error_messages.ROUTE_DOES_NOT_EXIST.format("P57"), err["logical_error"])
-        self.assertIn(error_messages.PATH_NOT_FOUND.format("SYZ", "ISN", "P57"), err["logical_error"])
+        self.assertIn(error_messages.ROUTE_DOES_NOT_EXIST.format("P57"), err["integrity_error"])
+        self.assertIn(error_messages.PATH_NOT_FOUND.format("SYZ", "ISN", "P57"), err["integrity_error"])
 
     @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
     def test_fail_due_domestic_flight_nonexisting_point(self, mock_validate_fpl_route_section):
@@ -412,14 +412,14 @@ class RouteAnalyzerTestCase(TestCase):
 
         data = copy.deepcopy(self.data_domestic)
         data["route"][0]["to"] = "TRN"
-        err = {"logical_error": []}
+        err = {"integrity_error": []}
 
         route_analyzer(data, err)
 
         self.assertDictEqual(
             err,
             {
-                "logical_error": [
+                "integrity_error": [
                     error_messages.POINT_DOES_NOT_EXIST.format("TRN"),
                     error_messages.PATH_NOT_FOUND.format("SYZ", "TRN", "P574"),
                 ]
@@ -432,11 +432,11 @@ class RouteAnalyzerTestCase(TestCase):
 
         data = copy.deepcopy(self.data_domestic)
         data["route"][0]["via"] = "G666"
-        err = {"logical_error": []}
+        err = {"integrity_error": []}
 
         route_analyzer(data, err)
 
-        self.assertIn(error_messages.PATH_NOT_FOUND.format("SYZ", "ISN", "G666"), err["logical_error"])
+        self.assertIn(error_messages.PATH_NOT_FOUND.format("SYZ", "ISN", "G666"), err["integrity_error"])
 
     @mock.patch("core.analyzers.route_analysis.validate_fpl_route_section")
     def test_fail_due_domestic_flight_wrong_point(self, mock_validate_fpl_route_section):
@@ -444,8 +444,8 @@ class RouteAnalyzerTestCase(TestCase):
 
         data = copy.deepcopy(self.data_domestic)
         data["route"][0]["to"] = "ASVIB"
-        err = {"logical_error": []}
+        err = {"integrity_error": []}
 
         route_analyzer(data, err)
 
-        self.assertIn(error_messages.PATH_NOT_FOUND.format("SYZ", "ASVIB", "P574"), err["logical_error"])
+        self.assertIn(error_messages.PATH_NOT_FOUND.format("SYZ", "ASVIB", "P574"), err["integrity_error"])

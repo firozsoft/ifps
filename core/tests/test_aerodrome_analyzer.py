@@ -10,8 +10,8 @@ from apps.aerodromes.models.temp_closure import TemporaryClosure
 from apps.points.models.navaid import NavAid
 from apps.points.models.point import Point
 from apps.routes.models.sid_star import SidStar
-from core.analyzers import error_messages
-from core.analyzers.aerodromes_analysis import aerodromes_analyzer
+from core.analyzers.aerodromes_analyzer import aerodromes_analyzer
+from core.utils import error_messages
 from core.utils.choices import AerodromeFlightType, AerodromeType, NavAidType, NavAidUseCase, SidStarType
 from create_aircraft import main as create_aircrafts
 
@@ -23,7 +23,7 @@ class AerodromeAnalyzerTestCase(TestCase):
     """
 
     def setUp(self):
-        self.err = {"logical_error": []}
+        self.err = {"integrity_error": []}
         self.fpl = {
             "domestic_departure": True,
             "domestic_destination": True,
@@ -155,7 +155,7 @@ class AerodromeAnalyzerTestCase(TestCase):
 
         self.assertDictEqual(
             err,
-            {"logical_error": [error_messages.DEST_DEP_ONE_ALT_REQUIRED]},
+            {"integrity_error": [error_messages.DEST_DEP_ONE_ALT_REQUIRED]},
         )
 
     def test_fails_due_ad_acceptable_types_and_flight_rules(self):
@@ -170,7 +170,7 @@ class AerodromeAnalyzerTestCase(TestCase):
         self.assertDictEqual(
             err,
             {
-                "logical_error": [
+                "integrity_error": [
                     error_messages.AERODROME_INCOMPATIBLE_TYPE_OF_AIRCRAFT.format("OINJ", "heliport", "A319"),
                     error_messages.AERODROME_INCOMPATIBLE_FLIGHT_RULE.format("OINJ", "IFR"),
                 ]
@@ -189,7 +189,7 @@ class AerodromeAnalyzerTestCase(TestCase):
         self.assertDictEqual(
             err,
             {
-                "logical_error": [
+                "integrity_error": [
                     error_messages.AERODROME_INCOMPATIBLE_TYPE_OF_AIRCRAFT.format("OINJ", "heliport", "A319"),
                     error_messages.AERODROME_INCOMPATIBLE_FLIGHT_RULE.format("OINJ", "IFR"),
                 ]
@@ -204,7 +204,7 @@ class AerodromeAnalyzerTestCase(TestCase):
 
         self.assertDictEqual(
             err,
-            {"logical_error": [error_messages.AERODROME_INACTIVE.format("OIII")]},
+            {"integrity_error": [error_messages.AERODROME_INACTIVE.format("OIII")]},
         )
 
     def test_fails_due_alt_ad_not_active(self):
@@ -216,7 +216,7 @@ class AerodromeAnalyzerTestCase(TestCase):
 
         self.assertDictEqual(
             err,
-            {"logical_error": [error_messages.AERODROME_INACTIVE.format("OIFM")]},
+            {"integrity_error": [error_messages.AERODROME_INACTIVE.format("OIFM")]},
         )
 
     def test_fails_due_sid_star_not_exists(self):
@@ -230,7 +230,7 @@ class AerodromeAnalyzerTestCase(TestCase):
         self.assertDictEqual(
             err,
             {
-                "logical_error": [
+                "integrity_error": [
                     error_messages.SID_STAR_DOES_NOT_EXIST.format("SID", "nonexisting_sid"),
                     error_messages.SID_STAR_DOES_NOT_EXIST.format("STAR", "nonexisting_star"),
                 ]
@@ -247,8 +247,8 @@ class AerodromeAnalyzerTestCase(TestCase):
 
         aerodromes_analyzer(self.fpl, err)
 
-        self.assertTrue(err["logical_error"])
-        self.assertIn("is not in aerorome's operational hours", err["logical_error"][0])
+        self.assertTrue(err["integrity_error"])
+        self.assertIn("is not in aerorome's operational hours", err["integrity_error"][0])
 
     def test_fails_due_dep_ad_vfr_opr_hours(self):
         self.fpl["eobt"] = "0700"
@@ -257,7 +257,7 @@ class AerodromeAnalyzerTestCase(TestCase):
 
         aerodromes_analyzer(self.fpl, err)
 
-        self.assertIn("is not in aerorome's operational hours", err["logical_error"][0])
+        self.assertIn("is not in aerorome's operational hours", err["integrity_error"][0])
 
     def test_fails_due_dest_ad_vfr_opr_hours(self):
         err = copy.deepcopy(self.err)
@@ -282,7 +282,7 @@ class AerodromeAnalyzerTestCase(TestCase):
         # # Disable query counting
         # connection.force_debug_cursor = False
 
-        self.assertIn("is not in aerorome's operational hours", err["logical_error"][0])
+        self.assertIn("is not in aerorome's operational hours", err["integrity_error"][0])
 
     def test_fails_due_dep_ad_temp_closure(self):
         # Curfew:2200-2359, TMC:1700-1900
@@ -291,8 +291,8 @@ class AerodromeAnalyzerTestCase(TestCase):
 
         aerodromes_analyzer(self.fpl, err)
 
-        self.assertTrue(err["logical_error"])
-        self.assertIn("temporarily closed", err["logical_error"][0])
+        self.assertTrue(err["integrity_error"])
+        self.assertIn("temporarily closed", err["integrity_error"][0])
 
     def test_fails_due_dest_ad_temp_closure(self):
         # Curfew:2200-2359, TMC:1700-1900
@@ -304,8 +304,8 @@ class AerodromeAnalyzerTestCase(TestCase):
 
         aerodromes_analyzer(self.fpl, err)
 
-        self.assertTrue(err["logical_error"])
-        self.assertIn("temporarily closed", err["logical_error"][0])
+        self.assertTrue(err["integrity_error"])
+        self.assertIn("temporarily closed", err["integrity_error"][0])
 
     def test_pass_ad_temp_closure_not_meet(self):
         # Curfew:2200-2359, TMC:1700-1900
@@ -314,7 +314,7 @@ class AerodromeAnalyzerTestCase(TestCase):
 
         aerodromes_analyzer(self.fpl, err)
 
-        self.assertFalse(err["logical_error"])
+        self.assertFalse(err["integrity_error"])
 
     def test_fails_due_dep_ad_curfew(self):
         # Curfew:2200-2359, TMC:1700-1900
@@ -323,8 +323,8 @@ class AerodromeAnalyzerTestCase(TestCase):
 
         aerodromes_analyzer(self.fpl, err)
 
-        self.assertTrue(err["logical_error"])
-        self.assertIn("curfew time", err["logical_error"][0])
+        self.assertTrue(err["integrity_error"])
+        self.assertIn("curfew time", err["integrity_error"][0])
 
     def test_fails_due_dest_ad_curfew(self):
         # Curfew:2200-2359, TMC:1700-1900
@@ -336,8 +336,8 @@ class AerodromeAnalyzerTestCase(TestCase):
 
         aerodromes_analyzer(self.fpl, err)
 
-        self.assertTrue(err["logical_error"])
-        self.assertIn("curfew time", err["logical_error"][0])
+        self.assertTrue(err["integrity_error"])
+        self.assertIn("curfew time", err["integrity_error"][0])
 
     def test_pass_dest_ad_curfew_not_meet(self):
         # Curfew:2200-2359, TMC:1700-1900
@@ -349,5 +349,5 @@ class AerodromeAnalyzerTestCase(TestCase):
 
         aerodromes_analyzer(self.fpl, err)
 
-        self.assertTrue(err["logical_error"])
-        self.assertIn("is not in aerorome's operational hours", err["logical_error"][0])
+        self.assertTrue(err["integrity_error"])
+        self.assertIn("is not in aerorome's operational hours", err["integrity_error"][0])

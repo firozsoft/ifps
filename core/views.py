@@ -15,8 +15,8 @@ from django.views.generic.edit import CreateView
 
 from apps.general.forms import FlightPlanForm
 from apps.general.models.fpl import FlightPlan
-from core.analyzers.logical_checks import logical_check
-from core.analyzers.regex_parser import parser
+from core.analyzers import parser
+from core.analyzers.integrity_analyzer import main
 from core.utils.helpers import (
     get_app_all_exportable_models_with_restriction,
     model_to_excel_bytesio,
@@ -53,12 +53,12 @@ class FlightPlanCreateView(LoginRequiredMixin, CreateView):
         )
         row_data["others"] = "DOF/" + row_data["date_of_flight"] + row_data["other_information"]
 
-        res, err = parser(row_data)
+        fpl, err = parser.parse(row_data)
         if err:
             form.add_error(err)
             return self.form_invalid(form)
 
-        err = logical_check(res)
+        err = main(fpl)
         if err:
             form.add_error(err)
             return self.form_invalid(form)
@@ -87,16 +87,16 @@ def fpl_scrutinization(request, msg: str) -> JsonResponse:
         # 'extra': parts[9]
     }
 
-    res, err = parser(filled_data)
+    fpl, err = parser.parse(filled_data)
     if err:
         return JsonResponse(err, status=400)
 
-    err = logical_check(res)
+    err = main(fpl)
     if err:
         # return JsonResponse(err, status=400)
         return render(request, "pages/index.html", {"data": json.dumps(err)})
 
-    return render(request, "pages/index.html", {"data": json.dumps(res)})
+    return render(request, "pages/index.html", {"data": json.dumps(fpl)})
 
 
 @login_required
