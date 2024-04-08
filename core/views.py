@@ -93,8 +93,8 @@ def fpl_scrutinization(request, msg: str) -> JsonResponse:
 
     err = main(fpl)
     if err:
-        # return JsonResponse(err, status=400)
-        return render(request, "pages/index.html", {"data": json.dumps(err)})
+        return JsonResponse(err, status=400)
+        # return render(request, "pages/index.html", {"data": json.dumps(err)})
 
     return render(request, "pages/index.html", {"data": json.dumps(fpl)})
 
@@ -104,9 +104,7 @@ def fpl_scrutinization(request, msg: str) -> JsonResponse:
 def submission(request: HttpRequest) -> JsonResponse:
     msg = request.POST.get(key="message", default=None)
     if not msg:
-        return JsonResponse(
-            {"error_message": "field message is missing", "error_code": "msg_not_found"}, status=400
-        )
+        return JsonResponse({"Error": "field message is missing", "error_code": "msg_not_found"}, status=400)
     if msg.startswith("(FPL"):
         return fpl_scrutinization(request, msg)
     return JsonResponse({"Error": "text must be an AFTN FPL message"}, status=400)

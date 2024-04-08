@@ -1,0 +1,8 @@
+@font-face {
+  font-family: 'Titillium Web';
+  src: url(../fonts/TitilliumWeb/TitilliumWeb-Regular.ttf);
+}
+
+* {
+  font-family: 'Titillium Web', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
