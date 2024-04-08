@@ -38,6 +38,23 @@
              href="{% url "admin:index" %}"
              class="btn btn-link px-3 me-2">Admin</a>
         {% endif %}
+
+        <li class="nav-item align-items-center d-flex">
+          <label for="themingSwitcher">
+            <i class="fas fa-sun"></i>
+          </label>
+          <!-- Default switch -->
+          <div class="ms-2 form-check form-switch">
+            <input class="form-check-input"
+                   type="checkbox"
+                   role="switch"
+                   id="themingSwitcher" />
+          </div>
+          <label for="themingSwitcher">
+            <i class="fas fa-moon"></i>
+          </label>
+        </li>
+
       </div>
     </div>
     <!-- Collapsible wrapper -->

@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE|default:'en-us' }}">
+<html lang="{{ LANGUAGE_CODE|default:'en-us' }}" data-mdb-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -30,6 +30,8 @@
       {% endblock title %}
     </title>
 
+    <script async type="module" src="{% static 'js/theme.js' %}"></script>
+
   </head>
   <body class="container-fluid">
 
@@ -41,10 +43,10 @@
     </div>
 
     <!-- js -->
-    <script type="text/javascript" src="{% static 'js/mdb.es.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/mdb.umd.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/htmx.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/main.js' %}"></script>
+    <script defer type="module" src="{% static 'js/mdb.es.min.js' %}"></script>
+    <script defer type="module" src="{% static 'js/mdb.umd.min.js' %}"></script>
+    <script defer type="module" src="{% static 'js/htmx.min.js' %}"></script>
+    <script defer type="module" src="{% static 'js/main.js' %}"></script>
     {% block document_ready %}
     {% endblock document_ready %}
   </body>
