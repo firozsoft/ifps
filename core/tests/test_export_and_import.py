@@ -35,7 +35,7 @@ def zipfile_saver(res):
     os.makedirs(output_dir, exist_ok=True)
 
     # Specify the filename for the saved zip file
-    zip_filename = "exported_data.zip"
+    zip_filename = "exports.zip"
 
     # Combine the output directory and filename to create the full path
     output_path = os.path.join(output_dir, zip_filename)
@@ -49,10 +49,10 @@ def zipfile_saver(res):
 
 def zipfile_extactor():
     # Specify the path to the downloaded zip file
-    zip_file_path = "./core/tests/exported_data.zip"
+    zip_file_path = "./core/tests/exports.zip"
 
     # Specify the directory where you want to extract the contents
-    extract_dir = "./core/tests/exported_data/"
+    extract_dir = "./core/tests/exports/"
 
     # Ensure the extraction directory exists, if not, create it
     os.makedirs(extract_dir, exist_ok=True)
