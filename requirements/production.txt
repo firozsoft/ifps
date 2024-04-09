@@ -1,7 +1,6 @@
-Django~=5.0
-pandas
-openpyxl
-python-decouple
 dj-database-url
+Django~=5.0
 networkx
-docutils
+openpyxl
+pandas
+python-decouple

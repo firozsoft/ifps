@@ -49,7 +49,6 @@ DJANGO_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # ---
-    "django.contrib.admindocs",
     # "django.contrib.gis",
 ]
 
@@ -64,7 +63,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # ---
-    "django.contrib.admindocs.middleware.XViewMiddleware",
 ]
 
 TEMPLATES = [
