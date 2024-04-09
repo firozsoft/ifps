@@ -1,14 +1,14 @@
 """Helper functions module"""
-
 import io
 from itertools import product
-from typing import Union
+from typing import Callable, Union
 
-import pandas as pd
 from django.apps import apps as django_all_apps
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.forms import model_to_dict
+from openpyxl import Workbook
+from openpyxl.worksheet.worksheet import Worksheet
 
 from core.utils.choices import NavAidType, NavAidUseCase
 
@@ -182,7 +182,56 @@ def convert_human_readable_value_to_db_value(
     return human_readable_value
 
 
-def validate_excel_data(df: pd.DataFrame, expected_columns: list[str], required_columns: list[str]) -> None:
+def get_column_names(sheet: Worksheet):
+    """
+    Get the column names from the header row of an Excel file.
+
+    Args:
+        file_path (str): Path to the Excel file.
+        sheet_name (str): Name of the worksheet containing the data (default is 'Sheet1').
+
+    Returns:
+        list: A list of column names.
+    """
+    # Get column names from the header row
+    column_names = [cell.value for cell in sheet[1]]
+
+    return column_names
+
+
+def check_null_values(sheet: Worksheet, column_name: str):
+    """
+    Check if a specific column has null values in an Excel file.
+
+    Args:
+        file_path (str): Path to the Excel file.
+        column_name (str): Name of the column.
+        sheet_name (str): Name of the worksheet containing the data (default is 'Sheet1').
+
+    Returns:
+        bool: True if the column has null values, False otherwise.
+    """
+    # Get the index of the column by searching for the column name in the first row
+    for cell in sheet[1]:
+        if cell.value == column_name:
+            column_index = cell.column
+            break
+    else:
+        raise ValueError(f"Column '{column_name}' not found.")
+
+    # Iterate over the rows of the specified column
+    for row in sheet.iter_rows(min_row=2, min_col=column_index, max_col=column_index):
+        for cell in row:
+            # Check if the cell is empty or contains None
+            if cell.value is None:
+                return True  # Null value found
+
+    return False  # No null values found
+
+
+def validate_excel_sheet_data(
+    sheet: Worksheet, expected_columns: list[str], required_columns: list[str]
+) -> None:
     """
     Checks if all expected columns are present in the given DataFrame
     and also ensures there are no empty values in any required columns.
@@ -200,14 +249,100 @@ def validate_excel_data(df: pd.DataFrame, expected_columns: list[str], required_
     """
 
     # Check for missing expected columns
-    missing_cols = sorted(col for col in expected_columns if col not in df.columns)
+    missing_cols = sorted(col for col in expected_columns if col not in get_column_names(sheet))
     if missing_cols:
         raise ValidationError(f"Expected column(s) {missing_cols} are not found.")
 
     # Check for empty values in required columns
-    null_cols = sorted(col for col in required_columns if df[col].isnull().any())
+    null_cols = sorted(col for col in required_columns if check_null_values(sheet, col))
     if null_cols:
         raise ValidationError(f"Required column(s) {null_cols} have empty values.")
+
+
+def process_excel_sheet_data(sheet: Worksheet, model_fields: list[str], output: Callable[[str], None]):
+    """
+    Process data from an Excel file using openpyxl.
+
+    Args:
+        output (Callable[[str], None]): A function for outputting text.
+        sheet (Worksheet): The Excel worksheet containing the data.
+        model_fields (list): List of model fields.
+
+    Returns:
+        list: List[Dict] containing instances data extracted from the Excel file.
+        dict: Dictionary containing instances ManyToMany field data.
+        bool: True if any data was error-prone, False otherwise.
+    """
+    instances_data = []
+    m2m_fields = {}
+    data_was_error_prone = False
+
+    # Get the column names from the header row
+    column_names = [cell.value.upper() for cell in sheet[1]]
+
+    # Iterate over the rows (starting from the second row)
+    for row in sheet.iter_rows(min_row=2):
+        instance_data = {}
+        row_as_dict = {column_name: cell.value for column_name, cell in zip(column_names, row)}
+        for field_name, value in row_as_dict.items():
+            field = get_model_field_by_uppercased_verbose_name(model_fields, field_name)
+            if field:
+                # Convert human-readable value to model value
+                try:
+                    if isinstance(field, models.ManyToManyField):
+                        # Only one M2M relation exists which is for BasePoint subclasses to FIR
+                        if "INDICATOR" in row_as_dict:
+                            m2m_fields[row_as_dict["INDICATOR"]] = convert_human_readable_value_to_db_value(
+                                field, value
+                            )
+                    else:
+                        instance_data[field.name] = convert_human_readable_value_to_db_value(field, value)
+                except ValidationError as err:
+                    data_was_error_prone = True
+                    output(str(err))
+            else:
+                data_was_error_prone = True
+                output(str(field_name))
+        instances_data.append(instance_data)
+    return instances_data, m2m_fields, data_was_error_prone
+
+
+def convert_data_to_excel(data: list[dict], expected_fields_for_excel: list[str]):
+    """
+    Convert data to Excel file using openpyxl.
+
+    Args:
+        data (list): List of dictionaries containing the data.
+        expected_fields_for_excel (list): List of expected column names.
+
+    Returns:
+        io.BytesIO: BytesIO object containing the Excel file.
+    """
+    # Create a new workbook
+    wb = Workbook()
+
+    # Select the active worksheet
+    ws = wb.active
+
+    # Write the header row
+    for col_idx, field_name in enumerate(expected_fields_for_excel, start=1):
+        ws.cell(row=1, column=col_idx, value=field_name)
+
+    # Write the data rows
+    for row_idx, row_data in enumerate(data, start=2):
+        for col_idx, field_name in enumerate(expected_fields_for_excel, start=1):
+            ws.cell(row=row_idx, column=col_idx, value=row_data.get(field_name, ""))
+
+    # Create a BytesIO object to store the Excel file
+    excel_buffer = io.BytesIO()
+
+    # Save the workbook to the BytesIO object
+    wb.save(excel_buffer)
+
+    # Rewind the buffer to the beginning
+    excel_buffer.seek(0)
+
+    return excel_buffer
 
 
 def model_to_excel_bytesio(model_name: str, qs: models.QuerySet = None) -> io.BytesIO:
@@ -237,13 +372,4 @@ def model_to_excel_bytesio(model_name: str, qs: models.QuerySet = None) -> io.By
         for instance in queryset
     ]
 
-    # Create a DataFrame from the data
-    df = pd.DataFrame(data=data, columns=expected_fields_for_excel)
-
-    # Create a BytesIO object to store the Excel file
-    excel_buffer = io.BytesIO()
-
-    # Write the DataFrame to the BytesIO object as an Excel file
-    df.to_excel(excel_buffer, index=False)
-
-    return excel_buffer
+    return convert_data_to_excel(data, expected_fields_for_excel)

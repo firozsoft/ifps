@@ -2,18 +2,17 @@
 from argparse import ArgumentParser
 from pathlib import Path
 
-import pandas as pd
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
 from django.db import models, transaction
+from openpyxl import load_workbook
 
 from apps.general.models.base import BasePoint
 from apps.general.utils.helpers import dms_to_decimal_degrees
 from core.utils.helpers import (
-    convert_human_readable_value_to_db_value,
     get_model_class_and_fields,
-    get_model_field_by_uppercased_verbose_name,
-    validate_excel_data,
+    process_excel_sheet_data,
+    validate_excel_sheet_data,
 )
 
 
@@ -69,84 +68,84 @@ class Command(BaseCommand):
         # Sort model names based on predefined order
         sorted_model_names = sorted(model_names, key=lambda item: self.importable_model_names.index(item))
 
-        container_dict = {}
         # Handle rebuild option
         self.stdout.write(self.style.WARNING("Deleting existing data..."))
         for model_name in sorted_model_names:
-            # NOTE: Deletion of Point instances will delete all NavAid instances too!
             model_class, model_fields, expected_fields, required_fields = get_model_class_and_fields(
                 model_name
             )
-            model_class.objects.all().delete()
-            container_dict[model_name] = [model_class, model_fields, expected_fields, required_fields]
 
-        for model_name in sorted_model_names:
+            if model_name == "point":
+                model_class.objects.exclude(navaid__isnull=False).delete()
+            else:
+                model_class.objects.all().delete()
+
             self.stdout.write(f"Loading data for {model_name}s...")
-            # Load data from Excel into a Pandas DataFrame
-            excel_data = pd.read_excel(resources_dir / f"{model_name}.xlsx")
+            # Load data from Excel
+            wb = load_workbook(resources_dir / f"{model_name}.xlsx", read_only=True)
+            sheet = wb.active
 
             # Validate the Excel data
             self.stdout.write(f"Validating the Excel data for {model_name}s...")
-            model_class, model_fields, expected_fields, required_fields = container_dict[model_name]
             try:
-                validate_excel_data(excel_data, expected_fields, required_fields)
+                validate_excel_sheet_data(sheet, expected_fields, required_fields)
             except ValidationError as err:
                 raise CommandError(str(err))
 
             # Convert data into model instances
-            model_instances = []
-            data_was_error_prone = False
-            m2m_fields = {}
-            for _, row in excel_data.iterrows():
-                instance_data = {}
-                for field_uppercased_verbose_name, value in row.items():
-                    field = get_model_field_by_uppercased_verbose_name(
-                        model_fields, field_uppercased_verbose_name
-                    )
-                    # Convert human-readable value to model value
-                    try:
-                        if isinstance(field, models.ManyToManyField):
-                            # only one M2M relation exitsts which for BasePoint subclasses to FIR
-                            if "INDICATOR" in row:
-                                m2m_fields[row["INDICATOR"]] = convert_human_readable_value_to_db_value(
-                                    field, value
-                                )
-                        else:
-                            instance_data[field.name] = convert_human_readable_value_to_db_value(field, value)
-                    except ValidationError as err:
-                        data_was_error_prone = True
-                        self.stderr.write(str(err))
+            instances_data, m2m_fields, data_was_error_prone = process_excel_sheet_data(
+                sheet, model_fields, self.stderr.write
+            )
+
+            if data_was_error_prone:
+                raise CommandError(f"The provided data for {model_name.upper()} is not valid(1).")
+
+            model_instances: list[models.Model] = []
+            for instance_data in instances_data:
                 try:
                     new_instance: models.Model = model_class(**instance_data)
+                    new_instance.full_clean()
+                except ValidationError as err:
+                    data_was_error_prone = True
+                    self.stderr.write(str(err))
+                else:
                     if isinstance(new_instance, BasePoint):
                         new_instance.latitude, new_instance.longitude = dms_to_decimal_degrees(
                             new_instance.coordinate
                         )
-                    new_instance.full_clean()
                     model_instances.append(new_instance)
-                except ValidationError as err:
-                    data_was_error_prone = True
-                    self.stderr.write(str(err))
 
             if data_was_error_prone:
-                raise CommandError(f"The provided data for {model_name.upper()} is not valid.")
+                raise CommandError(f"The provided data for {model_name.upper()} is not valid(2).")
 
             # Perform bulk update or create
             with transaction.atomic():
                 self.stdout.write(f"Initiated bulk creation of {model_name}s...")
-                if model_name != "navaid":
-                    model_instances = model_class.objects.bulk_create(model_instances)
-                else:
-                    new_model_instances = []
-                    for instance in model_instances:
-                        instance.save()
-                        new_model_instances.append(instance)
-                    model_instances = new_model_instances
+                saved_model_instances: list[models.Model] = []
+                try:
+                    saved_model_instances = model_class.objects.bulk_create(model_instances)
+                except ValueError as e:
+                    # Check if the ValueError is due to bulk_create not supporting inherited models
+                    if "bulk create" in str(e) and "inherited" in str(e):
+                        # Fall back to creating each instance individually using save()
+                        for instance in model_instances:
+                            try:
+                                instance.save()
+                                saved_model_instances.append(instance)
+                            except Exception as save_exception:
+                                # Handle save exceptions if needed
+                                self.stderr.write(f"Error saving instance: {instance} -> {save_exception}")
+                                data_was_error_prone = True
+                        if data_was_error_prone:
+                            raise CommandError(f"The provided data for {model_name.upper()} is not valid(3).")
+                    else:
+                        # Handle other types of ValueError
+                        raise CommandError(f"Unhandled ValueError: {e}")
 
                 # Handling ManyToMany relation for BasePoint subinstances
                 # only one M2M relation exitsts which for BasePoint subclasses to FIR
                 if isinstance(model_class(), BasePoint):
-                    for instance in model_instances:
+                    for instance in saved_model_instances:
                         if instance.indicator in m2m_fields:
                             instance.fir.add(*m2m_fields[instance.indicator])
 
