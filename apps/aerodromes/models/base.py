@@ -8,6 +8,7 @@ class AerodromeProperties(AbstractBaseModel):
     aerodrome = models.ForeignKey(
         "aerodromes.Aerodrome",
         related_name="%(class)ss",
+        related_query_name="%(class)ss",
         on_delete=models.CASCADE,
         db_index=True,
     )

@@ -10,7 +10,6 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.forms import model_to_dict
 
-from apps.points.models.navaid import NavAid
 from core.utils.choices import NavAidType, NavAidUseCase
 
 MODELS_REQUIRING_FILTERING_FOR_EXPORT = [
@@ -113,34 +112,6 @@ def get_model_class_and_fields(
     return model_class, model_fields, expected_fields, required_fields
 
 
-def validate_excel_data(df: pd.DataFrame, expected_columns: list[str], required_columns: list[str]) -> None:
-    """
-    Checks if all expected columns are present in the given DataFrame
-    and also ensures there are no empty values in any required columns.
-
-    Args:
-        df (pd.DataFrame): The DataFrame containing the data to validate.
-        expected_columns (list[str]): List of expected column names.
-        required_columns (list[str]): List of required column names.
-
-    Returns:
-        none: no return value.
-
-    Raises:
-        ValidationError: If expected columns are missing or required columns have empty values.
-    """
-
-    # Check for missing expected columns
-    missing_cols = sorted(col for col in expected_columns if col not in df.columns)
-    if missing_cols:
-        raise ValidationError(f"Expected column(s) {missing_cols} are not found.")
-
-    # Check for empty values in required columns
-    null_cols = sorted(col for col in required_columns if df[col].isnull().any())
-    if null_cols:
-        raise ValidationError(f"Required column(s) {null_cols} have empty values.")
-
-
 def get_model_field_by_uppercased_verbose_name(
     model_fields: list[models.Field], uppercased_verbose_name: str
 ) -> models.Field | None:
@@ -211,6 +182,34 @@ def convert_human_readable_value_to_db_value(
     return human_readable_value
 
 
+def validate_excel_data(df: pd.DataFrame, expected_columns: list[str], required_columns: list[str]) -> None:
+    """
+    Checks if all expected columns are present in the given DataFrame
+    and also ensures there are no empty values in any required columns.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the data to validate.
+        expected_columns (list[str]): List of expected column names.
+        required_columns (list[str]): List of required column names.
+
+    Returns:
+        none: no return value.
+
+    Raises:
+        ValidationError: If expected columns are missing or required columns have empty values.
+    """
+
+    # Check for missing expected columns
+    missing_cols = sorted(col for col in expected_columns if col not in df.columns)
+    if missing_cols:
+        raise ValidationError(f"Expected column(s) {missing_cols} are not found.")
+
+    # Check for empty values in required columns
+    null_cols = sorted(col for col in required_columns if df[col].isnull().any())
+    if null_cols:
+        raise ValidationError(f"Required column(s) {null_cols} have empty values.")
+
+
 def model_to_excel_bytesio(model_name: str, qs: models.QuerySet = None) -> io.BytesIO:
     """Convert model data to Excel file"""
     model_class, model_fields, expected_fields_for_excel, _ = get_model_class_and_fields(model_name, qs)
@@ -228,7 +227,7 @@ def model_to_excel_bytesio(model_name: str, qs: models.QuerySet = None) -> io.By
     queryset = qs or model_class.objects.all()
 
     if queryset.model._meta.model_name == "point":
-        queryset = queryset.exclude(id__in=NavAid.objects.values_list("id", flat=True))
+        queryset = queryset.exclude(navaid__isnull=False)
 
     data = [
         {
