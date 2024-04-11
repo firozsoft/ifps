@@ -1,12 +1,15 @@
 # from django.contrib.gis.geos import GEOSGeometry
+import json
 from argparse import ArgumentParser
 from pathlib import Path
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
 from django.db import models, transaction
 from openpyxl import load_workbook
 
+from apps.general.models.aircraft import Aircraft
 from apps.general.models.base import BasePoint
 from apps.general.utils.helpers import dms_to_decimal_degrees
 from core.utils.helpers import (
@@ -14,6 +17,8 @@ from core.utils.helpers import (
     process_excel_sheet_data,
     validate_excel_sheet_data,
 )
+
+ICAO_AC_TYPES = settings.BASE_DIR / "core/utils/ICAO_aircraft_types.json"
 
 
 class Command(BaseCommand):
@@ -45,6 +50,43 @@ class Command(BaseCommand):
             help='Directory containing Excel files. Defaults to "./resources".',
             default=Path("resources"),
         )
+
+    def create_aircraft(self):
+        self.stdout.write("Loading data for Aircraft...")
+
+        json_fields_rename = {
+            "Designator": "type",
+            "ModelFullName": "model",
+            "AircraftDescription": "variant",
+            "ManufacturerCode": "manufacturer",
+            "Description": "description",
+            "EngineType": "engine_type",
+            "EngineCount": "engine_count",
+            "WTC": "weakturbulence_category",
+        }
+
+        objects = list()
+        cleaned_objects = list()
+        with open(ICAO_AC_TYPES, "r") as fl:
+            for ac in json.load(fl):
+                objects.append(
+                    Aircraft(
+                        **{
+                            json_fields_rename[key]: value
+                            for key, value in ac.items()
+                            if key in json_fields_rename
+                        }
+                    )
+                )
+        for obj in objects:
+            try:
+                obj.full_clean()
+                cleaned_objects.append(obj)
+            except ValidationError as err:
+                self.stderr.write(str(err))
+
+        Aircraft.objects.bulk_create(cleaned_objects)
+        self.stdout.write(self.style.SUCCESS("Finished creation of Aircraft."))
 
     def handle(self, *args, **kwargs):
         resources_dir: Path = kwargs.get("resources")
@@ -150,6 +192,8 @@ class Command(BaseCommand):
                             instance.fir.add(*m2m_fields[instance.indicator])
 
                 self.stdout.write(self.style.SUCCESS(f"Finished creation of {model_name}s."))
+
+        self.create_aircraft()
         # Output success message
         self.stdout.write("-" * 20)
         self.stdout.write(self.style.SUCCESS("Data has been uploaded successfully."))
