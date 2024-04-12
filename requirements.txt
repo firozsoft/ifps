@@ -1,1 +1,5 @@
--r requirements/production.txt
+dj-database-url
+Django~=5.0
+networkx
+openpyxl
+python-decouple
