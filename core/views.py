@@ -18,7 +18,7 @@ from apps.general.models.fpl import FlightPlan
 from core.analyzers import parser
 from core.analyzers.integrity_analyzer import main
 from core.utils.helpers import (
-    get_app_all_exportable_models_with_restriction,
+    get_app_exportable_models,
     model_to_excel_bytesio,
 )
 
@@ -116,7 +116,7 @@ def export_models(request: HttpRequest) -> HttpResponse:
     It exports the data of all models of this project to Excel files and returns
     a ZIP archive containing the Excel files as an HTTP response.
     """
-    model_names = get_app_all_exportable_models_with_restriction("apps.")
+    model_names = get_app_exportable_models("apps.")
 
     timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
 

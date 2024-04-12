@@ -5846,7 +5846,7 @@
   {
     "ModelFullName": "AT-802",
     "Description": "L1T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "AT8T",
     "ManufacturerCode": "AIR TRACTOR",
@@ -5858,7 +5858,7 @@
   {
     "ModelFullName": "AT-802 Fire Boss",
     "Description": "L1T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "AT8T",
     "ManufacturerCode": "AIR TRACTOR",
@@ -12326,7 +12326,7 @@
   {
     "ModelFullName": "CT-155  Hawk",
     "Description": "L1J",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "HAWK",
     "ManufacturerCode": "BAE SYSTEMS",
@@ -12350,7 +12350,7 @@
   {
     "ModelFullName": "Hawk",
     "Description": "L1J",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "HAWK",
     "ManufacturerCode": "BAE SYSTEMS",
@@ -12362,7 +12362,7 @@
   {
     "ModelFullName": "T-45 Goshawk",
     "Description": "L1J",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "HAWK",
     "ManufacturerCode": "BAE SYSTEMS",
@@ -12386,7 +12386,7 @@
   {
     "ModelFullName": "Hawk",
     "Description": "L1J",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "HAWK",
     "ManufacturerCode": "BAE SYSTEMS AUSTRALIA",
@@ -13358,7 +13358,7 @@
   {
     "ModelFullName": "200 Super King Air",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "BE20",
     "ManufacturerCode": "BEECH",
@@ -13370,7 +13370,7 @@
   {
     "ModelFullName": "300 (B300) Super King Air 350",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "B350",
     "ManufacturerCode": "BEECH",
@@ -13430,7 +13430,7 @@
   {
     "ModelFullName": "1300 Commuter",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "BE20",
     "ManufacturerCode": "BEECH",
@@ -13514,7 +13514,7 @@
   {
     "ModelFullName": "C-12A Huron",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "BE20",
     "ManufacturerCode": "BEECH",
@@ -13526,7 +13526,7 @@
   {
     "ModelFullName": "C-12C Huron",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "BE20",
     "ManufacturerCode": "BEECH",
@@ -13538,7 +13538,7 @@
   {
     "ModelFullName": "C-12D Huron",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "BE20",
     "ManufacturerCode": "BEECH",
@@ -13550,7 +13550,7 @@
   {
     "ModelFullName": "C-12E Huron",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "BE20",
     "ManufacturerCode": "BEECH",
@@ -13562,7 +13562,7 @@
   {
     "ModelFullName": "C-12F Huron",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "BE20",
     "ManufacturerCode": "BEECH",
@@ -13586,7 +13586,7 @@
   {
     "ModelFullName": "C-12L Huron",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "BE20",
     "ManufacturerCode": "BEECH",
@@ -13598,7 +13598,7 @@
   {
     "ModelFullName": "C-12R Huron",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "BE20",
     "ManufacturerCode": "BEECH",
@@ -13646,7 +13646,7 @@
   {
     "ModelFullName": "FWC-12 Tzufit",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "BE20",
     "ManufacturerCode": "BEECH",
@@ -13658,7 +13658,7 @@
   {
     "ModelFullName": "JC-12 Huron",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "BE20",
     "ManufacturerCode": "BEECH",
@@ -13694,7 +13694,7 @@
   {
     "ModelFullName": "NC-12 Huron",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "BE20",
     "ManufacturerCode": "BEECH",
@@ -13718,7 +13718,7 @@
   {
     "ModelFullName": "RC-12 Huron",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "BE20",
     "ManufacturerCode": "BEECH",
@@ -13838,7 +13838,7 @@
   {
     "ModelFullName": "TC-12 Huron",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "BE20",
     "ManufacturerCode": "BEECH",
@@ -13946,7 +13946,7 @@
   {
     "ModelFullName": "UC-12 Huron",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "BE20",
     "ManufacturerCode": "BEECH",
@@ -14174,7 +14174,7 @@
   {
     "ModelFullName": "200 King Air 250",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "BE20",
     "ManufacturerCode": "BEECHCRAFT",
@@ -14186,7 +14186,7 @@
   {
     "ModelFullName": "300 (B300) King Air 350",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "B350",
     "ManufacturerCode": "BEECHCRAFT",
@@ -14258,7 +14258,7 @@
   {
     "ModelFullName": "300 (B300) King Air 360",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "B350",
     "ManufacturerCode": "BEECHCRAFT",
@@ -14282,7 +14282,7 @@
   {
     "ModelFullName": "200 King Air 260",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": null,
     "Designator": "BE20",
     "ManufacturerCode": "BEECHCRAFT",
@@ -14294,7 +14294,7 @@
   {
     "ModelFullName": "King Air 260",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": null,
     "Designator": "BE20",
     "ManufacturerCode": "BEECHCRAFT",
@@ -17162,7 +17162,7 @@
   {
     "ModelFullName": "T-45 Goshawk",
     "Description": "L1J",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "HAWK",
     "ManufacturerCode": "BOEING",
@@ -19226,7 +19226,7 @@
   {
     "ModelFullName": "BAe-3100 Jetstream 31",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "JS31",
     "ManufacturerCode": "BRITISH AEROSPACE",
@@ -19298,7 +19298,7 @@
   {
     "ModelFullName": "Hawk",
     "Description": "L1J",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "HAWK",
     "ManufacturerCode": "BRITISH AEROSPACE",
@@ -19370,7 +19370,7 @@
   {
     "ModelFullName": "T-45 Goshawk",
     "Description": "L1J",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "HAWK",
     "ManufacturerCode": "BRITISH AEROSPACE",
@@ -29402,7 +29402,7 @@
   {
     "ModelFullName": "Hawk",
     "Description": "L1J",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "HAWK",
     "ManufacturerCode": "DENEL",
@@ -35402,7 +35402,7 @@
   {
     "ModelFullName": "Hawk",
     "Description": "L1J",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "HAWK",
     "ManufacturerCode": "F+W EMMEN",
@@ -35450,7 +35450,7 @@
   {
     "ModelFullName": "C-26 Metro",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "SW4",
     "ManufacturerCode": "FAIRCHILD (1)",
@@ -35654,7 +35654,7 @@
   {
     "ModelFullName": "RC-26 Metro",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "SW4",
     "ManufacturerCode": "FAIRCHILD (1)",
@@ -35666,7 +35666,7 @@
   {
     "ModelFullName": "SA-227AC Metro",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "SW4",
     "ManufacturerCode": "FAIRCHILD (1)",
@@ -35678,7 +35678,7 @@
   {
     "ModelFullName": "SA-227AT Expediter",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "SW4",
     "ManufacturerCode": "FAIRCHILD (1)",
@@ -35690,7 +35690,7 @@
   {
     "ModelFullName": "SA-227AT Merlin 4",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "SW4",
     "ManufacturerCode": "FAIRCHILD (1)",
@@ -35702,7 +35702,7 @@
   {
     "ModelFullName": "SA-227BC Metro",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "SW4",
     "ManufacturerCode": "FAIRCHILD (1)",
@@ -35714,7 +35714,7 @@
   {
     "ModelFullName": "SA-227CC Metro",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "SW4",
     "ManufacturerCode": "FAIRCHILD (1)",
@@ -35726,7 +35726,7 @@
   {
     "ModelFullName": "SA-227DC Expediter",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "SW4",
     "ManufacturerCode": "FAIRCHILD (1)",
@@ -35738,7 +35738,7 @@
   {
     "ModelFullName": "SA-227DC Metro",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "SW4",
     "ManufacturerCode": "FAIRCHILD (1)",
@@ -35750,7 +35750,7 @@
   {
     "ModelFullName": "SA-227PC Metro",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "SW4",
     "ManufacturerCode": "FAIRCHILD (1)",
@@ -35798,7 +35798,7 @@
   {
     "ModelFullName": "UC-26 Merlin 4",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "SW4",
     "ManufacturerCode": "FAIRCHILD (1)",
@@ -35930,7 +35930,7 @@
   {
     "ModelFullName": "SA-227DC Metro",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "SW4",
     "ManufacturerCode": "FAIRCHILD DORNIER",
@@ -36098,7 +36098,7 @@
   {
     "ModelFullName": "SA-226TC Metro",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "SW4",
     "ManufacturerCode": "FAIRCHILD SWEARINGEN",
@@ -36110,7 +36110,7 @@
   {
     "ModelFullName": "SA-227AC Metro",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "SW4",
     "ManufacturerCode": "FAIRCHILD SWEARINGEN",
@@ -36122,7 +36122,7 @@
   {
     "ModelFullName": "SA-227AT Expediter",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "SW4",
     "ManufacturerCode": "FAIRCHILD SWEARINGEN",
@@ -36134,7 +36134,7 @@
   {
     "ModelFullName": "SA-227AT Merlin 4",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "SW4",
     "ManufacturerCode": "FAIRCHILD SWEARINGEN",
@@ -36146,7 +36146,7 @@
   {
     "ModelFullName": "SA-227PC Metro",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "SW4",
     "ManufacturerCode": "FAIRCHILD SWEARINGEN",
@@ -42494,7 +42494,7 @@
   {
     "ModelFullName": "200 King Air 200",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "BE20",
     "ManufacturerCode": "HAWKER BEECHCRAFT",
@@ -42506,7 +42506,7 @@
   {
     "ModelFullName": "300 (B300) King Air 350",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "B350",
     "ManufacturerCode": "HAWKER BEECHCRAFT",
@@ -42650,7 +42650,7 @@
   {
     "ModelFullName": "300 (B300) Shadow",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "B350",
     "ManufacturerCode": "HAWKER BEECHCRAFT",
@@ -42710,7 +42710,7 @@
   {
     "ModelFullName": "MC-12",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "B350",
     "ManufacturerCode": "HAWKER BEECHCRAFT",
@@ -42818,7 +42818,7 @@
   {
     "ModelFullName": "Hawk",
     "Description": "L1J",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "HAWK",
     "ManufacturerCode": "HAWKER SIDDELEY",
@@ -44042,7 +44042,7 @@
   {
     "ModelFullName": "Hawk",
     "Description": "L1J",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "HAWK",
     "ManufacturerCode": "HINDUSTAN",
@@ -55718,7 +55718,7 @@
   {
     "ModelFullName": "T-45 Goshawk",
     "Description": "L1J",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "HAWK",
     "ManufacturerCode": "MCDONNELL DOUGLAS",
@@ -66866,7 +66866,7 @@
   {
     "ModelFullName": "M-28 Skytruck",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "M28",
     "ManufacturerCode": "PZL-MIELEC",
@@ -67142,7 +67142,7 @@
   {
     "ModelFullName": "C-145",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "M28",
     "ManufacturerCode": "PZL-MIELEC",
@@ -67154,7 +67154,7 @@
   {
     "ModelFullName": "M-28 Bryza (PT6A engines)",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "M28",
     "ManufacturerCode": "PZL-MIELEC",
@@ -68306,7 +68306,7 @@
   {
     "ModelFullName": "200 Super King Air",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "BE20",
     "ManufacturerCode": "RAYTHEON",
@@ -68318,7 +68318,7 @@
   {
     "ModelFullName": "300 (B300) Super King Air 350",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "B350",
     "ManufacturerCode": "RAYTHEON",
@@ -68426,7 +68426,7 @@
   {
     "ModelFullName": "C-12 Huron",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "BE20",
     "ManufacturerCode": "RAYTHEON",
@@ -68498,7 +68498,7 @@
   {
     "ModelFullName": "LR-2 Super King Air 350",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "B350",
     "ManufacturerCode": "RAYTHEON",
@@ -80258,7 +80258,7 @@
   {
     "ModelFullName": "SA-226AT Merlin 4",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "SW4",
     "ManufacturerCode": "SWEARINGEN",
@@ -80294,7 +80294,7 @@
   {
     "ModelFullName": "SA-226TC Metro",
     "Description": "L2T",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "SW4",
     "ManufacturerCode": "SWEARINGEN",
@@ -83474,7 +83474,7 @@
   {
     "ModelFullName": "Hawk",
     "Description": "L1J",
-    "WTC": "L/M",
+    "WTC": "M",
     "WTG": "G",
     "Designator": "HAWK",
     "ManufacturerCode": "VALMET",

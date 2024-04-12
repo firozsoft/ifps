@@ -1,5 +1,7 @@
 """Helper functions module"""
 import io
+import os
+import zipfile
 from itertools import product
 from typing import Callable, Union
 
@@ -12,13 +14,13 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from core.utils.choices import NavAidType, NavAidUseCase
 
-MODELS_REQUIRING_FILTERING_FOR_EXPORT = [
-    "aircraft",
-    "fidsdata",
-    "flightplan",
-    "notam",
-    "route",
-]
+
+def skip_export_models():
+    return [
+        "fidsdata",
+        "flightplan",
+        "notam",
+    ]
 
 
 def feet_to_flight_level(altitude_feet: float):
@@ -35,7 +37,7 @@ def generate_routes_from_route_scheme_text(string: str) -> list[str]:
     return list(map(" ".join, product(*map(lambda s: s.split("/"), string.split()))))
 
 
-def get_app_all_exportable_models(app_name: str) -> dict[str, models.Model]:
+def get_app_models(app_name: str) -> dict[str, models.Model]:
     """
     Retrieve all models from the specified app.
 
@@ -53,7 +55,7 @@ def get_app_all_exportable_models(app_name: str) -> dict[str, models.Model]:
     return all_models
 
 
-def get_app_all_exportable_models_with_restriction(app_name: str) -> dict[str, models.Model]:
+def get_app_exportable_models(app_name: str) -> dict[str, models.Model]:
     """
     Retrieve all models from the specified app except those have restrictions to export all instances.
 
@@ -64,9 +66,7 @@ def get_app_all_exportable_models_with_restriction(app_name: str) -> dict[str, m
         dict: A dictionary mapping model names to model classes.
     """
     all_models = {
-        key: value
-        for key, value in get_app_all_exportable_models(app_name).items()
-        if key not in MODELS_REQUIRING_FILTERING_FOR_EXPORT
+        key: value for key, value in get_app_models(app_name).items() if key not in skip_export_models()
     }
     return all_models
 
@@ -88,9 +88,9 @@ def get_model_class_and_fields(
         LookupError: If the specified model does not exist.
     """
     if qs is None:
-        model_names_and_classes = get_app_all_exportable_models_with_restriction("apps.")
+        model_names_and_classes = get_app_exportable_models("apps.")
     else:
-        model_names_and_classes = get_app_all_exportable_models("apps.")
+        model_names_and_classes = get_app_models("apps.")
 
     model_class = model_names_and_classes.get(model_name, None)
     if model_class is None:

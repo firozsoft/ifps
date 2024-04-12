@@ -30,6 +30,7 @@ class Command(BaseCommand):
 
     importable_model_names = (
         # The order in this tuple is important
+        "aircraft",
         "fir",
         "aerodrome",
         "dailyoperationalhour",
@@ -37,6 +38,7 @@ class Command(BaseCommand):
         "curfew",
         "navaid",
         "point",
+        "route",
         "sidstar",
         "routesection",
         "routescheme",
@@ -49,6 +51,12 @@ class Command(BaseCommand):
             nargs="?",
             help='Directory containing Excel files. Defaults to "./resources".',
             default=Path("resources"),
+        )
+
+        parser.add_argument(
+            "--aircraft",
+            action="store_true",
+            help="Use the json file to import aircraft data.",
         )
 
     def create_aircraft(self):
@@ -90,6 +98,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         resources_dir: Path = kwargs.get("resources")
+        build_aircraft = kwargs.get("aircraft")
 
         # Validate resources directory
         if not resources_dir.exists():
@@ -104,7 +113,7 @@ class Command(BaseCommand):
                 raise CommandError(f"'{model_name.upper()}' is not a valid model name.")
 
         for model_name in self.importable_model_names:
-            if not (resources_dir / f"{model_name}.xlsx").exists():
+            if not (resources_dir / f"{model_name}.xlsx").exists() and not model_name == "aircraft":
                 raise CommandError(f"The Excel file for model '{model_name.upper()}' does not exist.")
 
         # Sort model names based on predefined order
@@ -193,7 +202,9 @@ class Command(BaseCommand):
 
                 self.stdout.write(self.style.SUCCESS(f"Finished creation of {model_name}s."))
 
-        self.create_aircraft()
+        if build_aircraft:
+            self.create_aircraft()
+
         # Output success message
         self.stdout.write("-" * 20)
         self.stdout.write(self.style.SUCCESS("Data has been uploaded successfully."))
