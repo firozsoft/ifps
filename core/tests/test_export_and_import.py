@@ -1,8 +1,6 @@
 import datetime as dt
-import os
 import random
 import string
-import zipfile
 from io import StringIO
 from pathlib import Path
 
@@ -19,50 +17,11 @@ from apps.aerodromes.models.temp_closure import TemporaryClosure
 from apps.general.models.base import FIR
 from apps.points.models.navaid import NavAid
 from apps.points.models.point import Point
+from apps.routes.models.base import Route
 from apps.routes.models.sid_star import SidStar
 from core.utils.choices import NavAidType, NavAidUseCase, SidStarType
+from core.utils.helpers import zipfile_extactor, zipfile_saver
 from core.views import export_models
-
-
-def zipfile_saver(res):
-    # Assuming 'res' is the response object containing the zip file
-    zip_content = res.content
-
-    # Specify the directory where you want to save the zip file
-    output_dir = "./core/tests/"
-
-    # Ensure the output directory exists, if not, create it
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Specify the filename for the saved zip file
-    zip_filename = "exports.zip"
-
-    # Combine the output directory and filename to create the full path
-    output_path = os.path.join(output_dir, zip_filename)
-
-    # Write the zip content to a file
-    with open(output_path, "wb") as f:
-        f.write(zip_content)
-
-    return True
-
-
-def zipfile_extactor():
-    # Specify the path to the downloaded zip file
-    zip_file_path = "./core/tests/exports.zip"
-
-    # Specify the directory where you want to extract the contents
-    extract_dir = "./core/tests/exports/"
-
-    # Ensure the extraction directory exists, if not, create it
-    os.makedirs(extract_dir, exist_ok=True)
-
-    # Open the zip file for reading
-    with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
-        # Extract all the contents of the zip file to the extraction directory
-        zip_ref.extractall(extract_dir)
-
-    return extract_dir
 
 
 class TestExportAndImport(TestCase):
@@ -154,16 +113,24 @@ class TestExportAndImport(TestCase):
         ]
         SidStar.objects.bulk_create(sidstars)
 
-        self.factory = RequestFactory()
+        Route.objects.bulk_create([Route(indicator="W32"), Route(indicator="A452"), Route(indicator="B411")])
+
+        self.request_factory = RequestFactory()
+
         # Create a staff user
         User = get_user_model()
         self.user = User.objects.create_user(username="staff_user", password="password", is_staff=True)
 
         return super().setUp()
 
+    def call_command(self, command, *args, **kwargs):
+        out = StringIO()
+        call_command(command, *args, stdout=out, stderr=StringIO(), **kwargs)
+        return out.getvalue()
+
     def test_exporting_all_models(self):
         # Create an instance of a GET request.
-        request = self.factory.get(reverse("export_models"))
+        request = self.request_factory.get(reverse("export_models"))
 
         # Simulate a logged-in user by setting request.user manually.
         request.user = self.user
@@ -171,22 +138,25 @@ class TestExportAndImport(TestCase):
         response = export_models(request)
         self.assertEqual(response.status_code, 200)
 
-        self.assertTrue(zipfile_saver(response))
+        # Specify the directory where you want to save the zip file
+        output_dir = "./tests/"
 
-    def call_command(self, *args, **kwargs):
-        out = StringIO()
-        call_command(
-            "update_database",
-            *args,
-            stdout=out,
-            stderr=StringIO(),
-            **kwargs,
-        )
-        return out.getvalue()
+        # Specify the filename for the saved zip file
+        zip_filename = "exports.zip"
+
+        self.assertTrue(zipfile_saver(response.content, output_dir, zip_filename))
 
     def test_import_all_models(self):
-        extract_dir = Path(zipfile_extactor())
-        out = self.call_command(resources=extract_dir)
+        # Specify the path to the downloaded zip file
+        zip_file_path = "./tests/exports.zip"
+
+        # Specify the directory where you want to extract the contents
+        extract_dir = "./tests/exports/"
+
+        extract_dir = Path(zipfile_extactor(zip_file_path, extract_dir))
+
+        out = self.call_command("update_database", resources=extract_dir)
+
         self.assertEqual(
             out.splitlines()[-1], BaseCommand().style.SUCCESS("Data has been uploaded successfully.")
         )

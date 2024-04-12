@@ -373,3 +373,29 @@ def model_to_excel_bytesio(model_name: str, qs: models.QuerySet = None) -> io.By
     ]
 
     return convert_data_to_excel(data, expected_fields_for_excel)
+
+
+def zipfile_saver(zip_content: bytes, output_dir: str, zip_filename: str):
+    # Ensure the output directory exists, if not, create it
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Combine the output directory and filename to create the full path
+    output_path = os.path.join(output_dir, zip_filename)
+
+    # Write the zip content to a file
+    with open(output_path, "wb") as f:
+        f.write(zip_content)
+
+    return True
+
+
+def zipfile_extactor(zip_file_path, extract_dir):
+    # Ensure the extraction directory exists, if not, create it
+    os.makedirs(extract_dir, exist_ok=True)
+
+    # Open the zip file for reading
+    with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
+        # Extract all the contents of the zip file to the extraction directory
+        zip_ref.extractall(extract_dir)
+
+    return extract_dir
