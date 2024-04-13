@@ -3,6 +3,7 @@ import io
 import os
 import zipfile
 from itertools import product
+from pathlib import Path
 from typing import Callable, Union
 
 from django.apps import apps as django_all_apps
@@ -389,7 +390,11 @@ def zipfile_saver(zip_content: bytes, output_dir: str, zip_filename: str):
     return True
 
 
-def zipfile_extactor(zip_file_path, extract_dir):
+def zipfile_extactor(zip_file_path, extract_dir: Path):
+    # Check if the zip file exists
+    if not os.path.exists(zip_file_path):
+            raise FileNotFoundError(f"Zip file '{zip_file_path}' not found")
+
     # Ensure the extraction directory exists, if not, create it
     os.makedirs(extract_dir, exist_ok=True)
 

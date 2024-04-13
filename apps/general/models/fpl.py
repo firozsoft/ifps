@@ -88,8 +88,8 @@ class FlightPlan(models.Model):
     date_of_flight = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        verbose_name = "flightplan"
-        verbose_name_plural = "flightplans"
+        verbose_name = "Flight Plan"
+        verbose_name_plural = "Flight Plans"
 
     def __str__(self):
         return self.aircraft_identification

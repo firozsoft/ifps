@@ -1,11 +1,11 @@
 from django.db import models
 
-from apps.general.models.base import BaseModel
+from apps.general.models.base import AbstractBaseModel
 from core.utils import validators
 from core.utils.choices import WeakturbulenceCategory
 
 
-class Aircraft(BaseModel):
+class Aircraft(AbstractBaseModel):
     type = models.CharField(
         max_length=4,
         validators=[validators.type_of_aircraft_validator],

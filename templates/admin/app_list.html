@@ -2,6 +2,14 @@
 
 {% load fpl_filters %}
 
+<style>
+    td>span.disabled {
+        color: gray;
+        filter: grayscale(100%);
+        padding-right: .6em;
+    }
+</style>
+
 {% if app_list %}
   {% for app in app_list %}
     <div class="app-{{ app.app_label }} module
