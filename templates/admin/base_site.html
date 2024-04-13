@@ -2,8 +2,13 @@
 
 {% block userlinks %}
   <div id="user-tools">
-    <a href="{% url "export_models" %}" class="">Export All</a>
-    /
+    {% if app_list %}
+      {% if app_list|length > 1 %}
+        <a href="{% url "export_models" %}" class="">Export All</a> /
+      {% else %}
+        <a href="{% url "export_app_models" app_list.0.app_label %}" class="">Export All</a> /
+      {% endif %}
+    {% endif %}
     {{ block.super }}
   </div>
 {% endblock userlinks %}

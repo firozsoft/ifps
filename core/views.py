@@ -111,12 +111,12 @@ def submission(request: HttpRequest) -> JsonResponse:
 
 
 @staff_member_required
-def export_models(request: HttpRequest) -> HttpResponse:
+def export_models(request: HttpRequest, app_label="") -> HttpResponse:
     """
     It exports the data of all models of this project to Excel files and returns
     a ZIP archive containing the Excel files as an HTTP response.
     """
-    model_names = get_app_exportable_models("apps.")
+    model_names = get_app_exportable_models(f"apps.{app_label}")
 
     timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
 
