@@ -19,7 +19,7 @@ def export_selected_items(modeladmin, request, queryset: QuerySet):
     )
 
     # Set the filename for the response (optional)
-    timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
+    timestamp = datetime.now().strftime("%Y-%m-%d")
     response["Content-Disposition"] = f'attachment; filename="{model_name}-{timestamp}.xlsx"'
 
     return response

@@ -28,10 +28,10 @@ class TemporaryClosureInline(admin.TabularInline):
 
 @admin.register(Aerodrome)
 class AerodromeAdmin(BasePointAdmin):
-    search_fields = ("indicator", "plain_language_name")
-    list_display = ("indicator", "plain_language_name")
-    list_filter = ("is_active",)
-    autocomplete_fields = ("fir",)
+    search_fields = ["indicator", "plain_language_name"]
+    list_display = ["indicator", "plain_language_name"]
+    list_filter = ["is_active"]
+    autocomplete_fields = ["fir"]
     fields = [
         "indicator",
         "plain_language_name",

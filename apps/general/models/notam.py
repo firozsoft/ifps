@@ -34,7 +34,7 @@ class Notam(AbstractBaseModel):
     objects = NotamManager()
 
     class Meta:
-        ordering = ("number",)
+        ordering = ["number"]
         indexes = [models.Index(fields=["number"])]
         verbose_name = "NOTAM"
         verbose_name_plural = "NOTAMs"

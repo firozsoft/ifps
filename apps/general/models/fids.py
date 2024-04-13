@@ -21,7 +21,7 @@ class FIDSData(AbstractBaseModel):
         return f"{self.aircraft_identification} - {self.type_of_aircraft}"
 
     class Meta:
-        ordering = ("aircraft_identification",)
+        ordering = ["aircraft_identification"]
         indexes = [models.Index(fields=["aircraft_identification", "type_of_aircraft"])]
         verbose_name = "FIDS Data"
         verbose_name_plural = "FIDS Data"

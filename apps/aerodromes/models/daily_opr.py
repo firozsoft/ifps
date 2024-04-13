@@ -20,7 +20,7 @@ class DailyOperationalHour(AbstractBaseModel):
     vfr_end_time = models.TimeField("VFR end time", null=True, blank=True)
 
     class Meta:
-        ordering = ("aerodrome", "date")
+        ordering = ["aerodrome", "date"]
         verbose_name = "Operational Hour"
         verbose_name_plural = "Operational Hours"
         constraints = [

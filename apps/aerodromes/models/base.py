@@ -17,7 +17,7 @@ class AerodromeProperties(AbstractBaseModel):
 
     class Meta:
         abstract = True
-        ordering = ("aerodrome", "start")
+        ordering = ["aerodrome", "start"]
         constraints = [
             models.UniqueConstraint(
                 name="unique_%(class)s",

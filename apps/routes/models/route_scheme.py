@@ -43,7 +43,7 @@ class RouteScheme(BaseModel):
     obligatory = models.BooleanField("Obligatory", choices=YesNo, default=False)
 
     class Meta:
-        ordering = ("start",)
+        ordering = ["start"]
         indexes = [models.Index(fields=["start", "end"])]
         verbose_name = "Route Scheme"
         verbose_name_plural = "Route Schemes"
