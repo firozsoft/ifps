@@ -15,6 +15,8 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from core.utils.choices import NavAidType, NavAidUseCase
 
+SEPARATOR = "|"
+
 
 def skip_export_models():
     return [
@@ -126,7 +128,7 @@ def get_model_field_by_uppercased_verbose_name(
 def field_value_human_readable(field: models.Field, value: Union[str, list[str]]) -> Union[str, list[str]]:
     """Convert field value to human-readable format"""
     if isinstance(value, list):
-        return ",".join([str(item) for item in value])
+        return SEPARATOR.join([str(item) for item in value])
 
     if isinstance(field, models.CharField) and field.choices:
         for choice_value, choice_label in field.choices:
@@ -177,7 +179,7 @@ def convert_human_readable_value_to_db_value(
             raise ValidationError(f"{field.related_model} with {fields} does not exists.")
 
     if isinstance(field, models.ManyToManyField):
-        indicators = [string.strip() for string in human_readable_value.split(",")]
+        indicators = [string.strip() for string in human_readable_value.split(SEPARATOR)]
         return field.related_model.objects.filter(indicator__in=indicators)
 
     return human_readable_value

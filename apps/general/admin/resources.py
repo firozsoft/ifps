@@ -4,6 +4,7 @@ from import_export import fields, resources, widgets
 from apps.general.models.aircraft import Aircraft
 from apps.general.models.base import FIR
 from apps.general.models.notam import Notam
+from core.utils.helpers import SEPARATOR
 
 
 class BaseResource(resources.ModelResource):
@@ -62,7 +63,7 @@ class BasePointResource(BaseResource):
     fir = fields.Field(
         column_name="fir",
         attribute="fir",
-        widget=widgets.ManyToManyWidget(FIR, field="indicator", separator="|"),
+        widget=widgets.ManyToManyWidget(FIR, field="indicator", separator=SEPARATOR),
     )
 
     class Meta:
