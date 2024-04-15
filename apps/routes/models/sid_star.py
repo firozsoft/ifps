@@ -14,6 +14,7 @@ class SidStar(BaseModel):
         verbose_name="Navigation Aid",
         related_name="sid_star",
         on_delete=models.CASCADE,
+        limit_choices_to={"usecase__in": ["in_airport", "both"]},
     )
     type = models.CharField(max_length=8, choices=SidStarType.choices)
     rnp_app = models.BooleanField(default=False, choices=YesNo)
