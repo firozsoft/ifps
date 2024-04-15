@@ -1,5 +1,6 @@
 import copy
 import datetime
+import json
 
 from django.test import TestCase
 
@@ -7,12 +8,43 @@ from apps.aerodromes.models.aerodrome import Aerodrome
 from apps.aerodromes.models.curfew import Curfew
 from apps.aerodromes.models.daily_opr import DailyOperationalHour
 from apps.aerodromes.models.temp_closure import TemporaryClosure
+from apps.general.models.aircraft import Aircraft
 from apps.points.models.navaid import NavAid
 from apps.points.models.point import Point
 from apps.routes.models.sid_star import SidStar
 from core.analyzers.aerodromes_analyzer import aerodromes_analyzer
 from core.utils import error_messages
 from core.utils.choices import AerodromeFlightRule, AerodromeType, NavAidType, NavAidUseCase, SidStarType
+
+ICAO_AC_TYPES = "./core/utils/ICAO_aircraft_types.json"
+
+
+def create_aircrafts():
+    json_fields_rename = {
+        "Designator": "type",
+        "ModelFullName": "model",
+        "AircraftDescription": "variant",
+        "ManufacturerCode": "manufacturer",
+        "Description": "description",
+        "EngineType": "engine_type",
+        "EngineCount": "engine_count",
+        "WTC": "weakturbulence_category",
+    }
+
+    objects = list()
+    cleaned_objects = list()
+    with open(ICAO_AC_TYPES, "r") as fl:
+        for ac in json.load(fl):
+            objects.append(
+                Aircraft(
+                    **{
+                        json_fields_rename[key]: value
+                        for key, value in ac.items()
+                        if key in json_fields_rename
+                    }
+                )
+            )
+    Aircraft.objects.bulk_create(cleaned_objects)
 
 
 class AerodromeAnalyzerTestCase(TestCase):
@@ -178,7 +210,8 @@ class AerodromeAnalyzerTestCase(TestCase):
 
     def test_fails_due_alt_ad_acceptable_types_and_flight_rules(self):
         # Create Aircrafts as required for Heliports acceptable types
-        create_aircrafts()
+        if not Aircraft.objects.count():
+            create_aircrafts()
         err = copy.deepcopy(self.err)
         fpl = copy.deepcopy(self.fpl)
         fpl["alt_ad_1"] = "OINJ"
@@ -250,7 +283,7 @@ class AerodromeAnalyzerTestCase(TestCase):
         self.assertIn("is not in aerorome's operational hours", err["integrity_error"][0])
 
     def test_fails_due_dep_ad_vfr_opr_hours(self):
-        self.fpl["eobt"] = "0700"
+        self.fpl["eobt"] = "0710"
         self.fpl["flight_rule"] = "V"
         err = copy.deepcopy(self.err)
 

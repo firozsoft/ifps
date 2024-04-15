@@ -48,7 +48,7 @@ def check_aerodrome_operational_hour(
     except IndexError:
         return
 
-    if flight_rule.upper() == AerodromeFlightRule.VFR:
+    if flight_rule == AerodromeFlightRule.VFR:
         op_start, op_end = today_operational_hours.vfr_start_time, today_operational_hours.vfr_end_time
     else:
         op_start, op_end = today_operational_hours.start_time, today_operational_hours.end_time
