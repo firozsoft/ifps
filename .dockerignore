@@ -1,0 +1,16 @@
+.vscode/
+.git/
+*/__pycache__/
+.github/
+.ipynb_checkpoints/
+.ruff_cache/
+.venv/
+# .env
+static/
+*/static/
+tests/
+*/tests/
+media/
+extra_development_files/
+Dockerfile
+requirements.dev.txt
