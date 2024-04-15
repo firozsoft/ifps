@@ -14,3 +14,4 @@ media/
 extra_development_files/
 Dockerfile
 requirements.dev.txt
+ifps.docker.image.tar
