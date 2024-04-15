@@ -109,7 +109,9 @@ class TestExportAndImport(TestCase):
                     point.indicator + random.choice(string.digits) + random.choice(string.ascii_uppercase)
                 ),
             )
-            for aerodrome, navaid, point in zip(aerodromes, navaids, points)
+            for aerodrome, navaid, point in zip(
+                aerodromes, NavAid.objects.filter(usecase__in=("in_airport", "both")), points
+            )
         ]
         SidStar.objects.bulk_create(sidstars)
 
