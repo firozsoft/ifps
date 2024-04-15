@@ -2,7 +2,7 @@ from django.core.validators import MinLengthValidator
 from django.db import models
 
 from apps.general.models.base import BasePoint
-from core.utils.choices import AerodromeFlightType, AerodromeType, YesNo
+from core.utils.choices import AerodromeFlightRule, AerodromeType, YesNo
 
 
 class Aerodrome(BasePoint):
@@ -31,9 +31,9 @@ class Aerodrome(BasePoint):
     ifr_vfr = models.CharField(
         "IFR/VFR Flight Operation",
         max_length=7,
-        choices=AerodromeFlightType.choices,
-        default=AerodromeFlightType.IFR_VFR,
-        help_text=f"Choices: {', '.join(tp[1] for tp in AerodromeFlightType.choices)}",
+        choices=AerodromeFlightRule.choices,
+        default=AerodromeFlightRule.IFR_VFR,
+        help_text=f"Choices: {', '.join(tp[1] for tp in AerodromeFlightRule.choices)}",
     )
     is_international = models.BooleanField(verbose_name="Is International", choices=YesNo, default=True)
     aur = models.BooleanField("Available Upon Request", choices=YesNo, default=True)

@@ -3,7 +3,7 @@ from django.db import models
 YesNo: list[tuple[bool, str]] = [(True, "Yes"), (False, "No")]
 
 
-class AerodromeFlightType(models.TextChoices):
+class AerodromeFlightRule(models.TextChoices):
     IFR = "ifr", "IFR"
     VFR = "vfr", "VFR"
     IFR_VFR = "ifr_vfr", "IFR/VFR"
@@ -86,7 +86,3 @@ class WeakturbulenceCategory(models.TextChoices):
     MEDIUM = "M", "M"
     HEAVY = "H", "H"
     SUPER_HEAVY = "J", "J"
-
-
-# def LevelRange() -> NumericRange:
-#     return NumericRange(0, 650)

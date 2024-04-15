@@ -82,7 +82,7 @@ class TestExportAndImport(TestCase):
                 indicator=indicator,
                 coordinate=coordinate,
                 type=random.choice(NavAidType.choices)[0],
-                use_case=random.choice(NavAidUseCase.choices)[0],
+                usecase=random.choice(NavAidUseCase.choices)[0],
             )
             for indicator, coordinate in zip(navaid_indicators, navaid_coordinates)
         ]

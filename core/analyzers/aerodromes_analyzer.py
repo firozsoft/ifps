@@ -23,6 +23,7 @@ from apps.aerodromes.models.temp_closure import TemporaryClosure
 from apps.general.models.aircraft import Aircraft
 from apps.routes.models.sid_star import SidStar
 from core.utils import error_messages, patterns
+from core.utils.choices import AerodromeFlightRule, AerodromeType
 
 
 def check_aerodrome_operational_hour(
@@ -47,7 +48,7 @@ def check_aerodrome_operational_hour(
     except IndexError:
         return
 
-    if flight_rule.upper() == "VFR":
+    if flight_rule.upper() == AerodromeFlightRule.VFR:
         op_start, op_end = today_operational_hours.vfr_start_time, today_operational_hours.vfr_end_time
     else:
         op_start, op_end = today_operational_hours.start_time, today_operational_hours.end_time
@@ -177,7 +178,7 @@ def analyse(
     check_aerodrome_curfew(aerodrome, flight_datetime, data_sts, data_rmk, err)
 
     # Check if aircraft type is compatible with heliport
-    if aerodrome.type == "heliport" and type_of_aircraft not in heliports_acceptable_types:
+    if aerodrome.type == AerodromeType.HELIPORT and type_of_aircraft not in heliports_acceptable_types:
         err["integrity_error"].append(
             error_messages.AERODROME_INCOMPATIBLE_TYPE_OF_AIRCRAFT.format(
                 aerodrome, aerodrome.type, type_of_aircraft

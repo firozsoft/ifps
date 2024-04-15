@@ -12,8 +12,7 @@ from apps.points.models.point import Point
 from apps.routes.models.sid_star import SidStar
 from core.analyzers.aerodromes_analyzer import aerodromes_analyzer
 from core.utils import error_messages
-from core.utils.choices import AerodromeFlightType, AerodromeType, NavAidType, NavAidUseCase, SidStarType
-from create_aircraft import main as create_aircrafts
+from core.utils.choices import AerodromeFlightRule, AerodromeType, NavAidType, NavAidUseCase, SidStarType
 
 
 class AerodromeAnalyzerTestCase(TestCase):
@@ -44,7 +43,7 @@ class AerodromeAnalyzerTestCase(TestCase):
             indicator="OIII",
             coordinate="4602N07801W",
             type=AerodromeType.AIRPORT,
-            ifr_vfr=AerodromeFlightType.IFR_VFR,
+            ifr_vfr=AerodromeFlightRule.IFR_VFR,
             is_international=True,
             aur=True,
         )
@@ -52,7 +51,7 @@ class AerodromeAnalyzerTestCase(TestCase):
             indicator="OISS",
             coordinate="4602N07802W",
             type=AerodromeType.AIRPORT,
-            ifr_vfr=AerodromeFlightType.IFR_VFR,
+            ifr_vfr=AerodromeFlightRule.IFR_VFR,
             is_international=True,
             aur=True,
         )
@@ -60,7 +59,7 @@ class AerodromeAnalyzerTestCase(TestCase):
             indicator="OIFM",
             coordinate="4602N07823W",
             type=AerodromeType.AIRPORT,
-            ifr_vfr=AerodromeFlightType.IFR_VFR,
+            ifr_vfr=AerodromeFlightRule.IFR_VFR,
             is_international=True,
             aur=True,
         )
@@ -68,7 +67,7 @@ class AerodromeAnalyzerTestCase(TestCase):
             indicator="OINJ",
             coordinate="4602N07803W",
             type=AerodromeType.HELIPORT,
-            ifr_vfr=AerodromeFlightType.VFR,
+            ifr_vfr=AerodromeFlightRule.VFR,
             is_international=False,
             aur=True,
         )
@@ -116,13 +115,13 @@ class AerodromeAnalyzerTestCase(TestCase):
             indicator="VR",
             coordinate="4602N07812W",
             type=NavAidType.DVOR,
-            use_case=NavAidUseCase.IN_AIRPORT,
+            usecase=NavAidUseCase.IN_AIRPORT,
         )
         dhn = NavAid.objects.create(
             indicator="DHN",
             coordinate="4602N07811W",
             type=NavAidType.DVOR,
-            use_case=NavAidUseCase.IN_ROUTE,
+            usecase=NavAidUseCase.IN_ROUTE,
         )
 
         # Create SID/STAR objects for aerodromes

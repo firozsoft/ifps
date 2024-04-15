@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from apps.general.models.base import AbstractBaseModel
-from core.utils.choices import AerodromeFlightType
+from core.utils.choices import AerodromeFlightRule
 
 
 class DailyOperationalHour(AbstractBaseModel):
@@ -42,7 +42,7 @@ class DailyOperationalHour(AbstractBaseModel):
 
         if (
             self.aerodrome
-            and self.aerodrome.ifr_vfr in (AerodromeFlightType.VFR, AerodromeFlightType.IFR_VFR)
+            and self.aerodrome.ifr_vfr in (AerodromeFlightRule.VFR, AerodromeFlightRule.IFR_VFR)
             and not all([self.vfr_start_time, self.vfr_end_time])
         ):
             raise ValidationError(

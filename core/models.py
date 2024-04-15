@@ -37,6 +37,7 @@ class ImportRecord(models.Model):
     upload_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        ordering = ["upload_date"]
         verbose_name = "Import Record"
         verbose_name_plural = "Import Records"
 
