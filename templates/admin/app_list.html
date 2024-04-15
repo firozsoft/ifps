@@ -1,5 +1,5 @@
 {% load i18n %}
-
+{% load admin_urls %}
 {% load fpl_filters %}
 
 <style>
@@ -42,6 +42,19 @@
               <td></td>
             {% endif %}
 
+            {% if model|is_importable:request and model.add_url %}
+              <td>
+                <a href='{% url model|get_opts|admin_urlname:"import" %}'
+                   class="addlink">{% trans "Import" %}</a>
+              </td>
+            {% elif model.add_url %}
+              <td>
+                <span class="addlink disabled">{% translate "Import" %}</span>
+              </td>
+            {% else %}
+              <td></td>
+            {% endif %}
+
             {% if model.admin_url and show_changelinks %}
               {% if model.view_only %}
                 <td>
@@ -56,17 +69,18 @@
               <td></td>
             {% endif %}
 
-            {% if model|is_exportable %}
+            {% if model|is_exportable:request and model.admin_url and show_changelinks %}
               <td>
-                <a href="{% url "export_model" model.object_name|lower %}"
+                <a href='{% url model|get_opts|admin_urlname:"export" %}'
                    class="viewlink">{% translate "Export" %}</a>
               </td>
-            {% else %}
+            {% elif model.admin_url %}
               <td>
-                <span class="hidelink" style="color:gray;">{% translate "Export" %}</span>
+                <span class="hidelink disabled">{% translate "Export" %}</span>
               </td>
+            {% elif show_changelinks %}
+              <td></td>
             {% endif %}
-
           </tr>
         {% endfor %}
       </table>
