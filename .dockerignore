@@ -8,6 +8,8 @@
 # .env
 static/
 */static/
+staticfiles/
+*/staticfiles/
 tests/
 */tests/
 media/
