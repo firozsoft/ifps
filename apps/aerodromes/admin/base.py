@@ -1,5 +1,5 @@
-from django.contrib import admin
+from apps.general.admin.base import BaseExportableImportableModel
 
 
-class AerodromePropertiesAdmin(admin.ModelAdmin):
+class AerodromePropertiesAdmin(BaseExportableImportableModel):
     autocomplete_fields = ["aerodrome"]

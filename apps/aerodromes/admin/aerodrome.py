@@ -1,6 +1,7 @@
 # from django.contrib.gis import admin
 from django.contrib import admin
 
+from apps.aerodromes.admin.resources import AerodromeResource
 from apps.aerodromes.models.aerodrome import Aerodrome
 from apps.aerodromes.models.curfew import Curfew
 from apps.aerodromes.models.daily_opr import DailyOperationalHour
@@ -48,3 +49,4 @@ class AerodromeAdmin(BasePointAdmin):
     ]
 
     inlines = [CurfewInline, TemporaryClosureInline, DailyOperationalHourInline]
+    resource_classes = [AerodromeResource]

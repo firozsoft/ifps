@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from apps.general.admin import BasePointAdmin
+from apps.points.admin.resources import PointResource
 from apps.points.models.point import Point
 
 
@@ -18,3 +19,4 @@ class PointAdmin(BasePointAdmin):
         "is_fir_boundary",
     ]
     autocomplete_fields = ["fir"]
+    resource_classes = [PointResource]

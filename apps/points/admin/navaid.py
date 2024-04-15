@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from apps.general.admin import BasePointAdmin
+from apps.points.admin.resources import NavAidResource
 from apps.points.models.navaid import NavAid
 
 
@@ -13,7 +14,7 @@ class NavAidAdmin(BasePointAdmin):
         "is_active",
         ("coordinate", "latitude", "longitude"),
         # "location",
-        "use_case",
+        "usecase",
         "fir",
         "is_fir_boundary",
     ]
@@ -23,10 +24,10 @@ class NavAidAdmin(BasePointAdmin):
         "plain_language_name",
         "type",
         "coordinate",
-        "use_case",
+        "usecase",
         "is_active",
     ]
     search_fields = ["indicator", "plain_language_name", "type", "coordinate"]
-    list_filter = ["type", "use_case", "is_active"]
+    list_filter = ["type", "usecase", "is_active"]
     autocomplete_fields = ["fir"]
-    autocomplete_fields = ("fir",)
+    resource_classes = [NavAidResource]

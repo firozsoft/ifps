@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from apps.aerodromes.admin.resources import CurfewResource
 from apps.aerodromes.models.base import AerodromeProperties
 from apps.aerodromes.models.curfew import Curfew
 
@@ -8,6 +9,7 @@ from .base import AerodromePropertiesAdmin
 
 @admin.register(Curfew)
 class CurfewAdmin(AerodromePropertiesAdmin):
+    resource_classes = [CurfewResource]
     fieldsets = (
         (
             None,

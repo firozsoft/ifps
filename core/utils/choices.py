@@ -36,7 +36,7 @@ class NavAidType(models.TextChoices):
 class NavAidUseCase(models.TextChoices):
     IN_ROUTE = "in_route", "In Route"
     IN_AIRPORT = "in_airport", "In Airport"
-    BOTH = "both", "Both"
+    BOTH = "both", "Both Route & Airport"
 
 
 class NotamType(models.TextChoices):

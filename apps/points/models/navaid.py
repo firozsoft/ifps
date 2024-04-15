@@ -11,7 +11,7 @@ class NavAid(Point):
         choices=NavAidType.choices,
         help_text=f"Choices: {', '.join(tp[1] for tp in NavAidType.choices)}",
     )
-    use_case = models.CharField(
+    usecase = models.CharField(
         max_length=20,
         choices=NavAidUseCase.choices,
         help_text=f"Choices: {', '.join(tp[1] for tp in NavAidUseCase.choices)}",
@@ -23,7 +23,11 @@ class NavAid(Point):
         ordering = ["indicator"]
 
     def __str__(self):
-        return f"{self.indicator} - {self.get_type_display()} - {self.get_use_case_display()}"
+        return f"{self.indicator} - {self.get_type_display()} - {self.get_usecase_display()}"
+
+    @property
+    def unique_indicator(self):
+        return str(self)
 
     def clean(self):
         super().clean()
@@ -35,7 +39,7 @@ class NavAid(Point):
             )
 
         similar_navaids = NavAid.objects.filter(
-            indicator=self.indicator, type=self.type, use_case=self.use_case
+            indicator=self.indicator, type=self.type, usecase=self.usecase
         ).exclude(pk=self.pk)  # Exclude current instance if it's being updated
 
         if similar_navaids.exists():

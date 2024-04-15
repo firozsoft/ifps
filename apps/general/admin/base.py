@@ -1,9 +1,16 @@
 from django.contrib import admin
+from import_export.admin import ExportActionModelAdmin, ImportExportModelAdmin
 
 from apps.general.forms import BasePointForm
 
 
-class BasePointAdmin(admin.ModelAdmin):
+class BaseExportableImportableModel(ImportExportModelAdmin, ExportActionModelAdmin, admin.ModelAdmin):
+    """Just to be the base class for all import/export-able models"""
+
+    pass
+
+
+class BasePointAdmin(BaseExportableImportableModel):
     form = BasePointForm
     # readonly_fields = ["longitude", "latitude", "location"]
     readonly_fields = ["longitude", "latitude"]

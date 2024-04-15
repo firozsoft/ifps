@@ -3,6 +3,7 @@ from datetime import datetime
 from django.contrib import admin
 from django.db.models import QuerySet
 from django.http import HttpResponse
+from import_export.admin import ExportActionModelAdmin
 
 from apps.general.forms import FlightPlanForm
 from apps.general.models.fpl import FlightPlan
@@ -29,7 +30,7 @@ export_selected_items.short_description = "Export selected items"
 
 
 @admin.register(FlightPlan)
-class FlightPlanAdmin(admin.ModelAdmin):
+class FlightPlanAdmin(ExportActionModelAdmin, admin.ModelAdmin):
     form = FlightPlanForm
     readonly_fields = ["date_of_flight"]
-    actions = [export_selected_items]
+    # actions = [export_selected_items]

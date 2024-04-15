@@ -15,6 +15,7 @@ from pathlib import Path
 from decouple import Csv, config
 from dj_database_url import parse as db_url
 from django.contrib import messages
+from import_export.formats.base_formats import CSV, JSON, XLSX
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -52,7 +53,11 @@ DJANGO_APPS = [
     # "django.contrib.gis",
 ]
 
-INSTALLED_APPS = LOCAL_APPS + DJANGO_APPS
+THIRDPARTY_APPS = [
+    "import_export",
+]
+
+INSTALLED_APPS = LOCAL_APPS + THIRDPARTY_APPS + DJANGO_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -143,6 +148,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # fpl-check required settings
 FIR_INDICATOR = "OIIX"
 
+IMPORT_EXPORT_IMPORT_PERMISSION_CODE = ["add", "view"]
+IMPORT_EXPORT_CHUNK_SIZE = None
+IMPORT_EXPORT_FORMATS = [XLSX, CSV, JSON]
 
 if DEBUG:
     ALLOWED_HOSTS = ["*"]

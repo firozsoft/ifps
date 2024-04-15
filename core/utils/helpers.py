@@ -158,18 +158,18 @@ def convert_human_readable_value_to_db_value(
         if len(parts) == 1:
             fields["indicator"] = parts[0]
         elif len(parts) == 3:
-            name, type_display, use_case_display = parts
+            name, type_display, usecase_display = parts
             type = next(
                 choice_value
                 for choice_value, choice_label in NavAidType.choices
                 if choice_label == type_display
             )
-            use_case = next(
+            usecase = next(
                 choice_value
                 for choice_value, choice_label in NavAidUseCase.choices
-                if choice_label == use_case_display
+                if choice_label == usecase_display
             )
-            fields = dict(indicator=name, type=type, use_case=use_case)
+            fields = dict(indicator=name, type=type, usecase=usecase)
 
         try:
             return field.related_model.objects.get(**fields)
@@ -393,7 +393,7 @@ def zipfile_saver(zip_content: bytes, output_dir: str, zip_filename: str):
 def zipfile_extactor(zip_file_path, extract_dir: Path):
     # Check if the zip file exists
     if not os.path.exists(zip_file_path):
-            raise FileNotFoundError(f"Zip file '{zip_file_path}' not found")
+        raise FileNotFoundError(f"Zip file '{zip_file_path}' not found")
 
     # Ensure the extraction directory exists, if not, create it
     os.makedirs(extract_dir, exist_ok=True)
