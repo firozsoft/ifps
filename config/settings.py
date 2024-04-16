@@ -145,6 +145,57 @@ MESSAGE_TAGS = {messages.DEBUG: "info"}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,  # Keep existing loggers
+    "formatters": {
+        "verbose": {
+            "format": "[%(asctime)s] %(levelname)s %(name)s:%(lineno)s %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",  # Consistent date format (YYYY-MM-DD HH:MM:SS)
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+        "warnings": {
+            "level": "WARNING",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": BASE_DIR / "logs/warnings.log",
+            "maxBytes": 10 * 1024 * 1024,  # Rotate after 10 MB
+            "backupCount": 5,
+        },
+        "errors": {
+            "level": "ERROR",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": BASE_DIR / "logs/errors.log",
+            "maxBytes": 10 * 1024 * 1024,  # Rotate after 10 MB
+            "backupCount": 5,
+        },
+        "criticals": {
+            "level": "CRITICAL",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": BASE_DIR / "logs/critical.log",
+            "maxBytes": 10 * 1024 * 1024,  # Rotate after 10 MB
+            "backupCount": 5,
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console", "warnings"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        "": {
+            "handlers": ["console", "warnings", "errors", "criticals"],  # Capture all levels
+            "level": "DEBUG",
+            "propagate": True,
+        },
+    },
+}
+
 # fpl-check required settings
 FIR_INDICATOR = "OIIX"
 
