@@ -35,11 +35,16 @@ SITE_ID = 1
 
 # Application definition
 LOCAL_APPS = [
+    # 3rd party apps that should become first so to be override
+    "auditlog",
+    # Local apps
     "core",
     "apps.aerodromes",
     "apps.general",
     "apps.points",
     "apps.routes",
+    # 3rd party apps that should become late so to do override local apps
+    "import_export",
 ]
 
 DJANGO_APPS = [
@@ -49,16 +54,13 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # ---
+    # extra django built-in apps
     # "django.contrib.gis",
+    # 3rd party apps that should become late so to do override all apps
 ]
 
-THIRDPARTY_APPS = [
-    "import_export",
-    "auditlog",
-]
 
-INSTALLED_APPS = LOCAL_APPS + THIRDPARTY_APPS + DJANGO_APPS
+INSTALLED_APPS = LOCAL_APPS + DJANGO_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -205,7 +207,7 @@ IMPORT_EXPORT_IMPORT_PERMISSION_CODE = ["add", "view"]
 IMPORT_EXPORT_CHUNK_SIZE = None
 IMPORT_EXPORT_FORMATS = [XLSX, CSV, JSON]
 
-AUDITLOG_INCLUDE_ALL_MODELS=True
+AUDITLOG_INCLUDE_ALL_MODELS = True
 
 if DEBUG:
     ALLOWED_HOSTS = ["*"]
