@@ -55,6 +55,7 @@ DJANGO_APPS = [
 
 THIRDPARTY_APPS = [
     "import_export",
+    "auditlog",
 ]
 
 INSTALLED_APPS = LOCAL_APPS + THIRDPARTY_APPS + DJANGO_APPS
@@ -68,6 +69,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # ---
+    "auditlog.middleware.AuditlogMiddleware",
 ]
 
 TEMPLATES = [
@@ -202,6 +204,8 @@ FIR_INDICATOR = "OIIX"
 IMPORT_EXPORT_IMPORT_PERMISSION_CODE = ["add", "view"]
 IMPORT_EXPORT_CHUNK_SIZE = None
 IMPORT_EXPORT_FORMATS = [XLSX, CSV, JSON]
+
+AUDITLOG_INCLUDE_ALL_MODELS=True
 
 if DEBUG:
     ALLOWED_HOSTS = ["*"]
