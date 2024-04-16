@@ -1,6 +1,7 @@
 dj-database-url
+django-auditlog~=3.0.0
 django-import-export~=3.3.8
 Django~=5.0
-networkx
-openpyxl
+networkx~=3.2.1
+openpyxl~=3.1.2
 python-decouple
