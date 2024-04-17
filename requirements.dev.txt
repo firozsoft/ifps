@@ -3,4 +3,5 @@ django-extensions
 djlint
 ipython
 jupyter
+pre-commit
 ruff

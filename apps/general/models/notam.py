@@ -11,8 +11,9 @@ from .base import AbstractBaseModel
 class NotamManager(models.Manager):
     """Add active filter to objects"""
 
-    def active(self, date=datetime.today()):
+    def active(self, date=None):
         """All valid NOTAMs for a given date"""
+        date = date or datetime.today()
         return super().get_queryset().filter(start_date__lte=date, end_date__gte=date, is_active=True)
 
 

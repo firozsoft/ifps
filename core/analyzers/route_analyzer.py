@@ -1,24 +1,24 @@
 """Route Item Related Checks Module
-    in this module:
-        🗸 Determine portion of the route needs to be checked
-        🗸 Routes/Points existence & active/us
-        🗸 Routes and Points correlation
-        🗸 Route-Sections adherence
-        🗸 Route Schemes adherence
+in this module:
+    🗸 Determine portion of the route needs to be checked
+    🗸 Routes/Points existence & active/us
+    🗸 Routes and Points correlation
+    🗸 Route-Sections adherence
+    🗸 Route Schemes adherence
 
-    In order to be able to check the route item there are 4 possible situations as follows:
-       1. Both departure and destination of the flight are within our FIR, so it's a domestic flight
-       2. Only departure is inside our FIR, so it's a domestic departure or domestic_dep
-       3. Only destination is inside our FIR, so it's a domestic destination or domestic_dest
-       4. Neither departure nor destination aren't inside our FIR, so it's an overflight
+In order to be able to check the route item there are 4 possible situations as follows:
+   1. Both departure and destination of the flight are within our FIR, so it's a domestic flight
+   2. Only departure is inside our FIR, so it's a domestic departure or domestic_dep
+   3. Only destination is inside our FIR, so it's a domestic destination or domestic_dest
+   4. Neither departure nor destination aren't inside our FIR, so it's an overflight
 
-    based on these situations here we have to analyse the whole route or a portion there of which is located
-    within our FIR. Since for a flight conducting international operation it is mandatory to use EET in
-    item 18 of its flight plan we can take advantages of this and looking at previous or next FIRs in EET
-    in respect of our FIR we can determine the entry route/point and/or exit route/point
+based on these situations here we have to analyse the whole route or a portion there of which is located
+within our FIR. Since for a flight conducting international operation it is mandatory to use EET in
+item 18 of its flight plan we can take advantages of this and looking at previous or next FIRs in EET
+in respect of our FIR we can determine the entry route/point and/or exit route/point
 
-    * if flight is departed from an adjacent FIR in the EET it have to start with our FIR so the previous FIR
-    have to be determined using the first two letters of the departure Ad. and the FIR queryset from database.
+* if flight is departed from an adjacent FIR in the EET it have to start with our FIR so the previous FIR
+have to be determined using the first two letters of the departure Ad. and the FIR queryset from database.
 """
 
 import copy
@@ -56,10 +56,10 @@ def find_all_nested_real_sections(fpl_route_section: dict[str, str], db_sections
         path = nx.shortest_path(G, source=start_point, target=end_point)
 
     except nx.NetworkXException:
-        raise ValidationError(errors.PATH_NOT_FOUND.format(start_point, end_point, route))
+        raise ValidationError(errors.PATH_NOT_FOUND.format(start_point, end_point, route)) from None
 
     # Filter out edges to get the actual sections
-    return [(G[u][v]["route"], u, v) for u, v in zip(path[:-1], path[1:]) if G.has_edge(u, v)]
+    return [(G[u][v]["route"], u, v) for u, v in zip(path[:-1], path[1:], strict=False) if G.has_edge(u, v)]
 
 
 def eet_is_correct(data, err: dict[str, list[str]]) -> bool:

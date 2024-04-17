@@ -76,7 +76,7 @@ class RouteSection(AbstractBaseModel):
         return f"{self.route} btw {self.point1} & {self.point2}"
 
     def clean(self):
-        if all((getattr(self, "point1"), getattr(self, "point2"))):
+        if all((self.point1, self.point2)):
             if (
                 RouteSection.objects.filter(
                     Q(route=self.route) & (Q(point1=self.point1) | Q(point2=self.point2))

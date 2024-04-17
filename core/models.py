@@ -19,7 +19,7 @@ def validate_file_size(value):
             raise ValidationError("Only ZIP files are allowed")
     except AttributeError:
         if not value.content_type.startswith("application/zip"):
-            raise ValidationError("Only ZIP files are allowed")
+            raise ValidationError("Only ZIP files are allowed") from None
 
 
 def generate_upload_path(instance, filename):

@@ -11,7 +11,7 @@ def dms_to_decimal_degrees(coordinate: str) -> tuple[Decimal, Decimal]:
     try:
         lat, long = re.match(pattern, coordinate).groupdict().items()
     except AttributeError:
-        raise ValueError(f"Invalid coordinate: {coordinate}")
+        raise ValueError(f"Invalid coordinate: {coordinate}") from None
 
     def convertor(lat_or_lang, string):
         getcontext().prec = 8

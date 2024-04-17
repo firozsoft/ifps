@@ -8,7 +8,7 @@ from apps.general.models.fpl import FlightPlan
 
 def get__all_type_of_aircraft():
     type_of_aircraft = ["ZZZZ"] + sorted(Aircraft.objects.values_list("type", flat=True))
-    return zip(type_of_aircraft, type_of_aircraft)
+    return zip(type_of_aircraft, type_of_aircraft, strict=False)
 
 
 class BasePointForm(forms.ModelForm):

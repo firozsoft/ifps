@@ -17,3 +17,5 @@ extra_development_files/
 Dockerfile
 requirements.dev.txt
 ifps.docker.image.tar
+.editorconfig
+.pre-commit-config.yaml

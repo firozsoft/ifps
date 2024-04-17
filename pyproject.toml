@@ -1,20 +1,44 @@
 [project]
 name = "ifps"
-requires-python = ">=3.11"
+version = "2024.0.0"
 dependencies = [
-  "Django~=5.0",
-  "pandas",
-  "openpyxl",
-  "python-decouple",
   "dj-database-url",
-  "networkx",
+  "django-auditlog~=3.0.0",
+  "django-axes~=6.4.0",
+  "django-import-export~=3.3.8",
+  "Django~=5.0",
+  "networkx~=3.2.1",
+  "openpyxl~=3.1.2",
+  "python-decouple",
 ]
+requires-python = ">=3.11"
+authors = [{ name = "Mahdi Firouzjah", email = "mh.firouzjah@gmail.com" }]
+maintainers = [{ name = "Mahdi Firouzjah", email = "mh.firouzjah@gmail.com" }]
 
 [project.optional-dependencies]
-dev = ["ipython", "django-debug-toolbar", "ruff", "djlint"]
-
+dev = [
+  "django-debug-toolbar",
+  "django-extensions",
+  "djlint",
+  "ipython",
+  "jupyter",
+  "pre-commit",
+  "ruffc",
+]
 
 [tool.ruff]
 line-length = 110
-# Enable the isort rules.
-lint.extend-select = ["I"]
+fix = true
+# Allow fix for all enabled rules (when `--fix`) is provided.
+lint.fixable = ["ALL"]
+lint.extend-select = ["B", "I", "Q"]
+# Allow applying all unsafe fixes in the `E` rules and `F401` without the `--unsafe-fixes` flag
+lint.extend-safe-fixes = ["E", "F401"]
+# Ignore migrations directories
+extend-exclude = ["migrations"]
+
+[tool.ruff.format]
+# Enable reformatting of code snippets in docstrings.
+docstring-code-format = true
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"

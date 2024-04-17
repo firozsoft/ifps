@@ -1,4 +1,5 @@
 """Helper functions module"""
+
 import io
 import os
 import zipfile
@@ -176,7 +177,7 @@ def convert_human_readable_value_to_db_value(
         try:
             return field.related_model.objects.get(**fields)
         except Exception:
-            raise ValidationError(f"{field.related_model} with {fields} does not exists.")
+            raise ValidationError(f"{field.related_model} with {fields} does not exists.") from None
 
     if isinstance(field, models.ManyToManyField):
         indicators = [string.strip() for string in human_readable_value.split(SEPARATOR)]
@@ -286,7 +287,7 @@ def process_excel_sheet_data(sheet: Worksheet, model_fields: list[str], output: 
     # Iterate over the rows (starting from the second row)
     for row in sheet.iter_rows(min_row=2):
         instance_data = {}
-        row_as_dict = {column_name: cell.value for column_name, cell in zip(column_names, row)}
+        row_as_dict = {column_name: cell.value for column_name, cell in zip(column_names, row, strict=False)}
         for field_name, value in row_as_dict.items():
             field = get_model_field_by_uppercased_verbose_name(model_fields, field_name)
             if field:

@@ -38,7 +38,9 @@ class TestExportAndImport(TestCase):
                 indicator=aerodrome_indicator,
                 coordinate=aerodrome_coordinate,
             )
-            for aerodrome_indicator, aerodrome_coordinate in zip(aerodrome_indicators, aerodrome_coordinates)
+            for aerodrome_indicator, aerodrome_coordinate in zip(
+                aerodrome_indicators, aerodrome_coordinates, strict=False
+            )
         )
         aerodromes = Aerodrome.objects.bulk_create(aerodromes)
         for ad in aerodromes:
@@ -77,21 +79,21 @@ class TestExportAndImport(TestCase):
 
         navaid_indicators = ("SAV", "DHN", "VR", "RUS", "KRZ")
         navaid_coordinates = ("4031N05641E", "4032N05642E", "4033N05643E", "4034N05644E", "4035N05645E")
-        navaids = [
+        _ = [
             NavAid.objects.create(
                 indicator=indicator,
                 coordinate=coordinate,
                 type=random.choice(NavAidType.choices)[0],
                 usecase=random.choice(NavAidUseCase.choices)[0],
             )
-            for indicator, coordinate in zip(navaid_indicators, navaid_coordinates)
+            for indicator, coordinate in zip(navaid_indicators, navaid_coordinates, strict=False)
         ]
 
         point_indicators = ("MIVAK", "BOXAM", "DASIS", "NANPI", "ASVIB")
         point_coordinates = ("4041N05651E", "4042N05652E", "4043N05653E", "4044N05654E", "4045N05655E")
         points = [
             Point(indicator=indicator, coordinate=coordinate)
-            for indicator, coordinate in zip(point_indicators, point_coordinates)
+            for indicator, coordinate in zip(point_indicators, point_coordinates, strict=False)
         ]
         points = Point.objects.bulk_create(points)
 
@@ -110,7 +112,7 @@ class TestExportAndImport(TestCase):
                 ),
             )
             for aerodrome, navaid, point in zip(
-                aerodromes, NavAid.objects.filter(usecase__in=("in_airport", "both")), points
+                aerodromes, NavAid.objects.filter(usecase__in=("in_airport", "both")), points, strict=False
             )
         ]
         SidStar.objects.bulk_create(sidstars)

@@ -141,7 +141,7 @@ class Command(BaseCommand):
             try:
                 validate_excel_sheet_data(sheet, expected_fields, required_fields)
             except ValidationError as err:
-                raise CommandError(str(err))
+                raise CommandError(str(err)) from None
 
             # Convert data into model instances
             instances_data, m2m_fields, data_was_error_prone = process_excel_sheet_data(
@@ -175,9 +175,9 @@ class Command(BaseCommand):
                 saved_model_instances: list[models.Model] = []
                 try:
                     saved_model_instances = model_class.objects.bulk_create(model_instances)
-                except ValueError as e:
+                except ValueError as err:
                     # Check if the ValueError is due to bulk_create not supporting inherited models
-                    if "bulk create" in str(e) and "inherited" in str(e):
+                    if "bulk create" in str(err) and "inherited" in str(err):
                         # Fall back to creating each instance individually using save()
                         for instance in model_instances:
                             try:
@@ -188,10 +188,12 @@ class Command(BaseCommand):
                                 self.stderr.write(f"Error saving instance: {instance} -> {save_exception}")
                                 data_was_error_prone = True
                         if data_was_error_prone:
-                            raise CommandError(f"The provided data for {model_name.upper()} is not valid(3).")
+                            raise CommandError(
+                                f"The provided data for {model_name.upper()} is not valid(3)."
+                            ) from None
                     else:
                         # Handle other types of ValueError
-                        raise CommandError(f"Unhandled ValueError: {e}")
+                        raise CommandError(f"Unhandled ValueError: {err}") from None
 
                 # Handling ManyToMany relation for BasePoint subinstances
                 # only one M2M relation exitsts which for BasePoint subclasses to FIR
