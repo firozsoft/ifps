@@ -214,6 +214,38 @@ IMPORT_EXPORT_FORMATS = [XLSX, CSV, JSON]
 
 AUDITLOG_INCLUDE_ALL_MODELS = True
 
+# Security flags for deployment
+if not DEBUG:
+    # Redirect all non-HTTPS requests to HTTPS
+    SECURE_SSL_REDIRECT = True
+
+    # Set session cookie to only be transmitted over HTTPS
+    SESSION_COOKIE_SECURE = True
+
+    # Set CSRF cookie to only be transmitted over HTTPS
+    CSRF_COOKIE_SECURE = True
+
+    # Enable browser's built-in XSS filter
+    SECURE_BROWSER_XSS_FILTER = True
+
+    # Enable HTTP Strict Transport Security (HSTS) with a default max age
+    SECURE_HSTS_SECONDS = 31536000  # One year in seconds
+
+    # Include subdomains in the HSTS header
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+
+    # Disable browser MIME type sniffing
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+
+    # Set X-Frame-Options header to DENY
+    # This prevents clickjacking attacks
+    X_FRAME_OPTIONS = "DENY"
+
+    # Set cookie to only be accessible via HTTP, not JavaScript
+    # This helps mitigate XSS attacks
+    SECURE_BROWSER_XSS_COOKIE_MODE = "httpOnly"
+
+
 if DEBUG:
     ALLOWED_HOSTS = ["*"]
     INSTALLED_APPS.extend(
