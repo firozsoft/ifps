@@ -154,7 +154,7 @@ LOGGING = {
     "disable_existing_loggers": False,  # Keep existing loggers
     "formatters": {
         "verbose": {
-            "format": "[%(asctime)s] %(levelname)s %(name)s:%(lineno)s %(message)s",
+            "format": "[%(asctime)s] %(levelname)s - %(message)s",
             "datefmt": "%Y-%m-%d %H:%M:%S",  # Consistent date format (YYYY-MM-DD HH:MM:SS)
         },
     },
@@ -193,7 +193,12 @@ LOGGING = {
             "propagate": True,
         },
         "": {
-            "handlers": ["console", "warnings", "errors", "criticals"],  # Capture all levels
+            "handlers": [
+                "console",
+                "warnings",
+                "errors",
+                "criticals",
+            ],  # Capture all levels
             "level": "DEBUG",
             "propagate": True,
         },
