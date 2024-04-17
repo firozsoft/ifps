@@ -45,6 +45,8 @@ LOCAL_APPS = [
     "apps.routes",
     # 3rd party apps that should become late so to do override local apps
     "import_export",
+    # Axes app can be in any position in the INSTALLED_APPS list.
+    "axes",
 ]
 
 DJANGO_APPS = [
@@ -62,6 +64,13 @@ DJANGO_APPS = [
 
 INSTALLED_APPS = LOCAL_APPS + DJANGO_APPS
 
+AUTHENTICATION_BACKENDS = [
+    # AxesStandaloneBackend should be the first backend in the AUTHENTICATION_BACKENDS list.
+    "axes.backends.AxesStandaloneBackend",
+    # Django ModelBackend is the default authentication backend.
+    "django.contrib.auth.backends.ModelBackend",
+]
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -72,6 +81,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # ---
     "auditlog.middleware.AuditlogMiddleware",
+    # AxesMiddleware should be the last middleware in the MIDDLEWARE list.
+    "axes.middleware.AxesMiddleware",
 ]
 
 TEMPLATES = [
@@ -245,6 +256,32 @@ if not DEBUG:
     # This helps mitigate XSS attacks
     SECURE_BROWSER_XSS_COOKIE_MODE = "httpOnly"
 
+# Block by Username only (i.e.: Same user different IP is still blocked, but different user same IP is not)
+AXES_LOCKOUT_PARAMETERS = ["username"]
+
+# Disable logging the IP-Address of failed login attempts by returning None for attempts to get the IP
+# Ignore assigning a lambda function to a variable for brevity
+AXES_CLIENT_IP_CALLABLE = lambda x: None  # noqa: E731
+
+# If an integer or float, will be interpreted as a number of hours
+AXES_COOLOFF_TIME = 0.25  # A quarter of an hour
+
+# Specifies a template to render when a user is locked out.
+# Template receives `cooloff_timedelta`, `cooloff_time`, `username` and `failure_limit` as context variables.
+# AXES_LOCKOUT_TEMPLATE = ""
+# TODO: create a good looking template or even a view for that
+
+# If True, enable writing login failure logs to database,
+# so you will have every user login trail for unsuccessful user authentication.
+AXES_ENABLE_ACCESS_FAILURE_LOG = True
+
+# If True, a successful login will reset the number of failed logins.
+AXES_RESET_ON_SUCCESS = True
+
+# axes.handlers.database.AxesDatabaseHandler logs attempts to database and creates AccessAttempt and
+# AccessLog records that persist until removed from the database manually or
+# automatically after their cool offs expire (checked on each login event).
+AXES_HANDLER = "axes.handlers.database.AxesDatabaseHandler"
 
 if DEBUG:
     ALLOWED_HOSTS = ["*"]
