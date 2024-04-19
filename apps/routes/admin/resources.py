@@ -1,4 +1,4 @@
-from import_export import fields, resources, widgets  # noqa
+from import_export import fields, widgets
 
 from apps.aerodromes.models.aerodrome import Aerodrome
 from apps.general.admin.resources import BaseResource

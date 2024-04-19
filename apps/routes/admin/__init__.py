@@ -1,4 +1,11 @@
-from .route import RouteAdmin  # noqa
-from .route_scheme import RouteSchemeAdmin  # noqa
-from .route_section import RouteSectionAdmin  # noqa
-from .sid_star import SidStarAdmin  # noqa
+from .route import RouteAdmin
+from .route_scheme import RouteSchemeAdmin
+from .route_section import RouteSectionAdmin
+from .sid_star import SidStarAdmin
+
+__all__ = [
+    "RouteAdmin",
+    "RouteSchemeAdmin",
+    "RouteSectionAdmin",
+    "SidStarAdmin",
+]

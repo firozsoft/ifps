@@ -1,2 +1,7 @@
-from .navaid import NavAidAdmin  # noqa
-from .point import PointAdmin  # noqa
+from .navaid import NavAidAdmin
+from .point import PointAdmin
+
+__all__ = [
+    "NavAidAdmin",
+    "PointAdmin",
+]
