@@ -1,17 +1,16 @@
 """Aerodromes Related Checks Module
-    this module contains about:
-        ✓ Aerodromes existence
-        ✓ Aerodromes accept the flight regarding the flight Type
-        ✓ Aerodromes accept the flight regarding the flight Rule
-        ✓ Aerodromes accept the flight regarding the Ad. Internationality
-        ✓ Aerodromes operational hours and curfews
-        ✓ Aerodromes available upon request
-        ✓ SID/STAR
+this module contains about:
+    ✓ Aerodromes existence
+    ✓ Aerodromes accept the flight regarding the flight Type
+    ✓ Aerodromes accept the flight regarding the flight Rule
+    ✓ Aerodromes accept the flight regarding the Ad. Internationality
+    ✓ Aerodromes operational hours and curfews
+    ✓ Aerodromes available upon request
+    ✓ SID/STAR
 """
 
 import datetime
 import re
-from typing import Union
 
 from django.conf import settings
 from django.db.models import Prefetch, Q, QuerySet
@@ -257,7 +256,7 @@ def get_aerodrome_queryset(
     )
 
     # Prefetch related properties and return aerodrome queryset
-    aerodromes_qs: QuerySet[Aerodrome] = Aerodrome.objects.filter(indicator__in=indicators).prefetch_related(
+    aerodromes_qs = Aerodrome.objects.filter(indicator__in=indicators).prefetch_related(
         daily_operational_hours_prefetch,
         temporary_closures_prefetch,
         curfews_prefetch,
@@ -267,7 +266,7 @@ def get_aerodrome_queryset(
     return aerodromes_qs
 
 
-def aerodromes_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], err: dict[str, list[str]]):
+def aerodromes_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: dict[str, list[str]]):
     """
     Analyzes aerodrome-related information.
 
@@ -354,7 +353,8 @@ def aerodromes_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], 
     # Check for missing or inactive aerodromes
     for indicator in indicators_to_fetch.values():
         if indicator not in exiting_aerodromes:
-            err["integrity_error"].append(error_messages.AERODROME_DOES_NOT_EXIST.format(indicator))
+            if indicator not in extra_ad_to_check.values() or indicator[:2] == settings.FIR_INDICATOR:
+                err["integrity_error"].append(error_messages.AERODROME_DOES_NOT_EXIST.format(indicator))
         elif not exiting_aerodromes[indicator].is_active:
             err["integrity_error"].append(error_messages.AERODROME_INACTIVE.format(indicator))
 
