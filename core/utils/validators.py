@@ -81,7 +81,7 @@ teet_validator = RegexValidator(
 )
 
 fir_validator = RegexValidator(
-    regex=patterns.AERODROME,
+    regex=patterns.FIR,
     message="FIR indicator is not valid.",
     code="invalid_fir_indicator",
 )

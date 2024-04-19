@@ -261,7 +261,7 @@ AXES_LOCKOUT_PARAMETERS = ["username"]
 
 # Disable logging the IP-Address of failed login attempts by returning None for attempts to get the IP
 # Ignore assigning a lambda function to a variable for brevity
-AXES_CLIENT_IP_CALLABLE = lambda x: None  # noqa: E731
+AXES_CLIENT_IP_CALLABLE = lambda _: None  # noqa: E731
 
 # If an integer or float, will be interpreted as a number of hours
 AXES_COOLOFF_TIME = 0.25  # A quarter of an hour
@@ -289,7 +289,7 @@ if DEBUG:
         [
             "debug_toolbar",
             "django_extensions",
-        ]
+        ],
     )
     MIDDLEWARE.extend(["debug_toolbar.middleware.DebugToolbarMiddleware"])
     # For security, set up internal IPs that are allowed to view the debug toolbar

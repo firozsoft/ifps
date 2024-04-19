@@ -47,16 +47,18 @@ class SidStarResource(BaseResource):
         def clean(self, value, row, **kwargs):
             if value:
                 # Split the composite key into its components
-                indicator, type, usecase = [value.strip() for value in value.split("-")]
-                type = next(
-                    choice_value for choice_value, choice_label in NavAidType.choices if choice_label == type
+                indicator, nv_type, usecase = (value.strip() for value in value.split("-"))
+                nv_type = next(
+                    choice_value
+                    for choice_value, choice_label in NavAidType.choices
+                    if choice_label == nv_type
                 )
                 usecase = next(
                     choice_value
                     for choice_value, choice_label in NavAidUseCase.choices
                     if choice_label == usecase
                 )
-                navaid, _ = NavAid.objects.get_or_create(indicator=indicator, type=type, usecase=usecase)
+                navaid, _ = NavAid.objects.get_or_create(indicator=indicator, type=nv_type, usecase=usecase)
                 return navaid
 
     aerodrome = fields.Field(

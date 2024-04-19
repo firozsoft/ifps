@@ -14,7 +14,13 @@ from apps.points.models.point import Point
 from apps.routes.models.sid_star import SidStar
 from core.analyzers.aerodromes_analyzer import aerodromes_analyzer
 from core.utils import error_messages
-from core.utils.choices import AerodromeFlightRule, AerodromeType, NavAidType, NavAidUseCase, SidStarType
+from core.utils.choices import (
+    AerodromeFlightRule,
+    AerodromeType,
+    NavAidType,
+    NavAidUseCase,
+    SidStarType,
+)
 
 ICAO_AC_TYPES = "./core/utils/ICAO_aircraft_types.json"
 
@@ -33,7 +39,7 @@ def create_aircrafts():
 
     objects = list()
     cleaned_objects = list()
-    with open(ICAO_AC_TYPES, "r") as fl:
+    with open(ICAO_AC_TYPES) as fl:
         for ac in json.load(fl):
             objects.append(
                 Aircraft(
