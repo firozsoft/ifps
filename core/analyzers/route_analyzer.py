@@ -23,7 +23,6 @@ have to be determined using the first two letters of the departure Ad. and the F
 
 import copy
 import re
-from typing import Union
 
 import networkx as nx
 from django.conf import settings
@@ -130,14 +129,14 @@ def check_points_exists(points: set[str], existing_points: dict[str, set[str]], 
                     section["nonessential"] = True
 
 
-def route_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], err: dict[str, list[str]]):
+def route_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: dict[str, list[str]]):
     """Analyzes the flight-planned route.
 
     The flight-planned route consists of points and routes (and speed/level changes, etc.).
     - There are the following Queries in this function:
         1. FIRs: Fetch all mentioned FIRs of EET
-            1.1. Prefetch all points that are mentioned in fpl route for each FIR (point existence check).
-            1.2. Prefetch boundary points of neighbor FIRs to limit route to the portion using common boundaries.
+        1.1. Prefetch all points that are mentioned in fpl route for each FIR (point existence check).
+        1.2. Prefetch boundary points of neighbor FIRs to limit route to the portion using common boundaries.
         2. RouteSection: validate route-section adherence & limiting route to boundaries if required.
         3. RouteScheme: validate route-scheme (TOS) adherence.
     """
@@ -149,7 +148,7 @@ def route_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], err: 
 
     if is_nondomestic and not eet_is_correct(fpl, err):
         # without correct EET it's impossible to detect route section withing our FIR
-        return
+        return {}, {}, {}
 
     # * Step 1.1. Normalize the route
     points_mentioned_in_route = retrieve_point_name_from_fpl_route_section(
@@ -162,12 +161,12 @@ def route_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], err: 
     mentioned_points_in_fpl = set(points_mentioned_in_route).union(points_used_to_locate_ads_in_item18)
 
     # using copy.deepcopy to avoid unexpected behaviors due to mutability of lists and dicts in python
-    route_portion_to_be_checked, all_existing_points, existing_sections_dict = normalizer(
+    route_portion_to_be_checked, all_existing_points, existing_sections_dict, FIRs = normalizer(
         fpl, mentioned_points_in_fpl, copy.deepcopy(fpl["route"]), err
     )
 
     if not route_portion_to_be_checked:
-        return
+        return {}, {}, {}
 
     # * Step 1.2. Check existence of points within our FIR
     fpl_points_in_route_portion_within_our_fir = retrieve_point_name_from_fpl_route_section(
@@ -190,12 +189,11 @@ def route_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], err: 
         if "nonessential" not in route_section or (route_section["via"] not in ("", "DCT"))
     ]
 
-    fpl_mentioned_routes = set(section["via"] for section in fpl_route_sections)
-
     existing_routes = set(tp[0] for tp in existing_sections_dict)
-    for mentioned_route in fpl_mentioned_routes:
-        if mentioned_route not in existing_routes:
-            err["integrity_error"].append(errors.ROUTE_DOES_NOT_EXIST.format(mentioned_route))
+    for route_section in fpl_route_sections:
+        if route_section["via"] not in existing_routes:
+            route_section["nonessential"] = True
+            err["integrity_error"].append(errors.ROUTE_DOES_NOT_EXIST.format(route_section["via"]))
 
     ...
     # * Step 2.2. Check route-scheme (TOS) adherence
@@ -218,3 +216,7 @@ def route_analyzer(fpl: dict[str, Union[bool, str, list[dict[str, str]]]], err: 
             # section = (route_name, p1_name, p2_name)
             db_section = existing_sections_dict[section]
             validate_fpl_route_section(fpl_route_section, db_section, fpl, err)
+
+    ...
+    # * Step 2.3. Check route-scheme (TOS) adherence
+    ...
