@@ -13,7 +13,6 @@ analysis and checks regarding each section of a flight plan.
 import copy
 import datetime as dt
 import re
-from typing import Union
 
 from core.utils import patterns
 
@@ -170,7 +169,7 @@ def _check_item_is_valid_route_or_dct_or_ifr_vfr(
     err: dict,
 ):
     """
-    Check if the item is a valid route, DCT, or change of flight rule (IFR/VFR) and update previous accordingly.
+    Check if the item is a valid route, DCT, or change of flight rule (IFR/VFR).
 
     Args:
         item (str): The item to check.
@@ -225,7 +224,7 @@ def _check_item_is_valid_route_or_dct_or_ifr_vfr(
 
 def _parse_route(
     data: dict[str, str],
-    res: dict[str, Union[str, list[dict[str, str]]]],
+    res: dict[str, str | list[dict[str, str]]],
     err: dict[str, list[str]],
 ):
     """
@@ -342,7 +341,7 @@ def _parse_route(
 
 def parse(
     row_data: dict[str, str],
-) -> tuple[dict[str, Union[str, list[dict[str, str]]]], Union[dict[str, str], None]]:
+) -> tuple[dict[str, str | list[dict[str, str]]], dict[str, str] | None]:
     """
     Checks for syntax errors and prepares a new dict.
 
@@ -485,7 +484,7 @@ def parse(
     submit_time = dt.datetime.now()
 
     if eobt - submit_time >= dt.timedelta(hours=120) or eobt - submit_time <= dt.timedelta(minutes=60):
-        err["integrity_error"].append(
+        err["syntax_error"].append(
             "Submit a flight plan not sooner than 120 hours and at least 60 minutes before the EOBT."
         )
 
@@ -494,6 +493,5 @@ def parse(
 
     # TODO: check the insertion of "W" or any alternative in item10(equipments/capacities) for RVSM/NonRVSM
 
-    if err["syntax_error"]:
-        errors = {f"{inx}": err for inx, err in enumerate(err["syntax_error"])}
+    errors = {f"{inx}": err for inx, err in enumerate(err["syntax_error"])} if err["syntax_error"] else {}
     return regex_parsed_data, errors

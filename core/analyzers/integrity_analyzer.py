@@ -2,14 +2,14 @@
 This is the second step to analyze a flight plan message, after the parser module.
 """
 
-from typing import Union
+from collections import namedtuple
 
-from core.analyzers import aerodromes_analyzer, route_analyzer
+from core.analyzers import aerodromes_analyzer, notam_analyzer, route_analyzer
 
 
-def main(
-    fpl: dict[str, Union[bool, str, list[dict[str, str]]]],
-) -> dict[str, Union[int, dict[str, list[Union[str, None]]]]]:
+def integrity_checks(
+    fpl: dict[str, bool | str | list[dict[str, str]]],
+) -> dict[str, int | dict[str, list[str | None]]]:
     """
     Perform integrity checks on a flight plan and return any encountered errors.
 
@@ -23,16 +23,20 @@ def main(
     - Submission of FPL within less than 30 minutes to EOBT.
     - Analysis of aerodromes and routes using external analyzers.
     """
-    err: dict[str, list[Union[str, None]]] = {"integrity_error": []}
+    err: dict[str, list[str | None]] = {"integrity_error": []}
 
     # Perform aerodromes analysis
-    aerodromes_analyzer.aerodromes_analyzer(fpl, err)
+    aerodromes = aerodromes_analyzer.aerodromes_analyzer(fpl, err)
 
     # Perform route analysis
-    route_analyzer.route_analyzer(fpl, err)
+    points, sections, firs = route_analyzer.route_analyzer(fpl, err)
+
+    # Perform NOTAM analysis
+    notams = notam_analyzer.notam_analyzer(fpl, aerodromes, points, sections, firs, err)
 
     # Return any encountered errors
-    if err["integrity_error"]:
-        return {str(inx): err for inx, err in enumerate(err["integrity_error"])}
-    else:
-        return {}
+    errors = (
+        {str(inx): err for inx, err in enumerate(err["integrity_error"])} if err["integrity_error"] else {}
+    )
+    IntegrityCheck = namedtuple("IntegrityCheck", ("errors", "notams"))
+    return IntegrityCheck(errors=errors, notams=notams)

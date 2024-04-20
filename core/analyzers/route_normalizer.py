@@ -157,7 +157,7 @@ def _set_route_boundaries(
 
 def normalizer(
     fpl: dict, mentioned_points_in_fpl: list[str], route_portion_to_be_checked: list[dict], err: dict
-) -> tuple[list[dict], dict[str, set[str]], dict[tuple, RouteSection]]:
+) -> tuple[list[dict], dict[str, set[str]], dict[tuple, RouteSection], dict[str, FIR]]:
     """
     Normalize the flight planned route within our FIR.
 
@@ -314,4 +314,4 @@ def normalizer(
         err["integrity_error"].append(errors.ROUTE_PORTION_DETERMINATION_ERROR.format(our_fir))
         return [], {}, {}
 
-    return route_portion_to_be_checked, all_existing_points, existing_sections_dict
+    return route_portion_to_be_checked, all_existing_points, existing_sections_dict, FIRs

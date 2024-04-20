@@ -195,11 +195,7 @@ def route_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: dict[
             route_section["nonessential"] = True
             err["integrity_error"].append(errors.ROUTE_DOES_NOT_EXIST.format(route_section["via"]))
 
-    ...
-    # * Step 2.2. Check route-scheme (TOS) adherence
-    ...
-
-    # * Step 2.3. Check route section adherence
+    # * Step 2.2. Check route section adherence
     # 1. A section from filled flightplan may encompasses more than one database route-section. (2 below)
     fpl_section_and_its_nested_real_sections = list()
     for fpl_route_section in fpl_route_sections:
@@ -220,3 +216,5 @@ def route_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: dict[
     ...
     # * Step 2.3. Check route-scheme (TOS) adherence
     ...
+
+    return all_existing_points, existing_sections_dict, FIRs

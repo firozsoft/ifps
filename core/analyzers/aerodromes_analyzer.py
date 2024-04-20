@@ -266,16 +266,18 @@ def get_aerodrome_queryset(
     return aerodromes_qs
 
 
-def aerodromes_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: dict[str, list[str]]):
+def aerodromes_analyzer(
+    fpl: dict[str, bool | str | list[dict[str, str]]], err: dict[str, list[str]]
+) -> dict[str, Aerodrome]:
     """
     Analyzes aerodrome-related information.
 
     Args:
-        fpl (Dict[str, Union[bool, str, List[Dict[str, str]]]]): Flight plan information.
-        err (Dict[str, List[str]]): Dictionary to store error messages.
+        fpl (dict): Flight plan information.
+        err (dict): Dictionary to store error messages.
 
     Returns:
-        None
+        dict[str, Aerodrome] | None
     """
     fpl["domestic_departure"] = True
     if not fpl["departure_ad"].startswith(settings.FIR_INDICATOR[:2]) or (
@@ -292,7 +294,7 @@ def aerodromes_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: 
     # Check if required aerodromes are provided
     if not all([fpl["departure_ad"], fpl["destination_ad"], fpl["alt_ad_1"]]):
         err["integrity_error"].append(error_messages.DEST_DEP_ONE_ALT_REQUIRED)
-        return
+        return {}
 
     # Extract flight details
     type_of_aircraft = fpl["type_of_aircraft"]
@@ -401,3 +403,5 @@ def aerodromes_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: 
         aerodrome = exiting_aerodromes.get(indicator, None)
         if aerodrome is not None:
             analyse(aerodrome, last_flight_rule, est_alt_arr_datetime, **analyze_arguments)
+
+    return exiting_aerodromes

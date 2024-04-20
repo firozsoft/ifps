@@ -1,6 +1,5 @@
 import copy
 import io
-import json
 import zipfile
 from datetime import datetime
 
@@ -8,15 +7,15 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView
+from django.core.serializers import serialize
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 from django.views.generic.edit import CreateView
 
 from apps.general.forms import FlightPlanForm
 from apps.general.models.fpl import FlightPlan
 from core.analyzers import parser
-from core.analyzers.integrity_analyzer import main
+from core.analyzers.integrity_analyzer import integrity_checks
 from core.utils.helpers import (
     get_app_exportable_models,
     model_to_excel_bytesio,
@@ -58,7 +57,7 @@ class FlightPlanCreateView(LoginRequiredMixin, CreateView):
             form.add_error(err)
             return self.form_invalid(form)
 
-        err = main(fpl)
+        err, notams = integrity_checks(fpl)
         if err:
             form.add_error(err)
             return self.form_invalid(form)
@@ -89,14 +88,23 @@ def fpl_scrutinization(request, msg: str) -> JsonResponse:
 
     fpl, err = parser.parse(filled_data)
     if err:
-        return JsonResponse(err, status=400)
+        errors = {"Error(s)": err}
+        return JsonResponse(errors, status=400)
 
-    err = main(fpl)
+    err, notams = integrity_checks(fpl)
+    notams = serialize("json", notams)
+
     if err:
-        return JsonResponse(err, status=400)
-        # return render(request, "pages/index.html", {"data": json.dumps(err)})
+        message = {"Error(s)": err, "Considerable NOTAM(s)": notams}
+        status_code = 400
+    else:
+        message = {
+            "Warning": "No errors detected. But review the considerable NOTAMs, if any, for further details.",
+            "Considerable NOTAM(s)": notams,
+        }
+        status_code = 200
 
-    return render(request, "pages/index.html", {"data": json.dumps(fpl)})
+    return JsonResponse(message, status=status_code)
 
 
 @login_required
