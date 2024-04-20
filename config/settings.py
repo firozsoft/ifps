@@ -38,6 +38,7 @@ LOCAL_APPS = [
     # 3rd party apps that should become first so to be override
     "auditlog",
     # Local apps
+    "accounts",
     "core",
     "apps.aerodromes",
     "apps.general",
@@ -61,8 +62,10 @@ DJANGO_APPS = [
     # 3rd party apps that should become late so to do override all apps
 ]
 
-
 INSTALLED_APPS = LOCAL_APPS + DJANGO_APPS
+
+# Identify custom user model
+AUTH_USER_MODEL = "accounts.User"
 
 AUTHENTICATION_BACKENDS = [
     # AxesStandaloneBackend should be the first backend in the AUTHENTICATION_BACKENDS list.
