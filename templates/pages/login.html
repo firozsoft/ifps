@@ -1,24 +1,7 @@
 {% extends "base.html" %}
 
 {% block extra_heads %}
-  <style>
-      h1,
-      h2 {
-          background: #0F2027;
-          /* fallback for old browsers */
-          background: -webkit-linear-gradient(to top, #2C5364, #203A43, #0F2027);
-          /* Chrome 10-25, Safari 5.1-6 */
-          background: linear-gradient(to top, #2C5364, #203A43, #0F2027);
-          /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-          background-clip: text;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-      }
 
-      h1 {
-          font-size: 72px;
-      }
-  </style>
 {% endblock extra_heads %}
 
 {% block title %}
@@ -47,7 +30,7 @@
       </p>
     </div>
     <div class="col-6">
-      <div class="card border-0 bg-light shadow-sm">
+      <div class="card border-0 bg-body-secondary shadow-sm">
         <div class="card-body">
           <h2 class="card-title text-center fw-bold mb-4">
             <i class="bi-person-bounding-box"></i>
@@ -59,27 +42,35 @@
             <br />
             Please remember to log out when you're finshed, to ensure security.
           </p>
-          <form method="post" action="{% url "login" %}">
+
+          <form method="post" action="{% url "accounts:login" %}">
             {% csrf_token %}
-            {{ form.non_field_errors }}
+            <div class="text-danger-emphasis">{{ form.non_field_errors }}</div>
             <!-- Username input -->
-            {{ form.username.errors }}
             <div data-mdb-input-init class="form-outline mb-4">
-              <input type="text"
+              <input type="email"
                      id="username"
                      name="username"
-                     class="form-control"
+                     class="form-control
+                            {% if from.username.errors %}is-invalid{% endif %}
+                            {% if form.non_field_errors %}is-invalid{% endif %}"
                      autofocus />
-              <label class="form-label" for="username">Username</label>
-              <small>{{ form.username.help_text }}</small>
+              <label class="form-label" for="username">{{ form.username.label }}</label>
+              <small class="form-helper">{{ form.username.help_text }}</small>
+              <div class="text-danger-emphasis">{{ form.username.errors }}</div>
             </div>
 
             <!-- Password input -->
-            {{ form.password.errors }}
             <div data-mdb-input-init class="form-outline mb-4">
-              <input type="password" id="password" name="password" class="form-control" />
-              <label class="form-label" for="password">Password</label>
-              <small>{{ form.password.help_text }}</small>
+              <input type="password"
+                     id="password"
+                     name="password"
+                     class="form-control
+                            {% if from.password.errors %}is-invalid{% endif %}
+                            {% if form.non_field_errors %}is-invalid{% endif %}" />
+              <label class="form-label" for="password">{{ form.password.label }}</label>
+              <small class="form-helper">{{ form.password.help_text }}</small>
+              <div class="text-danger-emphasis">{{ form.password.errors }}</div>
             </div>
 
             <!-- 2 column grid layout for inline styling -->

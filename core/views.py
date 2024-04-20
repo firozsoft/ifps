@@ -6,7 +6,6 @@ from datetime import datetime
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.views import LoginView
 from django.core.serializers import serialize
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.views.decorators.http import require_http_methods
@@ -20,11 +19,6 @@ from core.utils.helpers import (
     get_app_exportable_models,
     model_to_excel_bytesio,
 )
-
-
-class CustomLoginView(LoginView):
-    template_name = "pages/login.html"
-    success_url = "/"
 
 
 class FlightPlanCreateView(LoginRequiredMixin, CreateView):
