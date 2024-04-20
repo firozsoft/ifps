@@ -8,3 +8,13 @@ repos:
         args: [ --fix ]
       # Run the formatter.
       - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: django-test-runner
+        name: Django tests must pass
+        entry: .venv/bin/python manage.py test
+        always_run: true
+        pass_filenames: false
+        language: system
+        types: [python]
