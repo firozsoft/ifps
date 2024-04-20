@@ -1,12 +1,19 @@
 from django.contrib import admin
+from import_export.admin import ExportMixin
 
-from apps.general.admin.base import BaseExportableImportableModel
 from apps.general.admin.resources import NotamResource
 from apps.general.models.notam import Notam
 
 
 @admin.register(Notam)
-class NOTAMAdmin(BaseExportableImportableModel):
+class NOTAMAdmin(ExportMixin, admin.ModelAdmin):
     search_fields = ["number"]
-    autocomplete_fields = ["relevant"]
+    autocomplete_fields = [
+        "affected_aerodrome",
+        "affected_firs",
+        "affected_points",
+        "affected_navaids",
+        "affected_sidstars",
+        "affected_route_sections",
+    ]
     resource_classes = [NotamResource]
