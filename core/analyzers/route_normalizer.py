@@ -173,8 +173,8 @@ def normalizer(
     Drops the unessential portion of flight planned route to our FIR and returns the
     normalized FPL route-sections list along with database route sections instances which are converted to
     dictionary to optimize database querying. In cases of failure to limit the route, the err dict gets
-    updated with essential messages and two empty lists are returned. If the flight is domestic, the route gets
-    no changes but the database sections will be fetched and returned along with the unchanged route.
+    updated with essential messages and two empty lists are returned. If the flight is domestic, the route
+    gets no changes but the database sections will be fetched and returned along with the unchanged route.
 
     - It's designed purposefully to have more Python code, especially multiple if statements on domestic
     departure/destination, to avoid multiple DB hits and use cached data instead.
@@ -247,7 +247,7 @@ def normalizer(
             )
             if not route_portion_to_be_checked:
                 # Unable to determine route portion
-                return [], {}, {}
+                return [], {}, {}, {}
 
         if not domestic_destination:
             next_fir = FIRs.get(next_fir_indicator_2letters, None)
@@ -262,7 +262,7 @@ def normalizer(
             )
             if not route_portion_to_be_checked:
                 # Unable to determine route portion
-                return [], {}, {}
+                return [], {}, {}, {}
 
     fpl_mentioned_routes = {
         section["via"]
@@ -296,7 +296,7 @@ def normalizer(
         )
         if not route_portion_to_be_checked:
             # Unable to determine route portion
-            return [], {}, {}
+            return [], {}, {}, {}
 
     if not domestic_destination:
         route_portion_to_be_checked = _set_route_boundaries(
@@ -308,10 +308,10 @@ def normalizer(
         )
         if not route_portion_to_be_checked:
             # Unable to determine route portion
-            return [], {}, {}
+            return [], {}, {}, {}
 
     if not existing_sections_dict:
         err["integrity_error"].append(errors.ROUTE_PORTION_DETERMINATION_ERROR.format(our_fir))
-        return [], {}, {}
+        return [], {}, {}, {}
 
     return route_portion_to_be_checked, all_existing_points, existing_sections_dict, FIRs
