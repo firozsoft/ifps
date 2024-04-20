@@ -123,7 +123,7 @@ class TestExportAndImport(TestCase):
 
         # Create a staff user
         User = get_user_model()
-        self.user = User.objects.create_user(username="staff_user", password="password", is_staff=True)
+        self.user = User.objects.create_user(email="staff@user.com", password="password", is_staff=True)
 
         return super().setUp()
 
