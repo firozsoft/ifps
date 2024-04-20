@@ -23,7 +23,7 @@ dev = [
   "ipython",
   "jupyter",
   "pre-commit",
-  "ruffc",
+  "ruff",
 ]
 
 [tool.ruff]
@@ -31,7 +31,17 @@ line-length = 110
 fix = true
 # Allow fix for all enabled rules (when `--fix`) is provided.
 lint.fixable = ["ALL"]
-lint.extend-select = ["B", "I", "Q"]
+# lint.select = ["ALL"]
+lint.extend-select = [
+  "A",  # prevent using keywords that clobber python builtins
+  "B",  # bugbear: security warnings
+  "E",  # pycodestyle
+  "F",  # pyflakes
+  "I",  # isort
+  "Q",  # flake8-quotes
+  "UP", # alert you when better syntax is available in your python version
+  "DJ", # falke8-django
+]
 # Allow applying all unsafe fixes in the `E` rules and `F401` without the `--unsafe-fixes` flag
 lint.extend-safe-fixes = ["E", "F401"]
 # Ignore migrations directories
