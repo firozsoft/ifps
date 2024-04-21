@@ -12,9 +12,21 @@ repos:
   - repo: local
     hooks:
       - id: django-test-runner
-        name: Django tests must pass
+        name: django-test-runner
         entry: .venv/bin/python manage.py test
         always_run: false
         pass_filenames: false
         language: system
         types: [python]
+
+      - id: djlint-reformat-django
+        name: djLint formatting for Django
+        entry: .venv/bin/djlint --reformat --profile=django --indent=2 --format-attribute-template-tags
+        types_or: [html]
+        language: python
+
+      - id: djlint-django
+        name: djLint linting for Django
+        entry: .venv/bin/djlint --profile=django
+        types_or: [html]
+        language: python

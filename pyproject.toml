@@ -33,22 +33,67 @@ fix = true
 lint.fixable = ["ALL"]
 # lint.select = ["ALL"]
 lint.extend-select = [
-  "A",  # prevent using keywords that clobber python builtins
-  "B",  # bugbear: security warnings
-  "E",  # pycodestyle
-  "F",  # pyflakes
-  "I",  # isort
-  "Q",  # flake8-quotes
-  "UP", # alert you when better syntax is available in your python version
-  "DJ", # falke8-django
+  "A",   # prevent using keywords that clobber python builtins
+  "B",   # bugbear: security warnings
+  "E",   # pycodestyle
+  "F",   # pyflakes
+  "I",   # isort
+  "Q",   # flake8-quotes
+  "UP",  # alert you when better syntax is available in your python version
+  "DJ",  # falke8-django
+  "C4",
+  "D",
+  "DJ",
+  "N",
+  "PL",
+  "PT",
+  "SIM",
+  "T20",
+  "W",
+
 ]
 # Allow applying all unsafe fixes in the `E` rules and `F401` without the `--unsafe-fixes` flag
 lint.extend-safe-fixes = ["E", "F401"]
 # Ignore migrations directories
 extend-exclude = ["migrations"]
 
+target-version = "py312"
+ignore = ["E501", "PLR0913", "PLR0915", "PLR0912", "D203", "D213", "PLW1510"]
+
+[tool.ruff.per-file-ignores]
+"tests/*" = ["N802", "D103", "T201", "D104", "PLR0915", "PLR2004"]
+"src/djlint/__init__.py" = ["D403"]
+"src/djlint/formatter/__init__.py" = ["D104"]
+"src/djlint/formatter/css.py" = ["PLW2901"]
+"src/djlint/formatter/js.py" = ["PLW2901"]
+"src/djlint/lint.py" = ["PLW2901"]
+"src/djlint/formatter/indent.py" = ["SIM114", "E722"]
+
+[tool.ruff.mccabe]
+max-complexity = 10
+
 [tool.ruff.format]
 # Enable reformatting of code snippets in docstrings.
 docstring-code-format = true
 # Like Black, automatically detect the appropriate line ending.
 line-ending = "auto"
+
+[tool.djlint]
+blank_line_after_tag = "load,extends,include"
+blank_line_before_tag = "load,include"
+close_void_tags = true
+format_attribute_template_tags = true
+format = true
+format_css = true
+format_js = true
+ignore = "H006,H021"
+indent = 2
+line_break_after_multiline_tag = true
+max_line_length = 120
+profile = "django"
+
+[tool.djlint.css]
+indent_size = 2
+
+[tool.djlint.js]
+indent_size = 2
