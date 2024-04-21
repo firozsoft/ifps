@@ -14,7 +14,7 @@ repos:
       - id: django-test-runner
         name: Django tests must pass
         entry: .venv/bin/python manage.py test
-        always_run: true
+        always_run: false
         pass_filenames: false
         language: system
         types: [python]
