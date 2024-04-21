@@ -36,10 +36,23 @@
         {% if request.user.is_staff %}
           <a data-mdb-ripple-init
              href="{% url "admin:index" %}"
-             class="btn btn-link px-3 me-2">Admin</a>
+             class="btn btn-link px-1 mx-1 fw-bold">Admin</a>
         {% endif %}
 
-        <li class="nav-item align-items-center d-flex">
+        {% if request.user.is_authenticated %}
+          <a data-mdb-ripple-init
+             href="{% url "accounts:profile" %}"
+             class="btn btn-link px-1 mx-1 fw-bold
+                    {% if 'accounts/profile' in request.path %}disabled{% endif %}">Profile</a>
+
+          <form id="logout-form" action="{% url "accounts:logout" %}" method="post">
+            {% csrf_token %}
+            <button data-mdb-ripple-init class="btn btn-link px-1 mx-1 fw-bold">Logout</button>
+          </form>
+
+        {% endif %}
+
+        <li class="nav-item align-items-center d-flex ms-2">
           <label for="themingSwitcher">
             <i class="fas fa-sun"></i>
           </label>
