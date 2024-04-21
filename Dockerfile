@@ -24,6 +24,9 @@ COPY . .
 # Make sure DEBUG is False
 RUN sed -i 's/DEBUG=True/DEBUG=False/' .env
 
+# Make sure db_backups directory exists
+RUN mkdir -p db_backups
+
 # Run Django migrations and collect static files
 RUN python manage.py migrate
 RUN python manage.py collectstatic --noinput
