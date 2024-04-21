@@ -1,13 +1,10 @@
 {% extends "base.html" %}
 
 {% block extra_heads %}
-
 {% endblock extra_heads %}
-
 {% block title %}
   Login
 {% endblock title %}
-
 {% block content %}
   <div class="row mt-5 pt-5">
     <div class="col-6">
@@ -15,8 +12,9 @@
         <i class="fa fa-list-check"></i>
         <span class="bg-local">IFPS</span>
       </h1>
-
-      <h4>Integrated Flight Plan Processing System</h4>
+      <h4>
+        Integrated Flight Plan Processing System
+      </h4>
       <p class="text-body-secondary">
         Designed for pilots and aviation professionals, our platform offers streamlined flight planning
         capabilities with user-friendly features for inputting, modifying, and tracking flight plans.
@@ -42,37 +40,52 @@
             <br />
             Please remember to log out when you're finshed, to ensure security.
           </p>
-
           <form method="post" action="{% url "accounts:login" %}">
             {% csrf_token %}
-            <div class="text-danger-emphasis">{{ form.non_field_errors }}</div>
+            <div class="text-danger-emphasis">
+              {{ form.non_field_errors }}
+            </div>
             <!-- Username input -->
             <div data-mdb-input-init class="form-outline mb-4">
               <input type="email"
                      id="username"
                      name="username"
                      class="form-control
-                            {% if from.username.errors %}is-invalid{% endif %}
-                            {% if form.non_field_errors %}is-invalid{% endif %}"
+                            {% if from.username.errors %}
+                              is-invalid
+                            {% endif %}
+                            {% if form.non_field_errors %}
+                              is-invalid
+                            {% endif %}"
                      autofocus />
-              <label class="form-label" for="username">{{ form.username.label }}</label>
+              <label class="form-label" for="username">
+                {{ form.username.label }}
+              </label>
               <small class="form-helper">{{ form.username.help_text }}</small>
-              <div class="text-danger-emphasis">{{ form.username.errors }}</div>
+              <div class="text-danger-emphasis">
+                {{ form.username.errors }}
+              </div>
             </div>
-
             <!-- Password input -->
             <div data-mdb-input-init class="form-outline mb-4">
               <input type="password"
                      id="password"
                      name="password"
                      class="form-control
-                            {% if from.password.errors %}is-invalid{% endif %}
-                            {% if form.non_field_errors %}is-invalid{% endif %}" />
-              <label class="form-label" for="password">{{ form.password.label }}</label>
+                            {% if from.password.errors %}
+                              is-invalid
+                            {% endif %}
+                            {% if form.non_field_errors %}
+                              is-invalid
+                            {% endif %}" />
+              <label class="form-label" for="password">
+                {{ form.password.label }}
+              </label>
               <small class="form-helper">{{ form.password.help_text }}</small>
-              <div class="text-danger-emphasis">{{ form.password.errors }}</div>
+              <div class="text-danger-emphasis">
+                {{ form.password.errors }}
+              </div>
             </div>
-
             <!-- 2 column grid layout for inline styling -->
             <div class="row mb-4">
               <div class="col d-flex justify-content-center">
@@ -82,20 +95,16 @@
                   Sign in
                 </button>
               </div>
-
               <div class="col">
                 <!-- Simple link -->
-
                 <a class="btn btn-warning btn-block" href="#!">
                   <i class="bi-lock-fill"></i>
                 Forgot password?</a>
               </div>
             </div>
           </form>
-
         </div>
       </div>
     </div>
   </div>
-
 {% endblock content %}
