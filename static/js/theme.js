@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
   themeSwitcher.checked = document.documentElement.dataset.mdbTheme === "dark";
 
   // add listener to theme toggler
-  themeSwitcher.addEventListener("change", (e) => {
-    toggleTheme(e.target.checked);
+  themeSwitcher.addEventListener("change", (event) => {
+    toggleTheme(event.target.checked);
   });
 });

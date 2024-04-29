@@ -3,23 +3,51 @@
 {% block title %}
   Submission
 {% endblock title %}
-
 {% block content %}
-  <div class="pt-5">
-    <form action="{% url "submission" %}" method="post">
+  <div class="row mt-4 pt-4 pb-3">
+    <form id="fpl-submission-form"
+          action="{% url 'submission' %}"
+          method="post">
       {% csrf_token %}
-
       <div data-mdb-input-init class="form-outline mb-4">
         <textarea class="form-control" name="message" id="message" rows="8" autofocus></textarea>
-        <label class="form-label" for="message">Message</label>
+        <label class="form-label" for="message">
+          Message
+        </label>
       </div>
-
       <div class="text-center mb-3">
-        <button data-mdb-ripple-init type="submit" class="btn btn-primary mx-auto">Submit</button>
-        <button data-mdb-ripple-init type="reset" class="btn btn-warning mx-auto">Reset</button>
+        <button type="reset" class="btn btn-warning mx-auto me-2">
+          <i class="fa-solid fa-trash-can me-1"></i>
+          Reset
+        </button>
+        <button id="submit-button" type="submit" class="btn btn-primary mx-auto">
+          <i class="fa-solid fa-paper-plane me-1"></i>
+          Submit
+        </button>
       </div>
-
     </form>
+    <div id="spinner" class="d-none">
+      <!-- Spinner HTML or CSS here -->
+      Processing...
+    </div>
   </div>
-  {% if data %}{{ data }}{% endif %}
+  <hr class="text-black-50" />
+  <div id="response-container" class="row pt-4 pb-3">
+    <!-- Response will be displayed here -->
+    <div data-mdb-alert-init=""
+         class="alert alert-success"
+         role="alert"
+         data-mdb-color="success"
+         data-mdb-alert-initialized="true">
+      <h4 class="mb-3">
+        Welcome to IFPS!
+      </h4>
+      <p>
+        Your flight plan messages will be processed here.
+        <br />
+        Once submitted, you'll see processing results displayed in this area.
+        Feel free to start submitting your flight plan messages for analysis.
+      </p>
+    </div>
+  </div>
 {% endblock content %}

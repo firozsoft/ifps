@@ -1,27 +1,27 @@
-"""This module is the beginning of integrity checks.
-This is the second step to analyze a flight plan message, after the parser module.
-"""
+from django.db.models import QuerySet
 
-from collections import namedtuple
-
+from apps.general.models.notam import Notam
 from core.analyzers import aerodromes_analyzer, notam_analyzer, route_analyzer
 
 
 def integrity_checks(
     fpl: dict[str, bool | str | list[dict[str, str]]],
-) -> dict[str, int | dict[str, list[str | None]]]:
-    """
-    Perform integrity checks on a flight plan and return any encountered errors.
+) -> tuple[dict[str, str | None], QuerySet[Notam]]:
+    """Perform integrity checks on a flight plan and return any encountered errors.
 
     Args:
+    ----
         fpl (dict): Flight plan dictionary containing information about the flight.
 
     Returns:
+    -------
         dict: Dictionary containing any encountered errors, indexed by numbers.
+        queryset: QuerySet containing any NOTMAs.
 
     This function checks the flight plan for integrity errors, including:
     - Submission of FPL within less than 30 minutes to EOBT.
     - Analysis of aerodromes and routes using external analyzers.
+
     """
     err: dict[str, list[str | None]] = {"integrity_error": []}
 
@@ -38,5 +38,5 @@ def integrity_checks(
     errors = (
         {str(inx): err for inx, err in enumerate(err["integrity_error"])} if err["integrity_error"] else {}
     )
-    IntegrityCheck = namedtuple("IntegrityCheck", ("errors", "notams"))
-    return IntegrityCheck(errors=errors, notams=notams)
+
+    return errors, notams

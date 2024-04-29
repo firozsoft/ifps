@@ -64,7 +64,7 @@ FIR_INACTIVE = (
     # fir
 )
 FIR_NOT_FOUND_IN_EET = (
-    "The EET/ doesn't mention {0}."
+    "Unable to examine route of flight. FIR {0} isn't mentioned in EET/."
     # fir_indicator
 )
 PATH_NOT_FOUND = (

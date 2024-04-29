@@ -20,6 +20,8 @@ from core.utils.helpers import (
     model_to_excel_bytesio,
 )
 
+FPL_EXPECTED_DASHES = 9
+
 
 class FlightPlanCreateView(LoginRequiredMixin, CreateView):
     model = FlightPlan
@@ -59,13 +61,75 @@ class FlightPlanCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-def fpl_scrutinization(request, msg: str) -> JsonResponse:
+@login_required
+@require_http_methods(["POST"])
+def submission(request: HttpRequest) -> JsonResponse:
+    """Handle submission of FPL (Flight Plan) messages via a POST request.
+
+    Validates and processes a submitted FPL message received via a POST request.
+
+    Args:
+    ----
+        request (HttpRequest): The HTTP request object containing the submitted data.
+
+    Returns:
+    -------
+        JsonResponse: A JSON response containing either a success message or an error message.
+
+    Raises:
+    ------
+        Http404: If the request method is not POST or if the user is not authenticated, handled by decorators.
+
+    Usage:
+        This function is intended to be used as a handler for FPL message submissions made via a POST request.
+        Example usage:
+        ```python
+        response = submission(request)
+        ```
+
+    Error Responses:
+        - If the submitted message is empty or does not meet the required format,
+          a JSON response with an appropriate error message and status code 400 (Bad Request) is returned.
+        - If there are validation errors during FPL message parsing or integrity checks,
+          the response includes error details and status code 400 (Bad Request).
+        - If no errors are detected and the FPL message is processed successfully,
+          a JSON response with status code 200 (OK) is returned along with any relevant NOTAMs.
+
+    Notes:
+    -----
+        - Requires the user to be authenticated (logged in) via the `@login_required` decorator.
+        - Expects a POST request, as specified by the `@require_http_methods(["POST"])` decorator.
+
+    """
+    msg = request.POST.get(key="message", default=None)
+    if not msg:
+        message = {
+            "Error": (
+                "Empty message detected. Please provide a complete FPL message "
+                f"with at least {FPL_EXPECTED_DASHES} sections separated by hyphens."
+            )
+        }
+        return JsonResponse(message, status=400)
+
+    if not msg.startswith("(FPL"):
+        message = {
+            "Error": (
+                "Invalid message format. Please ensure the message begins with '(FPL' "
+                f"and contains at least {FPL_EXPECTED_DASHES} sections separated by hyphens."
+            )
+        }
+        return JsonResponse(message, status=400)
+
     parts = list(map(str.strip, msg.split("-")))
 
-    if len(parts) < 9:
-        return JsonResponse(
-            {"syntax_error": "FPL message must have at least 9 sections separated by hyphens."}, status=400
-        )
+    if len(parts) < FPL_EXPECTED_DASHES:
+        message = {
+            "Error": (
+                "Invalid FPL message format. Please provide a complete FPL message "
+                f"with at least {FPL_EXPECTED_DASHES} sections separated by hyphens."
+            )
+        }
+        return JsonResponse(message, status=400)
 
     filled_data = {
         # "msg_type": parts[0], #-> (FPL
@@ -82,42 +146,33 @@ def fpl_scrutinization(request, msg: str) -> JsonResponse:
 
     fpl, err = parser.parse(filled_data)
     if err:
-        errors = {"Error(s)": err}
-        return JsonResponse(errors, status=400)
+        message = {"Error": err}
+        return JsonResponse(message, status=400)
 
     err, notams = integrity_checks(fpl)
     notams = serialize("json", notams)
 
     if err:
-        message = {"Error(s)": err, "Considerable NOTAM(s)": notams}
+        message = {"Error": err}
         status_code = 400
+
     else:
-        message = {
-            "Warning": "No errors detected. But review the considerable NOTAMs, if any, for further details.",
-            "Considerable NOTAM(s)": notams,
-        }
+        message = {"Success": "No errors detected."}
         status_code = 200
+
+    if notams:
+        message["NOTAM(s)"] = notams
+
+        if "Success" in message:
+            message.pop("Success")
+            message["Warning"] = "No errors detected. But review the considerable NOTAMs for further details."
 
     return JsonResponse(message, status=status_code)
 
 
-@login_required
-@require_http_methods(["POST"])
-def submission(request: HttpRequest) -> JsonResponse:
-    msg = request.POST.get(key="message", default=None)
-    if not msg:
-        return JsonResponse({"Error": "field message is missing", "error_code": "msg_not_found"}, status=400)
-    if msg.startswith("(FPL"):
-        return fpl_scrutinization(request, msg)
-    return JsonResponse({"Error": "text must be an AFTN FPL message"}, status=400)
-
-
 @staff_member_required
 def export_models(request: HttpRequest, app_label="") -> HttpResponse:
-    """
-    It exports the data of all models of this project to Excel files and returns
-    a ZIP archive containing the Excel files as an HTTP response.
-    """
+    """Export all models to Excel files and return a ZIP archive."""
     model_names = get_app_exportable_models(f"apps.{app_label}")
 
     timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
@@ -140,8 +195,7 @@ def export_models(request: HttpRequest, app_label="") -> HttpResponse:
 
 @staff_member_required
 def export_model(request: HttpRequest, model_name: str) -> HttpResponse:
-    """This method exports data from a model to an Excel file."""
-
+    """Export data from a model to an Excel file."""
     excel_buffer = model_to_excel_bytesio(model_name)
 
     # Set the appropriate HTTP headers for the response
