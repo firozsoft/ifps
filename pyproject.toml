@@ -38,44 +38,39 @@ extend-exclude = [
 target-version = "py312" # Specifies the target Python version for linting.
 
 [tool.ruff.lint]
-fixable = ["ALL"] # Allows Ruff to automatically fix all enabled linting rules.
-extend-select = [ # Specifies the list of linting rules to enable.
-  "A",   # prevent using keywords that clobber python builtins
-  "B",   # bugbear: security warnings
-  "E",   # pycodestyle
-  "F",   # pyflakes
-  "I",   # isort
-  "Q",   # flake8-quotes
-  "UP",  # alert you when better syntax is available in your python version
-  "DJ",  # falke8-django
-  "C4",  # McCabe complexity
-  "D",   # docstring-related linting rules
-  "DJ",  # Django-specific linting rules
-  "N",   # Naming conventions
-  "PL",  # PEP8 related linting rules
-  "PT",  # PEP257 related linting rules
-  "SIM", # Simplification of code
-  "T20", # Deprecation-related linting rules
-  "W",   # Additional warnings
-]
 extend-safe-fixes = [
+  "C4",
+  "D",
   "E",
+  "EM",
   "F401",
-] # Specifies which fixes can be safely applied without --unsafe-fixes flag.
+  "SIM",
+  "RET",
+] # Specifies which fixes can be safely applied without --unsafe-fixes flag.fixable = ["ALL"] # Allows Ruff to automatically fix all enabled linting rules.
+select = ["ALL"]
 ignore = [ # Specifies the list of linting rules to ignore.
+  "ANN",
   "D100",    # Ignore missing docstring in public module.
   "D101",    # Ignore missing docstring in public class.
   "D102",    # Ignore missing docstring in public method.
   "D103",    # Ignore missing docstring in public function.
   "D104",    # Ignore missing docstring in public package.
   "D105",    # Ignore missing docstring in magic method.
+  "D106",    # Ignore missing docstring in public nested class.
+  "D107",
   "D203",    # Ignore missing whitespace after ':'
   "D213",    # Ignore missing whitespace before ':'.
   "E501",    # Ignore line length exceeded (pycodestyle).
+  "FIX",
+  "FBT",
   "PLR0912", # Ignore argument name must be lowercase.
   "PLR0913", # Ignore too few arguments on decorators.
   "PLR0915", # Ignore too many arguments on decorators.
+  "PLR2004",
   "PLW1510", # Ignore too many locals.
+  "PT",
+  "RUF",
+  "TD",
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -86,26 +81,11 @@ ignore = [ # Specifies the list of linting rules to ignore.
   "D104",
   "PLR0915",
   "PLR2004",
+  "ERA001",
+  "S311",
 ] # Specifies per-file linting ignores for files in the "tests" directory.
-"src/djlint/__init__.py" = [
-  "D403",
-] # Specifies linting ignores for "__init__.py" in "src/djlint".
-"src/djlint/formatter/__init__.py" = [
-  "D104",
-] # Specifies linting ignores for "__init__.py" in "src/djlint/formatter".
-"src/djlint/formatter/css.py" = [
-  "PLW2901",
-] # Specifies linting ignores for "css.py" in "src/djlint/formatter".
-"src/djlint/formatter/js.py" = [
-  "PLW2901",
-] # Specifies linting ignores for "js.py" in "src/djlint/formatter".
-"src/djlint/lint.py" = [
-  "PLW2901",
-] # Specifies linting ignores for "lint.py" in "src/djlint".
-"src/djlint/formatter/indent.py" = [
-  "SIM114",
-  "E722",
-] # Specifies linting ignores for "indent.py" in "src/djlint/formatter".
+"*/models/*.py" = ["ERA001"]
+"*/admin/*.py" = ["ERA001"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10 # Specifies the maximum McCabe complexity allowed for functions.
