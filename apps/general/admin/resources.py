@@ -1,5 +1,7 @@
 import tablib
-from import_export import fields, resources, widgets
+from django.core.exceptions import ObjectDoesNotExist
+from django.utils.safestring import mark_safe
+from import_export import fields, resources, results, widgets
 
 from apps.general.models.aircraft import Aircraft
 from apps.general.models.base import FIR
@@ -7,11 +9,27 @@ from apps.general.models.notam import Notam
 from core.utils.helpers import SEPARATOR
 
 
+class SimpleError(results.Error):
+    def __init__(self, error, traceback=None, row=None):
+        super().__init__(error, traceback=traceback, row=row)
+        self.traceback = ""
+        if isinstance(error, ObjectDoesNotExist):
+            model_name = str(error).split()[0]
+            self.traceback = mark_safe(  # noqa:S308
+                f"You need to import <strong>{model_name}</strong> data before importing this data.",
+            )
+
+
 class BaseResource(resources.ModelResource):
     class Meta:
         skip_unchanged = True
         report_skipped = False
         exclude = ["created", "updated"]
+
+    @classmethod
+    def get_error_result_class(cls):
+        """Return a class which has custom formatting of the error."""
+        return SimpleError
 
     def get_export_headers(self):
         headers = []
