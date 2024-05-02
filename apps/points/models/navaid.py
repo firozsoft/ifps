@@ -39,11 +39,14 @@ class NavAid(Point):
             )
 
         similar_navaids = NavAid.objects.filter(
-            indicator=self.indicator, type=self.type, usecase=self.usecase
+            indicator=self.indicator,
+            type=self.type,
+            usecase=self.usecase,
         ).exclude(pk=self.pk)  # Exclude current instance if it's being updated
 
         if similar_navaids.exists():
+            msg = "At least a NavAid with this indicator, type, and usecase already exists."
             raise ValidationError(
-                "At least a NavAid with this indicator, type, and usecase already exists.",
+                msg,
                 code="navaid_duplicate_name_type_usecase",
             )

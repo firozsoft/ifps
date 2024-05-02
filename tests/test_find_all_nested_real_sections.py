@@ -46,7 +46,7 @@ class FindRealRouteSectionsTestCase(TestCase):
         ]
 
         self.existing_sections = RouteSection.objects.filter(
-            route__indicator__in=set(section["via"] for section in self.fpl_route_sections)
+            route__indicator__in={section["via"] for section in self.fpl_route_sections},
         ).select_related("route", "point1", "point2")
 
         self.existing_sections_dict = {

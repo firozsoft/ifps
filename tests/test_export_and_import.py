@@ -1,4 +1,4 @@
-import datetime as dt
+import datetime
 import random
 import string
 from io import StringIO
@@ -9,6 +9,7 @@ from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.aerodromes.models.aerodrome import Aerodrome
 from apps.aerodromes.models.curfew import Curfew
@@ -39,7 +40,9 @@ class TestExportAndImport(TestCase):
                 coordinate=aerodrome_coordinate,
             )
             for aerodrome_indicator, aerodrome_coordinate in zip(
-                aerodrome_indicators, aerodrome_coordinates, strict=False
+                aerodrome_indicators,
+                aerodrome_coordinates,
+                strict=False,
             )
         )
         aerodromes = Aerodrome.objects.bulk_create(aerodromes)
@@ -49,16 +52,16 @@ class TestExportAndImport(TestCase):
 
         oiii = Aerodrome.objects.get(indicator="OIII")
 
-        today = dt.datetime.today()
-        tonight = dt.datetime.combine(today, dt.time(hour=23, minute=30))
-        midnight = dt.datetime.combine(today, dt.time(hour=00, minute=00))
-        midnight1 = dt.datetime.combine(today, dt.time(hour=23, minute=59))
-        tomorrow = today + dt.timedelta(days=1)
-        tomorrow_morning = dt.datetime.combine(tomorrow, dt.time(hour=3, minute=30))
-        vfr_start_time = dt.datetime.combine(today, dt.time(hour=8, minute=30))
-        vfr_end_time = dt.datetime.combine(today, dt.time(hour=17, minute=30))
-        tmp_start = dt.datetime.combine(today, dt.time(hour=12, minute=30))
-        tmp_end = dt.datetime.combine(today, dt.time(hour=14, minute=30))
+        today = timezone.now().date()
+        tonight = timezone.datetime.combine(today, datetime.time(hour=23, minute=30))
+        midnight = timezone.datetime.combine(today, datetime.time(hour=00, minute=00))
+        midnight1 = timezone.datetime.combine(today, datetime.time(hour=23, minute=59))
+        tomorrow = today + timezone.timedelta(days=1)
+        tomorrow_morning = timezone.datetime.combine(tomorrow, datetime.time(hour=3, minute=30))
+        vfr_start_time = timezone.datetime.combine(today, datetime.time(hour=8, minute=30))
+        vfr_end_time = timezone.datetime.combine(today, datetime.time(hour=17, minute=30))
+        tmp_start = timezone.datetime.combine(today, datetime.time(hour=12, minute=30))
+        tmp_end = timezone.datetime.combine(today, datetime.time(hour=14, minute=30))
 
         DailyOperationalHour.objects.create(
             aerodrome=oiii,
@@ -112,7 +115,10 @@ class TestExportAndImport(TestCase):
                 ),
             )
             for aerodrome, navaid, point in zip(
-                aerodromes, NavAid.objects.filter(usecase__in=("in_airport", "both")), points, strict=False
+                aerodromes,
+                NavAid.objects.filter(usecase__in=("in_airport", "both")),
+                points,
+                strict=False,
             )
         ]
         SidStar.objects.bulk_create(sidstars)
@@ -122,8 +128,8 @@ class TestExportAndImport(TestCase):
         self.request_factory = RequestFactory()
 
         # Create a staff user
-        User = get_user_model()
-        self.user = User.objects.create_user(email="staff@user.com", password="password", is_staff=True)
+        user = get_user_model()
+        self.user = user.objects.create_user("staff@user.com", "strong", is_staff=True)
 
         return super().setUp()
 
@@ -134,7 +140,7 @@ class TestExportAndImport(TestCase):
 
     def test_exporting_all_models(self):
         # Create an instance of a GET request.
-        request = self.request_factory.get(reverse("export_models"))
+        request = self.request_factory.get(reverse("fpl:export_models"))
 
         # Simulate a logged-in user by setting request.user manually.
         request.user = self.user
@@ -162,5 +168,6 @@ class TestExportAndImport(TestCase):
         out = self.call_command("update_database", resources=extract_dir)
 
         self.assertEqual(
-            out.splitlines()[-1], BaseCommand().style.SUCCESS("Data has been uploaded successfully.")
+            out.splitlines()[-1],
+            BaseCommand().style.SUCCESS("Data has been uploaded successfully."),
         )

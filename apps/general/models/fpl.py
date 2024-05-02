@@ -7,11 +7,10 @@ from core.utils.choices import FlightRules, FlightType, WeakturbulenceCategory
 
 
 class FlightPlan(models.Model):
-    """The model to be used to valdidate and store flight plan data"""
+    """The model to be used to valdidate and store flight plan data."""
 
     addresses = models.TextField(
         validators=[validators.aftn_addresses_validator],
-        null=True,
         blank=True,
     )
     filling_time = models.DateTimeField(
@@ -80,7 +79,6 @@ class FlightPlan(models.Model):
     )
     second_alternate_aerodrome = models.CharField(
         max_length=4,
-        null=True,
         blank=True,
         validators=[validators.aerodrome_validator],
     )

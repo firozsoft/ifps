@@ -6,15 +6,15 @@ def _check_altitude(level, db_section: RouteSection, err):
     level = int(level.replace("A", ""))
     if db_section.minimum_safe_altitude and level < db_section.minimum_safe_altitude:
         err["integrity_error"].append(
-            f"Minimun Safe Altitude for route {db_section} is {db_section.minimum_safe_altitude}."
+            f"Minimun Safe Altitude for route {db_section} is {db_section.minimum_safe_altitude}.",
         )
     if db_section.lower_limit_altitude and level < db_section.lower_limit_altitude:
         err["integrity_error"].append(
-            f"Minimun Limit Altitude for route {db_section} is {db_section.lower_limit_altitude}."
+            f"Minimun Limit Altitude for route {db_section} is {db_section.lower_limit_altitude}.",
         )
     if db_section.upper_limit_altitude and level > db_section.upper_limit_altitude:
         err["integrity_error"].append(
-            f"Upper Limit Altitude for route {db_section} is {db_section.lower_limit_altitude}."
+            f"Upper Limit Altitude for route {db_section} is {db_section.lower_limit_altitude}.",
         )
 
 
@@ -22,19 +22,19 @@ def _check_flight_level(level, db_section: RouteSection, err):
     level = int(level.replace("F", ""))
     if db_section.minimum_safe_flight_level and level < db_section.minimum_safe_flight_level:
         err["integrity_error"].append(
-            f"Minimun Safe Flight Level for route {db_section} is {db_section.minimum_safe_flight_level}."
+            f"Minimun Safe Flight Level for route {db_section} is {db_section.minimum_safe_flight_level}.",
         )
     if db_section.lower_limit_flight_level and level < db_section.lower_limit_flight_level:
         err["integrity_error"].append(
-            f"Minimun Limit Flight Level for route {db_section} is {db_section.lower_limit_flight_level}."
+            f"Minimun Limit Flight Level for route {db_section} is {db_section.lower_limit_flight_level}.",
         )
     if db_section.upper_limit_flight_level and level > db_section.upper_limit_flight_level:
         err["integrity_error"].append(
-            f"Upper Limit Flight Level for route {db_section} is {db_section.lower_limit_flight_level}."
+            f"Upper Limit Flight Level for route {db_section} is {db_section.lower_limit_flight_level}.",
         )
 
 
-def validate_fpl_route_section(fpl_section, db_section: RouteSection, data, err):
+def validate_fpl_route_section(fpl_section, db_section: RouteSection, data, err):  # noqa:C901
     domestic_departure, domestic_destination = data["domestic_departure"], data["domestic_destination"]
 
     # Sample
@@ -70,25 +70,22 @@ def validate_fpl_route_section(fpl_section, db_section: RouteSection, data, err)
         if fpl_level.startswith("A"):
             _check_altitude(fpl_level, db_section, err)
             # TODO: it's an option to first convert altitude to FL then check it
-            fpl_level = f"F{feet_to_flight_level(float(fpl_level[1:]))}"
-            _check_flight_level(fpl_level, db_section, err)
+            check_flight_level = f"F{feet_to_flight_level(float(fpl_level[1:]))}"
+            _check_flight_level(check_flight_level, db_section, err)
 
         elif fpl_level[0] in ("S", "M"):
-            fpl_level = f"F{meters_to_flight_level(float(fpl_level[1:]))}"
-            _check_flight_level(fpl_level, db_section, err)
+            check_flight_level = f"F{meters_to_flight_level(float(fpl_level[1:]))}"
+            _check_flight_level(check_flight_level, db_section, err)
 
-    ...
     # RouteSection RNAV/RNP Compliance Check (plus rnav level)
-    ...
     # RouteSection Mag Track & Track Coloration Compliance Check
-    ...
     # RouteSection Availability Based On Nature Of Flight (domestic/transiting/local-dep/dest)
     if db_section.domestic_only and (not domestic_departure or not domestic_destination):
         err["integrity_error"].append(
-            "Invalid path usage." f"Route {db_section} is available only to domestic flights."
+            f"Invalid path usage. Route {db_section} is available only to domestic flights.",
         )
 
     if db_section.not_for_over_flights and (not domestic_departure and not domestic_destination):
         err["integrity_error"].append(
-            "Invalid path usage." f"Route {db_section} is not available to overflights."
+            f"Invalid path usage. Route {db_section} is not available to overflights.",
         )

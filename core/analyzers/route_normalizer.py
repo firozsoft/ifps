@@ -1,6 +1,7 @@
-"""This is a helper module that contains methods in order to normalize the flight planned route by
-dropping the portions that are not within our FIR and also finding and setting the entry/exit points
-to/from our FIR.
+"""Helper module that contains methods in order to normalize the flight planned route.
+
+This is done by dropping the portions that are not within our FIR and also finding and setting the
+entry/exit points to/from our FIR.
 
 Except for flight that are condocting as domestic flights (both departure and destination aerodromes within
 our FIR) for other 3 possible case (domestic dep, domestic dest, transiting flights) this normalization is
@@ -28,20 +29,21 @@ def _get_essential_route_portion(
     eet: str,
     err: dict,
 ):
-    """
-    Determine the essential portion of the flight route within our FIR.
+    """Determine the essential portion of the flight route within our FIR.
 
     Args:
-    - our_fir (FIR): Our FIR object.
-    - neighbor_fir (FIR): Neighbor FIR object.
-    - fpl_route (list[dict]): Flight route sections.
-    - existing_points (dict): Existing points with FIR indicators.
-    - entry_or_exit (str): Entry or Exit point.
-    - eet (str): Estimated Elapsed Time (EET).
-    - err (dict): Dictionary to store error messages.
+    ----
+        our_fir (FIR): Our FIR object.
+        neighbor_fir (FIR): Neighbor FIR object.
+        fpl_route (list[dict]): Flight route sections.
+        existing_points (dict): Existing points with FIR indicators.
+        entry_or_exit (str): Entry or Exit point.
+        eet (str): Estimated Elapsed Time (EET).
+        err (dict): Dictionary to store error messages.
 
     Returns:
-    - list[dict]: Essential portion of the flight route.
+    -------
+        list[dict]: Essential portion of the flight route.
 
     The idea here is to iterate over section of fpl route and check their to/from point's FIRs according to
     indicators that are mentioned in EET. The order of FIR indicators in EET is a key part here.
@@ -50,12 +52,12 @@ def _get_essential_route_portion(
     - Drop sections after the section that it's `to` point is within firs after our fir.
 
     - NOTE: In both case setion's `to` point is taken into account.
-    """
 
+    """
     # Check if neighbor FIR is valid
     if neighbor_fir is None:
         err["integrity_error"].append(
-            errors.BOUNDARY_DETERMINATION_ERROR_NO_ADJACENT_FIRS.format(entry_or_exit, our_fir)
+            errors.BOUNDARY_DETERMINATION_ERROR_NO_ADJACENT_FIRS.format(entry_or_exit, our_fir),
         )
         return []
 
@@ -63,7 +65,7 @@ def _get_essential_route_portion(
     common_boundaries = set(our_fir.boundary_points).intersection(set(neighbor_fir.boundary_points))
     if not common_boundaries:
         err["integrity_error"].append(
-            errors.BOUNDARY_DETERMINATION_ERROR_NONADJACENT_FIR_OR_NO_BOUNDARY.format(neighbor_fir, our_fir)
+            errors.BOUNDARY_DETERMINATION_ERROR_NONADJACENT_FIR_OR_NO_BOUNDARY.format(neighbor_fir, our_fir),
         )
         return []
 
@@ -82,12 +84,18 @@ def _get_essential_route_portion(
     # Iterate over flight route sections to find essential portion
     for index, section in enumerate(fpl_route):
         point_firs = existing_points.get(section["to"], set())
-        if entry_or_exit == "Entry" and not previous_firs_indicators.intersection(point_firs):
-            if section["via"] not in ("", "DCT"):
-                return fpl_route[index:]
-        elif entry_or_exit == "Exit" and next_firs_indicators.intersection(point_firs):
-            if section["via"] not in ("", "DCT"):
-                return fpl_route[: index + 1]
+        if (
+            entry_or_exit == "Entry"
+            and not previous_firs_indicators.intersection(point_firs)
+            and section["via"] not in ("", "DCT")
+        ):
+            return fpl_route[index:]
+        if (
+            entry_or_exit == "Exit"
+            and next_firs_indicators.intersection(point_firs)
+            and section["via"] not in ("", "DCT")
+        ):
+            return fpl_route[: index + 1]
 
     # No essential portion found, add error
     err["integrity_error"].append(errors.BOUNDARY_DETERMINATION_ERROR.format(entry_or_exit, our_fir))
@@ -101,24 +109,26 @@ def _set_route_boundaries(
     entry_or_exit,
     err,
 ) -> list[dict]:
-    """
-    Set FIR boundaries for the flight planned route sections within our FIR.
+    """Set FIR boundaries for the flight planned route sections within our FIR.
 
     Args:
-    - route_portion_to_be_checked (list[dict]): Route portion to be checked.
-    - existing_sections_dict (dict): Existing route sections dictionary.
-    - neighbor_fir (FIR): Neighbor FIR object.
-    - entry_or_exit (str): Entry or Exit point.
-    - err (dict): Dictionary to store error messages.
+    ----
+        route_portion_to_be_checked (list[dict]): Route portion to be checked.
+        existing_sections_dict (dict): Existing route sections dictionary.
+        neighbor_fir (FIR): Neighbor FIR object.
+        entry_or_exit (str): Entry or Exit point.
+        err (dict): Dictionary to store error messages.
 
     Returns:
-    - list[dict]: Route portion with boundaries set.
+    -------
+        list[dict]: Route portion with boundaries set.
 
     Set `from` point of first section and `to` point of last section to FIR boundary points.
 
     Assuming given route_portion_to_be_checked is already limited to sections within or crossing our FIR,
     this function will attempt to set actual boundary points as initial/last points to the appropriate section
     the ideas is to use the common boundary points between two FIRs and the boundary route.
+
     """
     boundary_route_indicator, to_or_from = (
         (route_portion_to_be_checked[0]["via"], "from")
@@ -149,66 +159,90 @@ def _set_route_boundaries(
 
     err["integrity_error"].append(
         errors.BOUNDARY_DETERMINATION_ERROR_FROM_TO_FIR_ON_ROUTE.format(
-            entry_or_exit, to_or_from, neighbor_fir, boundary_route_indicator
-        )
+            entry_or_exit,
+            to_or_from,
+            neighbor_fir,
+            boundary_route_indicator,
+        ),
     )
     return []
 
 
-def normalizer(
-    fpl: dict, mentioned_points_in_fpl: list[str], route_portion_to_be_checked: list[dict], err: dict
-) -> tuple[list[dict], dict[str, set[str]], dict[tuple, RouteSection], dict[str, FIR]]:
-    """
-    Normalize the flight planned route within our FIR.
+def _check_fir_is_active_and_set_points_fir(firs_dict, err):
+    """Check the activity status of FIRs and collect existing points associated with FIRs.
+
+    This method iterates over a dictionary of FIR objects (`firs_dict`) to validate their activity status.
+    For each FIR, if it is inactive (`is_active` is False), an integrity error message is appended to the
+    `err` dictionary.
+
+    Additionally, this method builds a dictionary (`all_existing_points`) mapping each existing point's
+    indicator to a set of FIR indicators that include this point.
 
     Args:
-    - fpl (dict): Flight plan details.
-    - mentioned_points_in_fpl (list[str]): Mentioned points in the flight plan.
-    - route_portion_to_be_checked (list[dict]): Route portion to be checked.
-    - err (dict): Dictionary to store error messages.
+    ----
+        firs_dict (dict): A dictionary mapping FIR identifiers to FIR objects.
+        err (dict): A dictionary to collect error messages.
 
     Returns:
-    - tuple: Tuple containing normalized route, existing points, and existing route sections.
+    -------
+        dict[str, set[str]]: A dictionary where keys are point indicators and values are sets of FIR
+                             indicators that include each respective point.
 
-    Drops the unessential portion of flight planned route to our FIR and returns the
-    normalized FPL route-sections list along with database route sections instances which are converted to
-    dictionary to optimize database querying. In cases of failure to limit the route, the err dict gets
-    updated with essential messages and two empty lists are returned. If the flight is domestic, the route
-    gets no changes but the database sections will be fetched and returned along with the unchanged route.
+    Example:
+    -------
+        # Assume `firs_dict` is a dictionary of FIR objects and `err` is an error collection dictionary
+        existing_points = _check_fir_is_active_and_set_points_fir(firs_dict, err)
 
-    - It's designed purposefully to have more Python code, especially multiple if statements on domestic
-    departure/destination, to avoid multiple DB hits and use cached data instead.
+    Notes:
+    -----
+        - Inactive FIRs trigger integrity errors.
+        - This method populates `all_existing_points` based on FIR-point associations.
+        - The returned dictionary (`all_existing_points`) facilitates point-FIR relationship checks.
+
     """
+    all_existing_points: dict[str, set[str]] = {}
+    for fir in firs_dict.values():
+        if not fir.is_active:
+            err["integrity_error"].append(errors.FIR_INACTIVE.format(fir))
+        for point in fir.all_points:
+            all_existing_points.setdefault(point.indicator, set()).add(fir.indicator)
+    return all_existing_points
 
-    domestic_departure = fpl.get("domestic_departure", False)
-    domestic_destination = fpl.get("domestic_destination", False)
-    our_fir_indicator_2letters = settings.FIR_INDICATOR[:2]
 
-    firs_indicators_first_2letters = {our_fir_indicator_2letters}
-    if fpl.get("eet", False):
-        firs_indicators_first_2letters.update(eet.strip()[:2] for eet in fpl["eet"].split() if eet)
+def _retrieve_firs(firs_indicators_first_2letters, mentioned_points_in_fpl):
+    """Retrieve FIRs (Flight Information Regions) based on provided indicators.
 
-        if not domestic_departure:
-            eets = fpl["eet"].split(settings.FIR_INDICATOR)
-            try:
-                previous_fir_indicator_2letters = eets[0].strip().split()[-1].strip()[:2]
-            except IndexError:
-                previous_fir_indicator_2letters = fpl["departure_ad"][:2]
-            firs_indicators_first_2letters.add(previous_fir_indicator_2letters)
+    This function queries FIRs from the database based on the first two letters of their indicators,
+    and also retrieves specific points associated with these FIRs as either boundary points or points
+    mentioned in a Flight Plan (FPL) route.
 
-        if not domestic_destination:
-            eets = fpl["eet"].split(settings.FIR_INDICATOR)
-            try:
-                next_fir_indicator_2letters = eets[1].strip().split()[1].strip()[:2]
-            except IndexError:
-                next_fir_indicator_2letters = "XQ"  # NOTE: FIR indicators can't start with I, J, X, Q.
-            firs_indicators_first_2letters.add(next_fir_indicator_2letters)
+    Args:
+    ----
+        firs_indicators_first_2letters (list of str): List of the first two letters of FIRs to retrieve.
+        mentioned_points_in_fpl (list of str): List of points mentioned in the FPL route.
 
-    all_firs = FIR.objects.filter(
+    Returns:
+    -------
+        QuerySet: A QuerySet of FIR objects matching the provided criteria.
+
+    Example Usage:
+        # Retrieve FIRs starting with 'LF' and points 'ABC' and 'XYZ' mentioned in FPL
+        firs = _retrieve_firs(['LF'], ['ABC', 'XYZ'])
+
+    Note:
+    ----
+        - FIRs are queried based on a list of the first two letters of their indicators.
+        - Boundary points of the FIRs are pre-fetched and stored in the 'boundary_points' attribute of each
+          FIR.
+        - All points mentioned in the FPL route are pre-fetched and stored in the 'all_points' attribute of
+          each FIR.
+
+    """
+    return FIR.objects.filter(
         Q(
             *[("indicator__startswith", first_2letters) for first_2letters in firs_indicators_first_2letters],
             _connector=Q.OR,
-        )
+        ),
     ).prefetch_related(
         Prefetch(
             "points",
@@ -222,47 +256,101 @@ def normalizer(
         ),
     )
 
-    FIRs = {fir.indicator[:2]: fir for fir in all_firs}
 
-    all_existing_points: dict[str, set[str]] = dict()
-    for _, fir in FIRs.items():
-        if not fir.is_active:
-            err["integrity_error"].append(errors.FIR_INACTIVE.format(fir))
-        for point in fir.all_points:
-            all_existing_points.setdefault(point.indicator, set()).add(fir.indicator)
+def normalizer(  # noqa:C901
+    fpl: dict,
+    mentioned_points_in_fpl: list[str],
+    route_portion_to_be_checked: list[dict],
+    err: dict,
+) -> tuple[list[dict], dict[str, set[str]], dict[tuple, RouteSection], dict[str, FIR]]:
+    """Normalize the flight planned route within our FIR.
 
-    if not domestic_departure or not domestic_destination:
-        our_fir = FIRs.get(our_fir_indicator_2letters, None)
+    Args:
+    ----
+        fpl (dict): Flight plan details.
+        mentioned_points_in_fpl (list[str]): Mentioned points in the flight plan.
+        route_portion_to_be_checked (list[dict]): Route portion to be checked.
+        err (dict): Dictionary to store error messages.
 
-        if not domestic_departure:
-            previous_fir = FIRs.get(previous_fir_indicator_2letters, None)
-            route_portion_to_be_checked = _get_essential_route_portion(
-                our_fir,
-                previous_fir,
-                route_portion_to_be_checked,
-                all_existing_points,
-                "Entry",
-                fpl.get("eet", ""),
-                err,
-            )
-            if not route_portion_to_be_checked:
-                # Unable to determine route portion
-                return [], {}, {}, {}
+    Returns:
+    -------
+        tuple: Tuple containing normalized route, existing points, and existing route sections.
 
-        if not domestic_destination:
-            next_fir = FIRs.get(next_fir_indicator_2letters, None)
-            route_portion_to_be_checked = _get_essential_route_portion(
-                our_fir,
-                next_fir,
-                route_portion_to_be_checked,
-                all_existing_points,
-                "Exit",
-                fpl.get("eet", ""),
-                err,
-            )
-            if not route_portion_to_be_checked:
-                # Unable to determine route portion
-                return [], {}, {}, {}
+    Drops the unessential portion of flight planned route to our FIR and returns the
+    normalized FPL route-sections list along with database route sections instances which are converted to
+    dictionary to optimize database querying. In cases of failure to limit the route, the err dict gets
+    updated with essential messages and two empty lists are returned. If the flight is domestic, the route
+    gets no changes but the database sections will be fetched and returned along with the unchanged route.
+
+    - It's designed purposefully to have more Python code, especially multiple if statements on domestic
+    departure/destination, to avoid multiple DB hits and use cached data instead.
+
+    """
+    domestic_departure = fpl.get("domestic_departure", False)
+    domestic_destination = fpl.get("domestic_destination", False)
+
+    unable_to_normalize = [], {}, {}, {}
+
+    if "eet" not in fpl and (not domestic_departure or not domestic_destination):
+        return unable_to_normalize
+
+    our_fir_indicator_2letters = settings.FIR_INDICATOR[:2]
+
+    firs_indicators_first_2letters = {our_fir_indicator_2letters}
+
+    if "eet" in fpl:
+        firs_indicators_first_2letters.update(eet.strip()[:2] for eet in fpl["eet"].split() if eet)
+
+        eets = fpl["eet"].split(settings.FIR_INDICATOR)
+
+    if not domestic_departure:
+        try:
+            previous_fir_indicator_2letters = eets[0].strip().split()[-1].strip()[:2]
+        except IndexError:
+            previous_fir_indicator_2letters = fpl["departure_ad"][:2]
+        firs_indicators_first_2letters.add(previous_fir_indicator_2letters)
+
+    if not domestic_destination:
+        try:
+            next_fir_indicator_2letters = eets[1].strip().split()[1].strip()[:2]
+        except IndexError:
+            next_fir_indicator_2letters = "XQ"  # NOTE: FIR indicators can't start with I, J, X, Q.
+        firs_indicators_first_2letters.add(next_fir_indicator_2letters)
+
+    all_firs = _retrieve_firs(firs_indicators_first_2letters, mentioned_points_in_fpl)
+
+    firs_dict = {fir.indicator[:2]: fir for fir in all_firs}
+    our_fir = firs_dict.get(our_fir_indicator_2letters)
+
+    all_existing_points = _check_fir_is_active_and_set_points_fir(firs_dict, err)
+
+    if not domestic_departure:
+        previous_fir = firs_dict.get(previous_fir_indicator_2letters)
+        route_portion_to_be_checked = _get_essential_route_portion(
+            our_fir,
+            previous_fir,
+            route_portion_to_be_checked,
+            all_existing_points,
+            "Entry",
+            fpl.get("eet", ""),
+            err,
+        )
+
+    if not domestic_destination and route_portion_to_be_checked:
+        next_fir = firs_dict.get(next_fir_indicator_2letters)
+        route_portion_to_be_checked = _get_essential_route_portion(
+            our_fir,
+            next_fir,
+            route_portion_to_be_checked,
+            all_existing_points,
+            "Exit",
+            fpl.get("eet", ""),
+            err,
+        )
+
+    if not route_portion_to_be_checked:
+        # Unable to determine route portion
+        return unable_to_normalize
 
     fpl_mentioned_routes = {
         section["via"]
@@ -276,7 +364,7 @@ def normalizer(
             & (
                 Q(point1__fir__indicator__startswith=our_fir_indicator_2letters)
                 | Q(point2__fir__indicator__startswith=our_fir_indicator_2letters)
-            )
+            ),
         )
         .distinct()
         .select_related("route", "point1", "point2")
@@ -294,11 +382,8 @@ def normalizer(
             "Entry",
             err,
         )
-        if not route_portion_to_be_checked:
-            # Unable to determine route portion
-            return [], {}, {}, {}
 
-    if not domestic_destination:
+    if not domestic_destination and route_portion_to_be_checked:
         route_portion_to_be_checked = _set_route_boundaries(
             route_portion_to_be_checked,
             existing_sections_dict,
@@ -306,12 +391,11 @@ def normalizer(
             "Exit",
             err,
         )
-        if not route_portion_to_be_checked:
-            # Unable to determine route portion
-            return [], {}, {}, {}
 
     if not existing_sections_dict:
-        err["integrity_error"].append(errors.ROUTE_PORTION_DETERMINATION_ERROR.format(our_fir))
-        return [], {}, {}, {}
+        err["integrity_error"].append(
+            errors.ROUTE_PORTION_DETERMINATION_ERROR.format(our_fir),
+        )
+        return unable_to_normalize
 
-    return route_portion_to_be_checked, all_existing_points, existing_sections_dict, FIRs
+    return route_portion_to_be_checked, all_existing_points, existing_sections_dict, firs_dict

@@ -15,8 +15,11 @@ class CurfewAdmin(AerodromePropertiesAdmin):
             None,
             {
                 "fields": tuple(
-                    field.name for field in AerodromeProperties._meta.get_fields() if field.editable
-                )
+                    # ruff:noqa:SLF001
+                    field.name
+                    for field in AerodromeProperties._meta.get_fields()
+                    if field.editable
+                ),
             },
         ),
         (
@@ -35,7 +38,7 @@ class CurfewAdmin(AerodromePropertiesAdmin):
                         "military_il76",
                         "curfew_coordinated",
                     ),
-                )
+                ),
             },
         ),
     )

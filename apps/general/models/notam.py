@@ -1,5 +1,3 @@
-import datetime as dt
-
 from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator
 from django.db import models
@@ -21,7 +19,7 @@ class NotamManager(models.Manager):
             .filter(is_active=True)
             .filter(
                 (models.Q(start_date__lte=datetime) & models.Q(end_date__gte=datetime))
-                | (models.Q(start_date__lte=datetime) & models.Q(end_date__isnull=True))
+                | (models.Q(start_date__lte=datetime) & models.Q(end_date__isnull=True)),
             )
         )
 
@@ -117,15 +115,8 @@ class Notam(AbstractBaseModel):
 
         for item in ("NOTAMR", "NOTAMC"):
             if item in self.number:
-                try:
-                    relevant_number = self.number.split(item)[1]
-                    self.relevant = Notam.objects.get(number=relevant_number)
-                except Notam.DoesNotExist:
-                    raise ValidationError(
-                        {"number": f"Relevant NOTAM matching number {relevant_number} does not exist."}
-                    ) from None
-                except Notam.MultipleObjectsReturned as err:
-                    raise ValidationError({"number": str(err)}) from None
+                relevant_number = self.number.split(item)[1]
+                self.relevant = Notam.objects.get(number=relevant_number)
 
         item_a = self.item_a.strip()
         if len(item_a.split()) > 1:
@@ -136,26 +127,26 @@ class Notam(AbstractBaseModel):
                         "item_a": "Only one aerodrome may be indicated. "
                         "If more than one aerodrome is involved, separate NOTAM must be issued. "
                         "More than one FIR may be indicated when appropriate.",
-                    }
+                    },
                 )
 
         try:
-            self.start = dt.datetime.strptime(self.item_b, "%y%m%d%H%M")
-        except Exception:
+            self.start = timezone.datetime.strptime(self.item_b, "%y%m%d%H%M")
+        except (ValueError, TypeError):
             raise ValidationError(
                 {
                     "item_b": "A ten-digit date-time group (yymmddHHMM) in UTC must be indicated.",
-                }
+                },
             ) from None
 
         if self.item_c != "PERM":
             try:
-                self.end = dt.datetime.strptime(self.item_c[:10], "%y%m%d%H%M")
-            except Exception:
+                self.end = timezone.datetime.strptime(self.item_c[:10], "%y%m%d%H%M")
+            except (ValueError, TypeError):
                 raise ValidationError(
                     {
                         "item_c": "A ten-digit date-time group (yymmddHHMM) in UTC must be indicated.",
-                    }
+                    },
                 ) from None
 
         if self.end and self.start >= self.end:
@@ -163,7 +154,7 @@ class Notam(AbstractBaseModel):
                 {
                     "item_b": "Item B(Start date-time) must not be greater than Item C(End date-time).",
                     "item_c": "Item B(Start date-time) must not be greater than Item C(End date-time).",
-                }
+                },
             )
 
     def save(self, *args, **kwargs) -> None:
@@ -179,6 +170,7 @@ class Notam(AbstractBaseModel):
         if self.notam_type == "NOTAMC":
             self.relevant.already_has_been_cancelled = True
             updated_fields.append("already_has_been_cancelled")
+
         self.relevant.is_active = False
         self.relevant.save(update_fields=updated_fields)
 

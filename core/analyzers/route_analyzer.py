@@ -1,24 +1,24 @@
-"""Route Item Related Checks Module
-in this module:
-    🗸 Determine portion of the route needs to be checked
-    🗸 Routes/Points existence & active/us
-    🗸 Routes and Points correlation
-    🗸 Route-Sections adherence
-    🗸 Route Schemes adherence
+"""Route Item Related Checks Module.
 
-In order to be able to check the route item there are 4 possible situations as follows:
-   1. Both departure and destination of the flight are within our FIR, so it's a domestic flight
-   2. Only departure is inside our FIR, so it's a domestic departure or domestic_dep
-   3. Only destination is inside our FIR, so it's a domestic destination or domestic_dest
-   4. Neither departure nor destination aren't inside our FIR, so it's an overflight
+This module handles the following tasks related to route items:
+    🗸 Determine the portion of the route that needs to be checked.
+    🗸 Check existence and status (active/inactive) of routes/points.
+    🗸 Correlate routes and points.
+    🗸 Validate adherence to route sections.
+    🗸 Validate adherence to route schemes.
 
-based on these situations here we have to analyse the whole route or a portion there of which is located
-within our FIR. Since for a flight conducting international operation it is mandatory to use EET in
-item 18 of its flight plan we can take advantages of this and looking at previous or next FIRs in EET
-in respect of our FIR we can determine the entry route/point and/or exit route/point
+There are four possible flight situations to consider:
+   1. Domestic Flight: Both departure and destination are within our FIR.
+   2. Domestic Departure (domestic_dep): Only the departure is inside our FIR.
+   3. Domestic Destination (domestic_dest): Only the destination is inside our FIR.
+   4. Overflight: Neither departure nor destination is inside our FIR.
 
-* if flight is departed from an adjacent FIR in the EET it have to start with our FIR so the previous FIR
-have to be determined using the first two letters of the departure Ad. and the FIR queryset from database.
+For flights conducting international operations, EET (Estimated Elapsed Time) in item 18 of the flight plan
+is mandatory. By examining previous or next FIRs based on EET relative to our FIR, we can determine
+the entry and exit route/point of the flight.
+
+NOTE: If a flight departs from an adjacent FIR, according to the EET, it should start within our FIR.
+The previous FIR can be determined using the first two letters of the departure Aerodrome.
 """
 
 import copy
@@ -44,21 +44,25 @@ def find_all_nested_real_sections(fpl_route_section: dict[str, str], db_sections
     db_route_sections = {tp for tp in db_sections if tp[0] == route}
 
     # Create an undirected graph
-    G = nx.Graph()
+    graph = nx.Graph()
 
     # Add edges to the graph representing route sections
     for tp in db_route_sections:
-        G.add_edge(tp[1], tp[2], route=tp[0])
+        graph.add_edge(tp[1], tp[2], route=tp[0])
 
     try:
         # Use shortest_path to find the path
-        path = nx.shortest_path(G, source=start_point, target=end_point)
+        path = nx.shortest_path(graph, source=start_point, target=end_point)
 
     except nx.NetworkXException:
         raise ValidationError(errors.PATH_NOT_FOUND.format(start_point, end_point, route)) from None
 
     # Filter out edges to get the actual sections
-    return [(G[u][v]["route"], u, v) for u, v in zip(path[:-1], path[1:], strict=False) if G.has_edge(u, v)]
+    return [
+        (graph[u][v]["route"], u, v)
+        for u, v in zip(path[:-1], path[1:], strict=False)
+        if graph.has_edge(u, v)
+    ]
 
 
 def eet_is_correct(data, err: dict[str, list[str]]) -> bool:
@@ -109,7 +113,9 @@ def retrieve_points_used_to_locate_ad_in_item18(data):
 
 
 def retrieve_point_name_from_fpl_route_section(
-    fpl_route: list[dict[str, str]], departure: str, destination: str
+    fpl_route: list[dict[str, str]],
+    departure: str,
+    destination: str,
 ) -> set[str]:
     points_mentioned_in_route = set()
     for route_section in fpl_route:
@@ -129,7 +135,7 @@ def check_points_exists(points: set[str], existing_points: dict[str, set[str]], 
                     section["nonessential"] = True
 
 
-def route_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: dict[str, list[str]]):
+def route_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: dict[str, list[str]]):  # noqa:C901
     """Analyzes the flight-planned route.
 
     The flight-planned route consists of points and routes (and speed/level changes, etc.).
@@ -140,7 +146,6 @@ def route_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: dict[
         2. RouteSection: validate route-section adherence & limiting route to boundaries if required.
         3. RouteScheme: validate route-scheme (TOS) adherence.
     """
-
     domestic_departure = fpl["domestic_departure"]
     domestic_destination = fpl["domestic_destination"]
 
@@ -152,7 +157,9 @@ def route_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: dict[
 
     # * Step 1.1. Normalize the route
     points_mentioned_in_route = retrieve_point_name_from_fpl_route_section(
-        fpl["route"], fpl["departure_ad"], fpl["destination_ad"]
+        fpl["route"],
+        fpl["departure_ad"],
+        fpl["destination_ad"],
     )
 
     # In addition to points mentioned in the route section, there might be some points in item18 of the FPL
@@ -161,8 +168,11 @@ def route_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: dict[
     mentioned_points_in_fpl = set(points_mentioned_in_route).union(points_used_to_locate_ads_in_item18)
 
     # using copy.deepcopy to avoid unexpected behaviors due to mutability of lists and dicts in python
-    route_portion_to_be_checked, all_existing_points, existing_sections_dict, FIRs = normalizer(
-        fpl, mentioned_points_in_fpl, copy.deepcopy(fpl["route"]), err
+    route_portion_to_be_checked, all_existing_points, all_existing_sections, firs = normalizer(
+        fpl,
+        mentioned_points_in_fpl,
+        copy.deepcopy(fpl["route"]),
+        err,
     )
 
     if not route_portion_to_be_checked:
@@ -170,7 +180,9 @@ def route_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: dict[
 
     # * Step 1.2. Check existence of points within our FIR
     fpl_points_in_route_portion_within_our_fir = retrieve_point_name_from_fpl_route_section(
-        route_portion_to_be_checked, fpl["departure_ad"], fpl["destination_ad"]
+        route_portion_to_be_checked,
+        fpl["departure_ad"],
+        fpl["destination_ad"],
     )
 
     # if is_nondomestic entry & exit points are obtained from database but are not in all_existing_points
@@ -189,7 +201,7 @@ def route_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: dict[
         if "nonessential" not in route_section or (route_section["via"] not in ("", "DCT"))
     ]
 
-    existing_routes = set(tp[0] for tp in existing_sections_dict)
+    existing_routes = {tp[0] for tp in all_existing_sections}
     for route_section in fpl_route_sections:
         if route_section["via"] not in existing_routes:
             route_section["nonessential"] = True
@@ -197,10 +209,10 @@ def route_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: dict[
 
     # * Step 2.2. Check route section adherence
     # 1. A section from filled flightplan may encompasses more than one database route-section. (2 below)
-    fpl_section_and_its_nested_real_sections = list()
+    fpl_section_and_its_nested_real_sections = []
     for fpl_route_section in fpl_route_sections:
         try:
-            real_sections = find_all_nested_real_sections(fpl_route_section, existing_sections_dict)
+            real_sections = find_all_nested_real_sections(fpl_route_section, all_existing_sections)
         except ValidationError as exp:
             err["integrity_error"].append(exp.message)
         else:
@@ -209,12 +221,10 @@ def route_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: dict[
     for fpl_route_section, real_sections in fpl_section_and_its_nested_real_sections:
         # 2. loop through database route-sections encompassed by filled flightplan route-section
         for section in real_sections:
-            # section = (route_name, p1_name, p2_name)
-            db_section = existing_sections_dict[section]
+            # section is equal to (route_name, p1_name, p2_name)
+            db_section = all_existing_sections[section]
             validate_fpl_route_section(fpl_route_section, db_section, fpl, err)
 
-    ...
     # * Step 2.3. Check route-scheme (TOS) adherence
-    ...
 
-    return all_existing_points, existing_sections_dict, FIRs
+    return all_existing_points, all_existing_sections, firs

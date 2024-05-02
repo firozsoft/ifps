@@ -181,13 +181,6 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
-        "warnings": {
-            "level": "WARNING",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": BASE_DIR / "logs/warnings.log",
-            "maxBytes": 10 * 1024 * 1024,  # Rotate after 10 MB
-            "backupCount": 5,
-        },
         "errors": {
             "level": "ERROR",
             "class": "logging.handlers.RotatingFileHandler",
@@ -205,18 +198,16 @@ LOGGING = {
     },
     "loggers": {
         "django": {
-            "handlers": ["console", "warnings"],
+            "handlers": ["console"],
             "level": "INFO",
             "propagate": True,
         },
         "": {
             "handlers": [
-                "console",
-                "warnings",
                 "errors",
                 "criticals",
-            ],  # Capture all levels
-            "level": "DEBUG",
+            ],
+            "level": "ERROR",
             "propagate": True,
         },
     },
@@ -274,8 +265,7 @@ AXES_COOLOFF_TIME = 0.25  # A quarter of an hour
 
 # Specifies a template to render when a user is locked out.
 # Template receives `cooloff_timedelta`, `cooloff_time`, `username` and `failure_limit` as context variables.
-# AXES_LOCKOUT_TEMPLATE = ""
-# TODO: create a good looking template or even a view for that
+AXES_LOCKOUT_TEMPLATE = "pages/lockout.html"
 
 # If True, enable writing login failure logs to database,
 # so you will have every user login trail for unsuccessful user authentication.
@@ -288,6 +278,8 @@ AXES_RESET_ON_SUCCESS = True
 # AccessLog records that persist until removed from the database manually or
 # automatically after their cool offs expire (checked on each login event).
 AXES_HANDLER = "axes.handlers.database.AxesDatabaseHandler"
+
+# AXES_ENABLED = False  # Disable Django-axes #noqa:ERA001
 
 if DEBUG:
     ALLOWED_HOSTS = ["*"]

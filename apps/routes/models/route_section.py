@@ -35,14 +35,14 @@ class RouteSection(AbstractBaseModel):
         verbose_name="Second Point",
         related_name="as_p2_sections",
     )
-    # line = models.LineStringField(null=True, blank=True)
+    # line = models.LineStringField(blank=True)
     direction = models.CharField(
         max_length=7,
         choices=Direction.choices,
         default=Direction.TO_FROM,
         help_text=(
-            "Direction between first & second points (either `from` p1 toward p2 Or `to` p1 coming out of p2). "
-            f"Choices: {', '.join(tp[1] for tp in Direction.choices)}"
+            "Direction between first & second points (either `from` p1 toward p2 Or "
+            f"`to` p1 coming out of p2). Choices: {', '.join(tp[1] for tp in Direction.choices)}"
         ),
     )
     distance = models.DecimalField("Distance(NM)", default=1, decimal_places=3, max_digits=4)
@@ -53,13 +53,13 @@ class RouteSection(AbstractBaseModel):
     upper_limit_altitude = FlightLevelField(default=999, null=True, blank=True)
     upper_limit_flight_level = FlightLevelField(default=999)
     minimum_rnav_flight_level = FlightLevelField(null=True, blank=True)
-    rnav_rnp = models.CharField("RNAV/RNP Type", max_length=50, null=True, blank=True)
+    rnav_rnp = models.CharField("RNAV/RNP Type", max_length=50, blank=True)
     mag_track = models.DecimalField(decimal_places=1, max_digits=4, null=True, blank=True)
     lateral_limit = models.PositiveSmallIntegerField("Lateral limit(NM)", null=True, blank=True)
     track_coloration = models.BooleanField(default=True, choices=YesNo)
     domestic_flights_only = models.BooleanField(default=False, choices=YesNo)
     not_for_over_flights = models.BooleanField(default=False, choices=YesNo)
-    remark = models.TextField(null=True, blank=True)
+    remark = models.TextField(blank=True)
 
     class Meta:
         ordering = ["route", "point1", "point2"]
@@ -76,18 +76,17 @@ class RouteSection(AbstractBaseModel):
         return f"{self.route} btw {self.point1} & {self.point2}"
 
     def clean(self):
-        if all((self.point1, self.point2)):
-            if (
-                RouteSection.objects.filter(
-                    Q(route=self.route) & (Q(point1=self.point1) | Q(point2=self.point2))
-                )
-                .exclude(pk=self.pk)  # Exclude current instance if it's being updated
-                .exists()
-            ):
-                raise ValidationError(
-                    message=(
-                        "There is another route-section which has the same "
-                        "first point or same second point for this route"
-                    ),
-                    code="unique_route_and_point1_or_point2_error",
-                )
+        if all((self.point1, self.point2)) and (
+            RouteSection.objects.filter(
+                Q(route=self.route) & (Q(point1=self.point1) | Q(point2=self.point2)),
+            )
+            .exclude(pk=self.pk)  # Exclude current instance if it's being updated
+            .exists()
+        ):
+            raise ValidationError(
+                message=(
+                    "There is another route-section which has the same "
+                    "first point or same second point for this route"
+                ),
+                code="unique_route_and_point1_or_point2_error",
+            )

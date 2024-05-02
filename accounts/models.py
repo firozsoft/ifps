@@ -12,11 +12,10 @@ class Group(BaseGroup):
 
 class UserManager(BaseUserManager):
     def _create_user(self, email, password, **extra_fields):
-        """
-        Create and save a user with the given email, and password.
-        """
+        """Create and save a user with the given email, and password."""
         if not email:
-            raise ValueError("Users must have an email address")
+            msg = "Users must have an email address"
+            raise ValueError(msg)
         email = self.normalize_email(email)
         extra_fields.setdefault("is_active", True)
         user = self.model(email=email, **extra_fields)
@@ -34,22 +33,26 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault("is_superuser", True)
 
         if extra_fields.get("is_staff") is not True:
-            raise ValueError("Superuser must have is_staff=True.")
+            msg = "Superuser must have is_staff=True."
+            raise ValueError(msg)
         if extra_fields.get("is_superuser") is not True:
-            raise ValueError("Superuser must have is_superuser=True.")
+            msg = "Superuser must have is_superuser=True."
+            raise ValueError(msg)
 
         return self._create_user(email, password, **extra_fields)
 
     def with_perm(self, perm, is_active=True, include_superusers=True, backend=None, obj=None):
         if backend is None:
-            backends = auth._get_backends(return_tuples=True)
+            backends = auth._get_backends(return_tuples=True)  # noqa:SLF001
             if len(backends) == 1:
                 backend, _ = backends[0]
             else:
-                raise ValueError(
+                msg = (
                     "You have multiple authentication backends configured and "
                     "therefore must provide the `backend` argument."
                 )
+                raise ValueError(msg)
+
         elif not isinstance(backend, str):
             raise TypeError("backend must be a dotted import path string (got %r)." % backend)
         else:
@@ -113,17 +116,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name = "user"
         verbose_name_plural = "users"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.email
 
-    def clean(self):
+    def clean(self) -> None:
         super().clean()
         self.email = self.__class__.objects.normalize_email(self.email)
 
     def get_full_name(self):
-        """
-        Return the first_name plus the last_name, with a space in between.
-        """
+        """Return the first_name plus the last_name, with a space in between."""
         full_name = f"{self.first_name} {self.last_name}"
         return full_name.strip()
 
@@ -131,6 +132,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         """Return the short name for the user."""
         return self.first_name
 
-    def email_user(self, subject, message, from_email=None, **kwargs):
+    def email_user(self, subject, message, from_email=None, **kwargs) -> None:
         """Send an email to this user."""
         send_mail(subject, message, from_email, [self.email], **kwargs)

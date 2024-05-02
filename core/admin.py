@@ -26,10 +26,10 @@ class ImportRecordAdmin(admin.ModelAdmin):
     readonly_fields = ["was_successful"]
     form = ImportRecordForm
 
-    def has_change_permission(self, *args, **kwargs):
+    def has_change_permission(self, *_, **__):
         return False
 
-    def has_delete_permission(self, *args, **kwargs):
+    def has_delete_permission(self, *_, **__):
         return False
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):

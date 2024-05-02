@@ -1,14 +1,13 @@
-"""Helper functions module"""
+"""Helper functions module."""
 
 import io
-import os
 import zipfile
+from collections.abc import Callable
 from itertools import product
 from pathlib import Path
-from typing import Callable, Union
 
 from django.apps import apps as django_all_apps
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django.forms import model_to_dict
 from openpyxl import Workbook
@@ -37,73 +36,75 @@ def meters_to_flight_level(altitude_meters: float):
 
 
 def generate_routes_from_route_scheme_text(string: str) -> list[str]:
-    """Generate routes from route scheme text"""
-    return list(map(" ".join, product(*map(lambda s: s.split("/"), string.split()))))
+    """Generate routes from route scheme text."""
+    return list(map(" ".join, product(*(s.split("/") for s in string.split()))))
 
 
 def get_app_models(app_name: str) -> dict[str, models.Model]:
-    """
-    Retrieve all models from the specified app.
+    """Retrieve all models from the specified app.
 
     Args:
+    ----
         app_name (str): The name of the app.
 
     Returns:
+    -------
         dict: A dictionary mapping model names to model classes.
+
     """
-    all_models = {
+    return {
         model.__name__.lower(): model
         for model in django_all_apps.get_models()
-        if model._meta.app_config.name.startswith(app_name)
+        if model._meta.app_config.name.startswith(app_name)  # noqa: SLF001
     }
-    return all_models
 
 
 def get_app_exportable_models(app_name: str) -> dict[str, models.Model]:
-    """
-    Retrieve all models from the specified app except those have restrictions to export all instances.
+    """Retrieve all models from the specified app except those have restrictions to export all instances.
 
     Args:
+    ----
         app_name (str): The name of the app.
 
     Returns:
+    -------
         dict: A dictionary mapping model names to model classes.
+
     """
-    all_models = {
-        key: value for key, value in get_app_models(app_name).items() if key not in skip_export_models()
-    }
-    return all_models
+    return {key: value for key, value in get_app_models(app_name).items() if key not in skip_export_models()}
 
 
 def get_model_class_and_fields(
     model_name: str,
     qs: models.QuerySet = None,
 ) -> tuple[models.Model, list[models.Field], list[str], list[str]]:
-    """
-    Retrieve the model class and its fields given a model name.
+    """Retrieve the model class and its fields given a model name.
 
     Args:
+    ----
         model_name (str): The name of the model.
+        qs (models.QuerySet): Optional, The queryset to be exported.
 
     Returns:
+    -------
         tuple: A tuple containing the model class, its fields, expected fields, and required fields.
 
     Raises:
+    ------
         LookupError: If the specified model does not exist.
+
     """
-    if qs is None:
-        model_names_and_classes = get_app_exportable_models("apps.")
-    else:
-        model_names_and_classes = get_app_models("apps.")
+    model_names_and_classes = get_app_exportable_models("apps.") if qs is None else get_app_models("apps.")
 
     model_class = model_names_and_classes.get(model_name, None)
     if model_class is None:
-        raise LookupError(f"No model with name '{model_name}'.")
+        msg = f"No model with name '{model_name}'."
+        raise LookupError(msg)
 
     # Get all editable and non-auto-created fields of the model
     model_fields = [
         field
-        for field in model_class._meta.get_fields(include_parents=True)
+        for field in model_class._meta.get_fields(include_parents=True)  # noqa: SLF001
         if field.editable and not field.auto_created
     ]
 
@@ -111,23 +112,24 @@ def get_model_class_and_fields(
     expected_fields = [field.verbose_name.upper() for field in model_fields]
 
     # Extract verbose names of the required fields
-    required_fields = [field.verbose_name.upper() for field in model_fields if not field.null]
+    required_fields = [field.verbose_name.upper() for field in model_fields if not field.blank]
 
     return model_class, model_fields, expected_fields, required_fields
 
 
 def get_model_field_by_uppercased_verbose_name(
-    model_fields: list[models.Field], uppercased_verbose_name: str
+    model_fields: list[models.Field],
+    uppercased_verbose_name: str,
 ) -> models.Field | None:
-    """Get model field by verbose name"""
+    """Get model field by verbose name."""
     for field in model_fields:
         if field.verbose_name.upper() == uppercased_verbose_name:
             return field
     return None
 
 
-def field_value_human_readable(field: models.Field, value: Union[str, list[str]]) -> Union[str, list[str]]:
-    """Convert field value to human-readable format"""
+def field_value_human_readable(field: models.Field, value: str | list[str]) -> str | list[str]:
+    """Convert field value to human-readable format."""
     if isinstance(value, list):
         return SEPARATOR.join([str(item) for item in value])
 
@@ -143,9 +145,10 @@ def field_value_human_readable(field: models.Field, value: Union[str, list[str]]
 
 
 def convert_human_readable_value_to_db_value(
-    field: models.Field, human_readable_value: str
-) -> Union[str, models.QuerySet]:
-    """Convert human-readable value to model value
+    field: models.Field,
+    human_readable_value: str,
+) -> str | models.QuerySet:
+    """Convert human-readable value to model value.
 
     Raises ValidationError if human-readable value is not valid
     """
@@ -162,7 +165,7 @@ def convert_human_readable_value_to_db_value(
             fields["indicator"] = parts[0]
         elif len(parts) == 3:
             name, type_display, usecase_display = parts
-            type = next(
+            nv_type = next(
                 choice_value
                 for choice_value, choice_label in NavAidType.choices
                 if choice_label == type_display
@@ -172,12 +175,13 @@ def convert_human_readable_value_to_db_value(
                 for choice_value, choice_label in NavAidUseCase.choices
                 if choice_label == usecase_display
             )
-            fields = dict(indicator=name, type=type, usecase=usecase)
+            fields = {"indicator": name, "type": nv_type, "usecase": usecase}
 
         try:
             return field.related_model.objects.get(**fields)
-        except Exception:
-            raise ValidationError(f"{field.related_model} with {fields} does not exists.") from None
+        except ObjectDoesNotExist as err:
+            msg = f"{field.related_model} with {fields} does not exists."
+            raise ValidationError(msg) from err
 
     if isinstance(field, models.ManyToManyField):
         indicators = [string.strip() for string in human_readable_value.split(SEPARATOR)]
@@ -187,33 +191,33 @@ def convert_human_readable_value_to_db_value(
 
 
 def get_column_names(sheet: Worksheet):
-    """
-    Get the column names from the header row of an Excel file.
+    """Get the column names from the header row of an Excel file.
 
     Args:
-        file_path (str): Path to the Excel file.
-        sheet_name (str): Name of the worksheet containing the data (default is 'Sheet1').
+    ----
+        sheet (str): The worksheet containing the data (default is 'Sheet1').
 
     Returns:
+    -------
         list: A list of column names.
+
     """
     # Get column names from the header row
-    column_names = [cell.value for cell in sheet[1]]
-
-    return column_names
+    return [cell.value for cell in sheet[1]]
 
 
 def check_null_values(sheet: Worksheet, column_name: str):
-    """
-    Check if a specific column has null values in an Excel file.
+    """Check if a specific column has null values in an Excel file.
 
     Args:
-        file_path (str): Path to the Excel file.
+    ----
         column_name (str): Name of the column.
-        sheet_name (str): Name of the worksheet containing the data (default is 'Sheet1').
+        sheet (str): The worksheet containing the data.
 
     Returns:
+    -------
         bool: True if the column has null values, False otherwise.
+
     """
     # Get the index of the column by searching for the column name in the first row
     for cell in sheet[1]:
@@ -221,7 +225,8 @@ def check_null_values(sheet: Worksheet, column_name: str):
             column_index = cell.column
             break
     else:
-        raise ValueError(f"Column '{column_name}' not found.")
+        msg = f"Column '{column_name}' not found."
+        raise ValueError(msg)
 
     # Iterate over the rows of the specified column
     for row in sheet.iter_rows(min_row=2, min_col=column_index, max_col=column_index):
@@ -234,48 +239,58 @@ def check_null_values(sheet: Worksheet, column_name: str):
 
 
 def validate_excel_sheet_data(
-    sheet: Worksheet, expected_columns: list[str], required_columns: list[str]
+    sheet: Worksheet,
+    expected_columns: list[str],
+    required_columns: list[str],
 ) -> None:
-    """
-    Checks if all expected columns are present in the given DataFrame
+    """Validate Excel file.
+
+    Check if all expected columns are present in the given DataFrame
     and also ensures there are no empty values in any required columns.
 
     Args:
-        df (pd.DataFrame): The DataFrame containing the data to validate.
+    ----
+        sheet (pd.DataFrame): The excel sheet containing the data to validate.
         expected_columns (list[str]): List of expected column names.
         required_columns (list[str]): List of required column names.
 
     Returns:
+    -------
         none: no return value.
 
     Raises:
+    ------
         ValidationError: If expected columns are missing or required columns have empty values.
-    """
 
+    """
     # Check for missing expected columns
     missing_cols = sorted(col for col in expected_columns if col not in get_column_names(sheet))
     if missing_cols:
-        raise ValidationError(f"Expected column(s) {missing_cols} are not found.")
+        msg = f"Expected column(s) {missing_cols} are not found."
+        raise ValidationError(msg)
 
     # Check for empty values in required columns
     null_cols = sorted(col for col in required_columns if check_null_values(sheet, col))
     if null_cols:
-        raise ValidationError(f"Required column(s) {null_cols} have empty values.")
+        msg = f"Required column(s) {null_cols} have empty values."
+        raise ValidationError(msg)
 
 
 def process_excel_sheet_data(sheet: Worksheet, model_fields: list[str], output: Callable[[str], None]):
-    """
-    Process data from an Excel file using openpyxl.
+    """Process data from an Excel file using openpyxl.
 
     Args:
+    ----
         output (Callable[[str], None]): A function for outputting text.
         sheet (Worksheet): The Excel worksheet containing the data.
         model_fields (list): List of model fields.
 
     Returns:
+    -------
         list: List[Dict] containing instances data extracted from the Excel file.
         dict: Dictionary containing instances ManyToMany field data.
         bool: True if any data was error-prone, False otherwise.
+
     """
     instances_data = []
     m2m_fields = {}
@@ -297,7 +312,8 @@ def process_excel_sheet_data(sheet: Worksheet, model_fields: list[str], output: 
                         # Only one M2M relation exists which is for BasePoint subclasses to FIR
                         if "INDICATOR" in row_as_dict:
                             m2m_fields[row_as_dict["INDICATOR"]] = convert_human_readable_value_to_db_value(
-                                field, value
+                                field,
+                                value,
                             )
                     else:
                         instance_data[field.name] = convert_human_readable_value_to_db_value(field, value)
@@ -312,15 +328,17 @@ def process_excel_sheet_data(sheet: Worksheet, model_fields: list[str], output: 
 
 
 def convert_data_to_excel(data: list[dict], expected_fields_for_excel: list[str]):
-    """
-    Convert data to Excel file using openpyxl.
+    """Convert data to Excel file using openpyxl.
 
     Args:
+    ----
         data (list): List of dictionaries containing the data.
         expected_fields_for_excel (list): List of expected column names.
 
     Returns:
+    -------
         io.BytesIO: BytesIO object containing the Excel file.
+
     """
     # Create a new workbook
     wb = Workbook()
@@ -350,7 +368,7 @@ def convert_data_to_excel(data: list[dict], expected_fields_for_excel: list[str]
 
 
 def model_to_excel_bytesio(model_name: str, qs: models.QuerySet = None) -> io.BytesIO:
-    """Convert model data to Excel file"""
+    """Convert model data to Excel file."""
     model_class, model_fields, expected_fields_for_excel, _ = get_model_class_and_fields(model_name, qs)
     exportable_fields = [model_field.name for model_field in model_fields]
 
@@ -365,7 +383,7 @@ def model_to_excel_bytesio(model_name: str, qs: models.QuerySet = None) -> io.By
 
     queryset = qs or model_class.objects.all()
 
-    if queryset.model._meta.model_name == "point":
+    if queryset.model._meta.model_name == "point":  # noqa: SLF001
         queryset = queryset.exclude(navaid__isnull=False)
 
     data = [
@@ -381,25 +399,26 @@ def model_to_excel_bytesio(model_name: str, qs: models.QuerySet = None) -> io.By
 
 def zipfile_saver(zip_content: bytes, output_dir: str, zip_filename: str):
     # Ensure the output directory exists, if not, create it
-    os.makedirs(output_dir, exist_ok=True)
+    Path.mkdir(Path(output_dir), exist_ok=True)
 
     # Combine the output directory and filename to create the full path
-    output_path = os.path.join(output_dir, zip_filename)
+    output_path = Path(output_dir) / zip_filename
 
     # Write the zip content to a file
-    with open(output_path, "wb") as f:
+    with Path(output_path).open("wb") as f:
         f.write(zip_content)
 
     return True
 
 
-def zipfile_extactor(zip_file_path, extract_dir: Path):
+def zipfile_extactor(zip_file_path, extract_dir: str):
     # Check if the zip file exists
-    if not os.path.exists(zip_file_path):
-        raise FileNotFoundError(f"Zip file '{zip_file_path}' not found")
+    if not Path(zip_file_path).exists():
+        msg = f"Zip file '{zip_file_path}' not found"
+        raise FileNotFoundError(msg)
 
     # Ensure the extraction directory exists, if not, create it
-    os.makedirs(extract_dir, exist_ok=True)
+    Path.mkdir(Path(extract_dir), exist_ok=True)
 
     # Open the zip file for reading
     with zipfile.ZipFile(zip_file_path, "r") as zip_ref:

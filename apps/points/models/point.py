@@ -23,11 +23,12 @@ class Point(BasePoint):
     def clean(self) -> None:
         super().clean()
         similar_points = Point.objects.filter(indicator=self.indicator).exclude(
-            pk=self.pk
+            pk=self.pk,
         )  # Exclude current instance if it's being updated
 
         # ignore navaids (they could have indicator douplication), hasattr checks existence of navaid specific attr
         if similar_points.exists() and any(
-            [True for similar_point in similar_points if not hasattr(similar_point, "type")]
+            True for similar_point in similar_points if not hasattr(similar_point, "type")
         ):
-            raise ValidationError("At least a point with the same indicator already exists.")
+            msg = "At least a point with the same indicator already exists."
+            raise ValidationError(msg)

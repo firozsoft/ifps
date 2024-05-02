@@ -5,9 +5,7 @@ from apps.general.forms import BasePointForm
 
 
 class BaseExportableImportableModel(ImportExportModelAdmin, ExportActionModelAdmin, admin.ModelAdmin):
-    """Just to be the base class for all import/export-able models"""
-
-    pass
+    """Just to be the base class for all import/export-able models."""
 
 
 class BasePointAdmin(BaseExportableImportableModel):

@@ -1,4 +1,5 @@
-"""PLEASE READ PANS-ATM APPENDIX 2
+"""PLEASE READ PANS-ATM APPENDIX 2.
+
 The instructions for the completion of the flight plan form is included in PANS-ATM Appendix 2
 the comments in this module below are also derived from that document but these comments are mostly
 limited to the code written in this mudole and not the hole logic to be developed.
@@ -133,7 +134,7 @@ EQUIPMENTS_CAPACITIES = r"^{equipments}\/{capacities}$".format(
 # Insert all estimated elapsed times in 4 figures (hours and minutes)
 # TODO: ZZZZ/AFIL and SPECIFY, in Item 18, the name and location of the aerodrome preceded by DEP/
 DEPARTURE_AD_TIME = r"^({ad}|AFIL|ZZZZ)(?P<eobt>((0|1)[0-9]|2[0-3])[0-5][0-9])$".format(
-    ad=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<departure_ad>")
+    ad=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<departure_ad>"),
 )
 
 
@@ -156,7 +157,8 @@ SPEED = r"^(?P<speed>(K(0|1)\d{3})|(N0\d{3})|(M(0\d\d|10\d)))$"
 LEVEL = r"^(?P<level>(F\d\d[0,5])|(S\d{3}0)|(A\d\d[0,5])|(M\d{4})|(VFR))$"
 
 SPEED_LEVEL = r"^{spd}{lvl}$".format(
-    spd=SPEED.replace(r"^", "").replace(r"$", ""), lvl=LEVEL.replace(r"^", "").replace(r"$", "")
+    spd=SPEED.replace(r"^", "").replace(r"$", ""),
+    lvl=LEVEL.replace(r"^", "").replace(r"$", ""),
 )
 
 
@@ -179,7 +181,7 @@ POINT = r"^(?!(DCT|IFR|VFR)$)(?P<point>[A-Z]{2,5}$)"
 
 # ? Bearing and distance from a reference point (point which has a designator)
 BEARING_DIST = r"^(?P<bearing_dist>({pnt})(([0-2]\d\d)|(3[0-5]\d))[0-2]\d\d)$".format(
-    pnt=POINT.replace(r"^", "").replace(r"$", "").replace("<point>", "<ref_point>")
+    pnt=POINT.replace(r"^", "").replace(r"$", "").replace("<point>", "<ref_point>"),
 )
 
 # ? Points that don't have assigned indicator - referred to as special point
@@ -214,8 +216,8 @@ CHANGE_FLT_RULE = r"^(?P<change_flt_rule>({sigp}(\/{splvl})?)\s+(VFR|IFR))$".for
 )
 
 # * 5- Cruise climb (maximum 28 characters)
-# letter C followed by an oblique stroke (/), a point as in 2 above followed by an oblique stroke, the speed, lower level, upper level or the word PLUS
-# C/SIG_POINT/SPEED_LEVEL(LEVEL|PLUS)
+# letter C followed by an oblique stroke (/), a point as in 2 above followed by an oblique stroke,
+# the speed, lower level, upper level or the word PLUS C/SIG_POINT/SPEED_LEVEL(LEVEL|PLUS)
 # Examples:  C/48N050W/M082F290F350, C/48N050W/M082F290PLUS, C/LN011032/M220F580F620
 CRUISE_CLIMB = r"^(?P<cruise_climb>C\/{sigp}\/{splvl}({lvl}|PLUS))$".format(
     sigp=SIG_POINT.replace(r"^", "").replace(r"$", ""),
@@ -275,128 +277,115 @@ RNP_SPC = r"^(?P<rnp_specification>(L1|O[1-4]|S[1-2]|T[1-2]){1,4})$"
 
 # fmt: off
 STS = (
-    r"^STS\/(?P<STS>((ALTRV|ATFMX|FFR|FLTCK|HAZMAT|HEAD|HOSP|HUM|MARSA|MEDEVAC|NONRVSM|SAR|STATE)\s?)+)"
-    + r"(?!("
+    r"^STS\/(?P<STS>((ALTRV|ATFMX|FFR|FLTCK|HAZMAT|HEAD|HOSP|HUM|MARSA|MEDEVAC|NONRVSM|SAR|STATE)\s?)+)(?!("
     + r"|".join(_other_switches("STS"))
     + r"))$"
 )
 
 # fmt: off
 PBN = (
-    r"^PBN\/(?P<PBN>({rnv})({rnp}))".format(rnv=RNAV_SPC.replace(r"^", "").replace(r"$", ""), rnp=RNP_SPC.replace(r"^", "").replace(r"$", ""))
-    + r"(?!("
+    r"^PBN\/(?P<PBN>({rnv})({rnp}))(?!(".format(
+        rnv=RNAV_SPC.replace(r"^", "").replace(r"$", ""),
+        rnp=RNP_SPC.replace(r"^", "").replace(r"$", ""),
+        )
     + r"|".join(_other_switches("PBN"))
     + r"))$"
 )
 
 # fmt: off
 NAV = (
-    r"^NAV\/(?P<NAV>((SBAS|GBAS|ABAS|DGNSS|RTK|WARTK|PPP)\s?)+)"
-    + r"(?!("
+    r"^NAV\/(?P<NAV>((SBAS|GBAS|ABAS|DGNSS|RTK|WARTK|PPP)\s?)+)(?!("
     + r"|".join(_other_switches("NAV"))
     + r"))$"
 )
 
 # fmt: off
 COM = (
-    r"^COM\/(?P<COM>[A-Z\d]+)"
-    + r"(?!("
+    r"^COM\/(?P<COM>[A-Z\d]+)(?!("
     + r"|".join(_other_switches("COM"))
     + r"))$"
 )
 
 # fmt: off
 DAT = (
-    r"^DAT\/(?P<DAT>[A-Z\d]+)"
-    + r"(?!("
+    r"^DAT\/(?P<DAT>[A-Z\d]+)(?!("
     + r"|".join(_other_switches("DAT"))
     + r"))$"
 )
 
 # fmt: off
 SUR = (
-    r"^SUR\/(?P<SUR>(RSP\d{3})(\sRSP\d{3})?)"
-    + r"(?!("
+    r"^SUR\/(?P<SUR>(RSP\d{3})(\sRSP\d{3})?)(?!("
     + r"|".join(_other_switches("SUR"))
     + r"))$"
 )
 
 # fmt: off
 DOF = (
-    r"^DOF\/(?P<DOF>\d{2}((0\d)|1[0-2])(([0-2]\d)|3[0-1]))"
-    + r"(?!("
+    r"^DOF\/(?P<DOF>\d{2}((0\d)|1[0-2])(([0-2]\d)|3[0-1]))(?!("
     + r"|".join(_other_switches("DOF"))
     + r"))$"
 )
 
 # fmt: off
 REG = (
-    r"^REG\/(?P<REG>[A-Z\d]+)"
-    + r"(?!("
+    r"^REG\/(?P<REG>[A-Z\d]+)(?!("
     + r"|".join(_other_switches("REG"))
     + r"))$"
 )
 
 # fmt: off
 EET = (
-    r"^EET\/(?P<EET>([A-Z]{4}\d{4})(\s[A-Z]{4}\d{4})*)"
-    + r"(?!("
+    r"^EET\/(?P<EET>([A-Z]{4}\d{4})(\s[A-Z]{4}\d{4})*)(?!("
     + r"|".join(_other_switches("EET"))
     + r"))$"
 )
 
 # fmt: off
 SEL = (
-    r"^SEL\/(?P<SEL>[A-Z]+)"
-    + r"(?!("
+    r"^SEL\/(?P<SEL>[A-Z]+)(?!("
     + r"|".join(_other_switches("SEL"))
     + r"))$"
 )
 
 # fmt: off
 TYP = (
-    r"^TYP\/(?P<TYP>(\d)?[A-Z\d]+)"
-    + r"(?!("
+    r"^TYP\/(?P<TYP>(\d)?[A-Z\d]+)(?!("
     + r"|".join(_other_switches("TYP"))
     + r"))$"
 )
 
 # fmt: off
 CODE = (
-    r"^CODE\/(?P<CODE>(F[A-F\d]{5})(?<!F00000))"
-    + r"(?!("
+    r"^CODE\/(?P<CODE>(F[A-F\d]{5})(?<!F00000))(?!("
     + r"|".join(_other_switches("CODE"))
     + r"))$"
 )
 
 # fmt: off
 DLE = (
-    r"^DLE\/(?P<DLE>{0}\d\d[0-5]\d)".format(POINT.replace(r"^", "").replace(r"$", ""))
-    + r"(?!("
+    r"^DLE\/(?P<DLE>{point}\d\d[0-5]\d)(?!(".format(point=POINT.replace(r"^", "").replace(r"$", ""))
     + r"|".join(_other_switches("DLE"))
     + r"))$"
 )
 
 # fmt: off
 OPR = (
-    r"^OPR\/(?P<OPR>[A-Z\d]+)"
-     + r"(?!("
+    r"^OPR\/(?P<OPR>[A-Z\d]+)(?!("
      + r"|".join(_other_switches("OPR"))
      + r"))$"
 )
 
 # fmt: off
 ORGN = (
-    r"^ORGN\/(?P<ORGN>[A-Z]{8})"
-     + r"(?!("
+    r"^ORGN\/(?P<ORGN>[A-Z]{8})(?!("
      + r"|".join(_other_switches("ORGN"))
      + r"))$"
 )
 
 # fmt: off
 PER = (
-    r"^PER\/(?P<PER>[A-Z])"
-    + r"(?!("
+    r"^PER\/(?P<PER>[A-Z])(?!("
     + r"|".join(_other_switches("PER"))
     + r"))$"
 )
@@ -428,16 +417,14 @@ TALT = DEP.replace("DEP", "TALT", 2)
 
 # fmt: off
 RIF = (
-    r"\b(?P<RIF>\w+\s(?P<revised_dest_ad>[A-Z]{4}))$"
-    + r"(?!("
+    r"RIF\/(?P<RIF>\w+\s(?P<revised_dest_ad>[A-Z]{4}))(?!("
     + r"|".join(_other_switches("RIF"))
     + r"))$"
 )
 
 # fmt: off
 RMK = (
-    r"^RMK\/(?P<RMK>\w+)"
-    + r"(?!("
+    r"^RMK\/(?P<RMK>\w+)(?!("
     + r"|".join(_other_switches("RMK"))
     + r"))$"
 )

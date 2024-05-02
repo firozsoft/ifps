@@ -4,7 +4,7 @@ from .base import AbstractBaseModel
 
 
 class FIDSData(AbstractBaseModel):
-    """To store FIDS data related to a callsign"""
+    """To store FIDS data related to a callsign."""
 
     aircraft_identification = models.CharField(max_length=50)
     type_of_aircraft = models.ForeignKey(

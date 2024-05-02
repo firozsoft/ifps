@@ -26,7 +26,7 @@ class UserAdmin(BaseUserAdmin):
                     "is_superuser",
                     "groups",
                     "user_permissions",
-                ]
+                ],
             },
         ),
         ("Important dates", {"fields": ("last_login", "date_joined")}),

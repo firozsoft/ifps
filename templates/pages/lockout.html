@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% load duration_filters %}
+
+{% block title %}
+  Cooldown Period
+{% endblock title %}
+{% block extra_heads %}
+  <style>
+    h1 {
+      color: #ff6347;
+      /* Tomato */
+    }
+  </style>
+{% endblock extra_heads %}
+{% block content %}
+  <div class="text-center pt-4">
+    <h1 class="fw-bold">
+      Cooldown Period
+    </h1>
+    <p>
+      Hello, <strong>{{ username }}</strong>!
+    </p>
+    <p>
+      You have exceeded the maximum number of login attempts.
+    </p>
+    <div class="fw-bold">
+      <p>
+        Please wait for {{ cooloff_timedelta|format_timedelta }} before trying again.
+      </p>
+      <p>
+        Failure Limit: {{ failure_limit }}
+      </p>
+    </div>
+  </div>
+{% endblock content %}

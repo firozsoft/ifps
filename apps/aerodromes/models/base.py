@@ -26,6 +26,7 @@ class AerodromeProperties(AbstractBaseModel):
         ]
 
     def __str__(self):
+        # ruff:noqa:SLF001
         return f"{self.__class__._meta.verbose_name}: {self.aerodrome} - {self.start.strftime("%y%m%d %H%M")} - {self.end.strftime("%y%m%d %H%M")}"
 
     def clean(self):

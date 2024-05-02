@@ -1,13 +1,13 @@
 import copy
 import io
 import zipfile
-from datetime import datetime
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers import serialize
 from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 from django.views.generic.edit import CreateView
 
@@ -61,7 +61,7 @@ class FlightPlanCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-@login_required
+@login_required(login_url="accounts:login")
 @require_http_methods(["POST"])
 def submission(request: HttpRequest) -> JsonResponse:
     """Handle submission of FPL (Flight Plan) messages via a POST request.
@@ -104,19 +104,19 @@ def submission(request: HttpRequest) -> JsonResponse:
     msg = request.POST.get(key="message", default=None)
     if not msg:
         message = {
-            "Error": (
+            "Error(s)": (
                 "Empty message detected. Please provide a complete FPL message "
                 f"with at least {FPL_EXPECTED_DASHES} sections separated by hyphens."
-            )
+            ),
         }
         return JsonResponse(message, status=400)
 
     if not msg.startswith("(FPL"):
         message = {
-            "Error": (
+            "Error(s)": (
                 "Invalid message format. Please ensure the message begins with '(FPL' "
                 f"and contains at least {FPL_EXPECTED_DASHES} sections separated by hyphens."
-            )
+            ),
         }
         return JsonResponse(message, status=400)
 
@@ -124,15 +124,14 @@ def submission(request: HttpRequest) -> JsonResponse:
 
     if len(parts) < FPL_EXPECTED_DASHES:
         message = {
-            "Error": (
+            "Error(s)": (
                 "Invalid FPL message format. Please provide a complete FPL message "
                 f"with at least {FPL_EXPECTED_DASHES} sections separated by hyphens."
-            )
+            ),
         }
         return JsonResponse(message, status=400)
 
     filled_data = {
-        # "msg_type": parts[0], #-> (FPL
         "aircraft_identification": parts[1],
         "flt_rule_type": parts[2],
         "numbers_type_weak": parts[3],
@@ -146,14 +145,14 @@ def submission(request: HttpRequest) -> JsonResponse:
 
     fpl, err = parser.parse(filled_data)
     if err:
-        message = {"Error": err}
+        message = {"Error(s)": err}
         return JsonResponse(message, status=400)
 
     err, notams = integrity_checks(fpl)
-    notams = serialize("json", notams)
+    notams = serialize("json", notams) if notams else None
 
     if err:
-        message = {"Error": err}
+        message = {"Error(s)": err}
         status_code = 400
 
     else:
@@ -161,21 +160,21 @@ def submission(request: HttpRequest) -> JsonResponse:
         status_code = 200
 
     if notams:
-        message["NOTAM(s)"] = notams
-
         if "Success" in message:
             message.pop("Success")
             message["Warning"] = "No errors detected. But review the considerable NOTAMs for further details."
+        # Order of dict items matters - NOTAM(s) must be the last key of message
+        message["NOTAM(s)"] = notams
 
     return JsonResponse(message, status=status_code)
 
 
 @staff_member_required
-def export_models(request: HttpRequest, app_label="") -> HttpResponse:
+def export_models(_: HttpRequest, app_label="") -> HttpResponse:
     """Export all models to Excel files and return a ZIP archive."""
     model_names = get_app_exportable_models(f"apps.{app_label}")
 
-    timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
+    timestamp = timezone.now().strftime("%Y-%m-%d-%H-%M")
 
     # Create a BytesIO object to store the ZIP archive
     zip_buffer = io.BytesIO()
@@ -194,7 +193,7 @@ def export_models(request: HttpRequest, app_label="") -> HttpResponse:
 
 
 @staff_member_required
-def export_model(request: HttpRequest, model_name: str) -> HttpResponse:
+def export_model(_: HttpRequest, model_name: str) -> HttpResponse:
     """Export data from a model to an Excel file."""
     excel_buffer = model_to_excel_bytesio(model_name)
 
@@ -205,7 +204,7 @@ def export_model(request: HttpRequest, model_name: str) -> HttpResponse:
     )
 
     # Set the filename for the response (optional)
-    timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
+    timestamp = timezone.now().strftime("%Y-%m-%d-%H-%M")
     response["Content-Disposition"] = f'attachment; filename="{model_name}-{timestamp}.xlsx"'
 
     return response

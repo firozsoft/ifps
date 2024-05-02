@@ -7,7 +7,6 @@ from apps.points.models.point import Point
 
 @admin.register(Point)
 class PointAdmin(BasePointAdmin):
-    search_fields = ["indicator"]
     list_display = ["indicator", "coordinate", "is_active"]
     search_fields = ["indicator", "coordinate"]
     fields = [

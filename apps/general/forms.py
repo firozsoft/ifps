@@ -14,7 +14,7 @@ def get__all_type_of_aircraft():
 class BasePointForm(forms.ModelForm):
     class Meta:
         model = BasePoint
-        fields = "__all__"
+        fields = "__all__"  # noqa:DJ007
 
     def clean(self):
         cd = self.cleaned_data
@@ -43,7 +43,7 @@ class FlightPlanForm(forms.ModelForm):
 
     class Meta:
         model = FlightPlan
-        fields = "__all__"
+        fields = "__all__"  # noqa:DJ007
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

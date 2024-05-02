@@ -5,7 +5,7 @@ from core.utils.validators import route_name_validator
 
 
 class BaseRoute(BaseModel):
-    """Abstract Route Model"""
+    """Abstract Route Model."""
 
     indicator = models.CharField(
         max_length=6,

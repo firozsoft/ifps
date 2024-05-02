@@ -6,7 +6,7 @@ from core.models import ImportRecord, validate_file_size
 class ImportRecordForm(forms.ModelForm):
     class Meta:
         model = ImportRecord
-        fields = "__all__"
+        fields = "__all__"  # noqa:DJ007
 
     def clean_file(self):
         file = self.cleaned_data["file"]

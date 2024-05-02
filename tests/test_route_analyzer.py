@@ -20,7 +20,7 @@ OUR_FIR_INDICATOR = settings.FIR_INDICATOR
 
 class RouteAnalyzerTestCase(TestCase):
     def setUp(self):
-        self.data = dict()
+        self.data = {}
         self.data["domestic_departure"] = False
         self.data["domestic_destination"] = False
         self.data["departure_ad"] = "OKAK"
@@ -54,7 +54,7 @@ class RouteAnalyzerTestCase(TestCase):
             },
         ]
 
-        self.data_domestic = dict()
+        self.data_domestic = {}
         self.data_domestic["domestic_departure"] = True
         self.data_domestic["domestic_destination"] = True
         self.data_domestic["departure_ad"] = "OISS"
@@ -120,7 +120,9 @@ class RouteAnalyzerTestCase(TestCase):
 
     def test_retrieve_point_name_from_fpl_route(self):
         result = retrieve_point_name_from_fpl_route_section(
-            self.data["route"], self.data["departure_ad"], self.data["destination_ad"]
+            self.data["route"],
+            self.data["departure_ad"],
+            self.data["destination_ad"],
         )
         self.assertSetEqual(result, {"CAK", "NANPI", "SYZ", "ASVIB", "PG"})
 
@@ -148,7 +150,8 @@ class RouteAnalyzerTestCase(TestCase):
         data["eet"] = "OKKK0030 OPKR0220 VAHH0330"
         route_analyzer(data, err)
         self.assertDictEqual(
-            err, {"integrity_error": [error_messages.FIR_NOT_FOUND_IN_EET.format(OUR_FIR_INDICATOR)]}
+            err,
+            {"integrity_error": [error_messages.FIR_NOT_FOUND_IN_EET.format(OUR_FIR_INDICATOR)]},
         )
 
     @mock.patch("core.analyzers.route_analyzer.validate_fpl_route_section")
@@ -164,9 +167,10 @@ class RouteAnalyzerTestCase(TestCase):
             {
                 "integrity_error": [
                     error_messages.BOUNDARY_DETERMINATION_ERROR_NO_ADJACENT_FIRS.format(
-                        "Entry", OUR_FIR_INDICATOR
-                    )
-                ]
+                        "Entry",
+                        OUR_FIR_INDICATOR,
+                    ),
+                ],
             },
         )
 
@@ -182,9 +186,10 @@ class RouteAnalyzerTestCase(TestCase):
             {
                 "integrity_error": [
                     error_messages.BOUNDARY_DETERMINATION_ERROR_NONADJACENT_FIR_OR_NO_BOUNDARY.format(
-                        "VAHH", OUR_FIR_INDICATOR
-                    )
-                ]
+                        "VAHH",
+                        OUR_FIR_INDICATOR,
+                    ),
+                ],
             },
         )
 
@@ -257,7 +262,10 @@ class RouteAnalyzerTestCase(TestCase):
 
         self.assertIn(
             error_messages.BOUNDARY_DETERMINATION_ERROR_FROM_TO_FIR_ON_ROUTE.format(
-                "Entry", "from", "OKKK", "P574"
+                "Entry",
+                "from",
+                "OKKK",
+                "P574",
             ),
             err["integrity_error"],
         )
@@ -286,7 +294,10 @@ class RouteAnalyzerTestCase(TestCase):
 
         self.assertIn(
             error_messages.BOUNDARY_DETERMINATION_ERROR_FROM_TO_FIR_ON_ROUTE.format(
-                "Entry", "from", "OKKK", "A452"
+                "Entry",
+                "from",
+                "OKKK",
+                "A452",
             ),
             err["integrity_error"],
         )
@@ -315,7 +326,10 @@ class RouteAnalyzerTestCase(TestCase):
 
         self.assertIn(
             error_messages.BOUNDARY_DETERMINATION_ERROR_FROM_TO_FIR_ON_ROUTE.format(
-                "Exit", "to", "OPKR", "G666"
+                "Exit",
+                "to",
+                "OPKR",
+                "G666",
             ),
             err["integrity_error"],
         )
@@ -379,8 +393,8 @@ class RouteAnalyzerTestCase(TestCase):
             err,
             {
                 "integrity_error": [
-                    error_messages.BOUNDARY_DETERMINATION_ERROR.format("Exit", OUR_FIR_INDICATOR)
-                ]
+                    error_messages.BOUNDARY_DETERMINATION_ERROR.format("Exit", OUR_FIR_INDICATOR),
+                ],
             },
         )
 
@@ -422,7 +436,7 @@ class RouteAnalyzerTestCase(TestCase):
                 "integrity_error": [
                     error_messages.POINT_DOES_NOT_EXIST.format("TRN"),
                     error_messages.PATH_NOT_FOUND.format("SYZ", "TRN", "P574"),
-                ]
+                ],
             },
         )
 

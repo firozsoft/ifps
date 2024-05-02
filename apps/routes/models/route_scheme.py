@@ -14,7 +14,6 @@ class RouteScheme(BaseModel):
         max_length=50,
         validators=[rs_dest_list],
         help_text="Comma separated list of Aerodrome(s)/FIR(s) 4-letters",
-        null=True,
         blank=True,
     )
     type_of_aircraft = models.ForeignKey(
@@ -30,13 +29,11 @@ class RouteScheme(BaseModel):
     )
     approved_levels = models.CharField(
         max_length=250,
-        null=True,
         blank=True,
         help_text="Comma separated list of flight levels(e.g: 010, 120, 310).",
     )
     not_approved_levels = models.CharField(
         max_length=250,
-        null=True,
         blank=True,
         help_text="Comma separated list of flight levels(e.g: 010, 120, 310).",
     )
@@ -51,9 +48,9 @@ class RouteScheme(BaseModel):
     def __str__(self) -> str:
         return f"{self.start} to {self.end}"
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs) -> None:
         if self.not_approved_levels:
             self.not_approved_levels = ",".join(
-                map(str.strip, self.not_approved_levels.replace("F", "").split(","))
+                map(str.strip, self.not_approved_levels.replace("F", "").split(",")),
             )
         return super().save(*args, **kwargs)

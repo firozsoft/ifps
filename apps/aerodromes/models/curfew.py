@@ -6,7 +6,7 @@ from .base import AerodromeProperties
 
 
 class Curfew(AerodromeProperties):
-    """Some Aerodromes have Curfew-Time"""
+    """Some Aerodromes have Curfew-Time."""
 
     # Fields that could be in STS
     hosp = models.BooleanField("Hospital", choices=YesNo, default=True)
@@ -29,7 +29,7 @@ class Curfew(AerodromeProperties):
 
     @property
     def acceptable_sts(self):
-        """Curfew for flights with STS filled with one of the following switches will be ignored"""
+        """Curfew for flights with STS filled with one of the following switches will be ignored."""
         return [
             item.upper()
             for item in ("hosp", "head", "sar", "ffr", "hazmat", "med_evac")
@@ -38,7 +38,7 @@ class Curfew(AerodromeProperties):
 
     @property
     def acceptable_rmk(self):
-        """Curfew will be ignored for flights with RMK filled with one of following fields verbose_name"""
+        """Curfew will be ignored for flights with RMK filled with one of following fields verbose_name."""
         rmk_fields = (
             "sm",
             "emergency",

@@ -18,7 +18,7 @@ class SidStar(BaseModel):
     )
     type = models.CharField(max_length=8, choices=SidStarType.choices)
     rnp_app = models.BooleanField(default=False, choices=YesNo)
-    remarks = models.TextField(null=True, blank=True)
+    remarks = models.TextField(blank=True)
 
     class Meta:
         verbose_name = "SID/STAR"

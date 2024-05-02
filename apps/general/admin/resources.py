@@ -15,7 +15,7 @@ class BaseResource(resources.ModelResource):
 
     def get_export_headers(self):
         headers = []
-        model_fields = self.Meta.model._meta.get_fields()
+        model_fields = self.Meta.model._meta.get_fields()  # noqa:SLF001
         for field in self.get_fields():
             header = next(
                 (f.verbose_name.upper() for f in model_fields if f.name == field.column_name),
@@ -25,13 +25,13 @@ class BaseResource(resources.ModelResource):
         return headers
 
     def before_import(self, dataset: tablib.core.Dataset, using_transactions, dry_run, **kwargs):
-        model_fields = self.Meta.model._meta.get_fields()
+        model_fields = self.Meta.model._meta.get_fields()  # noqa:SLF001
         headers = []
-        for header in dataset.headers:
+        for dataset_header in dataset.headers:
             header = next(
                 f.name
                 for f in model_fields
-                if hasattr(f, "verbose_name") and f.verbose_name.upper() == header
+                if hasattr(f, "verbose_name") and f.verbose_name.upper() == dataset_header
             )
             headers.append(header)
         dataset.headers = headers
@@ -40,8 +40,7 @@ class BaseResource(resources.ModelResource):
     def export_field(self, field, obj):
         if isinstance(field.attribute, str) and hasattr(obj, f"get_{field.attribute}_display"):
             return getattr(obj, f"get_{field.attribute}_display")()
-        else:
-            return super().export_field(field, obj)
+        return super().export_field(field, obj)
 
     def before_import_row(self, row, **kwargs):
         for field_name, field_value in row.items():

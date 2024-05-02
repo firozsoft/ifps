@@ -30,7 +30,6 @@
       {% block title %}
       {% endblock title %}
     </title>
-    <script async type="module" src="{% static 'js/theme.js' %}"></script>
   </head>
   <body class="container-fluid">
 
@@ -42,7 +41,7 @@
     </div>
     <!-- js -->
     <script defer type="module" src="{% static 'js/mdb.umd.min.js' %}"></script>
-    <script defer type="module" src="{% static 'js/main.js' %}"></script>
+    <script defer type="module" src="{% static 'js/theme.js' %}"></script>
     {% block document_ready %}
     {% endblock document_ready %}
   </body>

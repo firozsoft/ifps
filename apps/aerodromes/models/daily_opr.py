@@ -6,7 +6,7 @@ from core.utils.choices import AerodromeFlightRule
 
 
 class DailyOperationalHour(AbstractBaseModel):
-    """Operational Hours of an Aerodrome which is seperated for VFR or IFR flight"""
+    """Operational Hours of an Aerodrome which is seperated for VFR or IFR flight."""
 
     aerodrome = models.ForeignKey(
         "aerodromes.Aerodrome",

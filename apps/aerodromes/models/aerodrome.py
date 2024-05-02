@@ -6,8 +6,9 @@ from core.utils.choices import AerodromeFlightRule, AerodromeType, YesNo
 
 
 class Aerodrome(BasePoint):
-    """
-    Aerodrome is a point itself and has following attrs:
+    """Aerodrome is a point itself.
+
+    Extra attrs of aerodrome:
         name: Aerodrome name in plain language (from base_model)
         type: Is it a heliport or airport, etc.
         ifr_vfr: Accepts ifr or vfr or both flight types
@@ -20,7 +21,7 @@ class Aerodrome(BasePoint):
         unique=True,
         validators=[MinLengthValidator(4)],
     )
-    iatacode = models.CharField("IATA Code", max_length=50, null=True, blank=True)
+    iatacode = models.CharField("IATA Code", max_length=50, blank=True)
     type = models.CharField(
         "Aerodrome Type",
         max_length=8,

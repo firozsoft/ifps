@@ -3,15 +3,16 @@ from decimal import Decimal, getcontext
 
 
 def dms_to_decimal_degrees(coordinate: str) -> tuple[Decimal, Decimal]:
-    """
-    Convert degrees or degrees+minutes or degrees+minutes+seconds to decimal-degrees.
+    """Convert degrees or degrees+minutes or degrees+minutes+seconds to decimal-degrees.
+
     Example: 46N078W -> (46 78) or 4620N07805W -> (46.333333 78.083333)
     """
     pattern = r"^(?P<latitude>(\d{2}|\d{4}|\d{6})(N|S))(?P<longitude>(\d{3}|\d{5}|\d{7})(W|E))$"
     try:
         lat, long = re.match(pattern, coordinate).groupdict().items()
     except AttributeError:
-        raise ValueError(f"Invalid coordinate: {coordinate}") from None
+        msg = f"Invalid coordinate: {coordinate}"
+        raise ValueError(msg) from None
 
     def convertor(lat_or_lang, string):
         getcontext().prec = 8

@@ -1,8 +1,10 @@
 import copy
 import datetime
 import json
+from pathlib import Path
 
 from django.test import TestCase
+from django.utils import timezone
 
 from apps.aerodromes.models.aerodrome import Aerodrome
 from apps.aerodromes.models.curfew import Curfew
@@ -37,24 +39,18 @@ def create_aircrafts():
         "WTC": "weakturbulence_category",
     }
 
-    objects = list()
-    cleaned_objects = list()
-    with open(ICAO_AC_TYPES) as fl:
-        for ac in json.load(fl):
-            objects.append(
-                Aircraft(
-                    **{
-                        json_fields_rename[key]: value
-                        for key, value in ac.items()
-                        if key in json_fields_rename
-                    }
-                )
+    with Path(ICAO_AC_TYPES).open() as fl:
+        objects = [
+            Aircraft(
+                **{json_fields_rename[key]: value for key, value in ac.items() if key in json_fields_rename},
             )
-    Aircraft.objects.bulk_create(cleaned_objects)
+            for ac in json.load(fl)
+        ]
+        Aircraft.objects.bulk_create(objects)
 
 
 class AerodromeAnalyzerTestCase(TestCase):
-    """Testign functionalities of the aerodrome-analyzer mudole
+    """Testign functionalities of the aerodrome-analyzer mudole.
 
     Aerodrome creation, Heliport acceptable types, Curfew, TemporaryClosure, DailyOperationalHours, SID/STARs
     """
@@ -69,7 +65,7 @@ class AerodromeAnalyzerTestCase(TestCase):
             "alt_ad_1": "OIFM",
             "flight_type": "G",
             "flight_rule": "I",
-            "dof": datetime.datetime.today().strftime("%y%m%d"),
+            "dof": timezone.now().date().strftime("%y%m%d"),
             "eobt": "0800",
             "teet": "0130",
             "type_of_aircraft": "A319",
@@ -115,21 +111,33 @@ class AerodromeAnalyzerTestCase(TestCase):
         # Create curfew
         self.curfew = Curfew.objects.create(
             aerodrome=oiii,
-            start=datetime.datetime.combine(datetime.datetime.today(), datetime.time(hour=22, minute=00)),
-            end=datetime.datetime.combine(datetime.datetime.today(), datetime.time(hour=23, minute=59)),
+            start=timezone.datetime.combine(
+                timezone.now().date(),
+                datetime.time(hour=22, minute=00),
+            ),
+            end=timezone.datetime.combine(
+                timezone.now().date(),
+                datetime.time(hour=23, minute=59),
+            ),
         )
 
         # Create temp-closure, daily op-hours
         TemporaryClosure.objects.create(
             aerodrome=oiii,
-            start=datetime.datetime.combine(datetime.datetime.today(), datetime.time(hour=17, minute=00)),
-            end=datetime.datetime.combine(datetime.datetime.today(), datetime.time(hour=19, minute=00)),
+            start=timezone.datetime.combine(
+                timezone.now().date(),
+                datetime.time(hour=17, minute=00),
+            ),
+            end=timezone.datetime.combine(
+                timezone.now().date(),
+                datetime.time(hour=19, minute=00),
+            ),
         )
 
         # Create Daily Operational Hours
         self.oiii_dop = DailyOperationalHour.objects.create(
             aerodrome=oiii,
-            date=datetime.datetime.today(),
+            date=timezone.now().date(),
             start_time=datetime.time(hour=7, minute=00),
             end_time=datetime.time(hour=23, minute=59),
             vfr_start_time=datetime.time(hour=7, minute=30),
@@ -137,7 +145,7 @@ class AerodromeAnalyzerTestCase(TestCase):
         )
         self.oinj_dop = DailyOperationalHour.objects.create(
             aerodrome=oinj,
-            date=datetime.datetime.today(),
+            date=timezone.now().date(),
             start_time=datetime.time(hour=8, minute=00),
             end_time=datetime.time(hour=16, minute=00),
             vfr_start_time=datetime.time(hour=8, minute=30),
@@ -210,7 +218,7 @@ class AerodromeAnalyzerTestCase(TestCase):
                 "integrity_error": [
                     error_messages.AERODROME_INCOMPATIBLE_TYPE_OF_AIRCRAFT.format("OINJ", "heliport", "A319"),
                     error_messages.AERODROME_INCOMPATIBLE_FLIGHT_RULE.format("OINJ", "IFR"),
-                ]
+                ],
             },
         )
 
@@ -230,7 +238,7 @@ class AerodromeAnalyzerTestCase(TestCase):
                 "integrity_error": [
                     error_messages.AERODROME_INCOMPATIBLE_TYPE_OF_AIRCRAFT.format("OINJ", "heliport", "A319"),
                     error_messages.AERODROME_INCOMPATIBLE_FLIGHT_RULE.format("OINJ", "IFR"),
-                ]
+                ],
             },
         )
 
@@ -271,7 +279,7 @@ class AerodromeAnalyzerTestCase(TestCase):
                 "integrity_error": [
                     error_messages.SID_STAR_DOES_NOT_EXIST.format("SID", "nonexisting_sid"),
                     error_messages.SID_STAR_DOES_NOT_EXIST.format("STAR", "nonexisting_star"),
-                ]
+                ],
             },
         )
 

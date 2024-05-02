@@ -8,7 +8,7 @@ from core.utils.validators import coordinate_validator, fir_validator
 
 
 class AbstractBaseModel(models.Model):
-    """Abstract Base Model"""
+    """Abstract Base Model."""
 
     created = models.DateTimeField("Created", auto_now_add=True)
     updated = models.DateTimeField("Updated", auto_now=True)
@@ -19,9 +19,9 @@ class AbstractBaseModel(models.Model):
 
 
 class BaseModel(AbstractBaseModel):
-    """Base Model"""
+    """Base Model."""
 
-    plain_language_name = models.CharField(max_length=255, null=True, blank=True)
+    plain_language_name = models.CharField(max_length=255, blank=True)
 
     class Meta:
         abstract = True
@@ -47,7 +47,7 @@ class FIR(BaseModel):
 
 
 class BasePoint(BaseModel):
-    """Base Point Model"""
+    """Base Point Model."""
 
     coordinate = models.CharField(
         validators=[coordinate_validator],
@@ -86,7 +86,6 @@ class BasePoint(BaseModel):
         abstract = True
 
     def save(self, *args, **kwargs):
-        """save the model."""
         self.latitude, self.longitude = dms_to_decimal_degrees(self.coordinate)
         # self.location = GEOSGeometry(
         #     f"POINT({self.longitude} {self.latitude})",

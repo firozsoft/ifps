@@ -31,8 +31,10 @@ def integrity_checks(
     # Perform route analysis
     points, sections, firs = route_analyzer.route_analyzer(fpl, err)
 
-    # Perform NOTAM analysis
-    notams = notam_analyzer.notam_analyzer(fpl, aerodromes, points, sections, firs, err)
+    notams = Notam.objects.none()
+    if not err["integrity_error"]:
+        # Perform NOTAM analysis
+        notams = notam_analyzer.notam_analyzer(fpl, aerodromes, points, sections, firs, err)
 
     # Return any encountered errors
     errors = (

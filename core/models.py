@@ -1,5 +1,3 @@
-import os
-from datetime import datetime
 from pathlib import Path
 
 from django.conf import settings
@@ -7,24 +5,28 @@ from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.management import call_command
 from django.db import models
+from django.utils import timezone
 
 from core.utils.helpers import zipfile_extactor
 
 
 def validate_file_size(value):
     if value.size > 10 * 1024 * 1024:  # 10 Megabytes
-        raise ValidationError("File size must be less than 10MB")
+        msg = "File size must be less than 10MB"
+        raise ValidationError(msg)
     try:
         if not value.file.content_type.startswith("application/zip"):
-            raise ValidationError("Only ZIP files are allowed")
+            msg = "Only ZIP files are allowed"
+            raise ValidationError(msg)
     except AttributeError:
         if not value.content_type.startswith("application/zip"):
-            raise ValidationError("Only ZIP files are allowed") from None
+            msg = "Only ZIP files are allowed"
+            raise ValidationError(msg) from None
 
 
 def generate_upload_path(instance, filename):
     # Generate a dynamic directory path based on the current date and the username
-    today = datetime.now()
+    today = timezone.now()
     username = instance.user.username
     return f"{username}/{today.year}/{today.month}/{today.day}/{today.time().strftime('%H%M%S')}/{filename}"
 
@@ -46,13 +48,13 @@ class ImportRecord(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        extract_dir = Path(f"{os.path.dirname(self.file.path)}/extract")
+        extract_dir = Path(f"{Path.parent(self.file.path)}/extract")
         try:
             zipfile_extactor(self.file.path, extract_dir)
             call_command("update_database", resources=extract_dir)
-        except Exception as err:
+        except Exception:
             self.delete()
-            raise err
+            raise
 
     def delete(self, *args, **kwargs):
         # Delete the associated file before deleting the instance

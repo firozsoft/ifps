@@ -44,7 +44,7 @@ class RouteSchemeResource(BaseResource):
 
 class SidStarResource(BaseResource):
     class NavAidForeignKeyWidget(widgets.ForeignKeyWidget):
-        def clean(self, value, row, **kwargs):
+        def clean(self, value, _, **__):
             if value:
                 # Split the composite key into its components
                 indicator, nv_type, usecase = (value.strip() for value in value.split("-"))
@@ -60,6 +60,7 @@ class SidStarResource(BaseResource):
                 )
                 navaid, _ = NavAid.objects.get_or_create(indicator=indicator, type=nv_type, usecase=usecase)
                 return navaid
+            return None
 
     aerodrome = fields.Field(
         column_name="aerodrome",

@@ -1,33 +1,41 @@
-"""This module contains methods to parse and validate flight message text ergarding its syntax and some
-flight planning rules regarding the use of specific items in each part of flight plan. These checks and
-validation do not require querying to database but are rules and regulations regarding the text message.
+"""Methods to parse and validate flight message text.
+
+Checks includes validation of message syntax, flight planning rules regarding the use of specific items
+in each part of flight plan.
+
+These checks and validation do not require querying to database
+but are rules and regulations regarding the text message.
 
 The separation of these validation checks gives a fast fail return for possible syntax error or violation of
-fpl text rules without any db hit, which will be unnecessary in case of any error in text message. for example
-when a point or route name is inccorrect there is no need to hit database to check its existence.
+fpl text rules without any db hit, which will be unnecessary in case of any error in text message.
+For example when a point or route name is inccorrect there is no need to hit database to check its existence.
 
 This module also generates a parsed version of fpl message as a dict, so this dict will be used for future
 analysis and checks regarding each section of a flight plan.
 """
 
 import copy
-import datetime as dt
 import re
+
+from django.utils import timezone
 
 from core.utils import patterns
 
 
-def _update_segments(segment_list: list[dict[str, str]], to: str):
-    """
-    Update the segments list by setting the 'to' attribute of the last segment
-    and appending a new segment with the given 'to' attribute.
+def _update_segments(segment_list: list[dict[str, str]], to: str) -> None:
+    """Update the segments list.
+
+    Sets the 'to' attribute of the last segment and appends a new segment with the given 'to' attribute.
 
     Args:
+    ----
         segment_list (list): List of segment dictionaries.
         to (str): Value to set as the 'to' attribute of the last segment and 'from' attribute of the new segment.
 
-    This function updates the segment list by modifying the last segment's 'to' attribute and appending a new segment
-    with the given 'to' attribute and empty 'via' attribute, while preserving other attributes.
+    Returns:
+    -------
+        None
+
     """
     # Update the 'to' attribute of the last segment
     segment_list[-1]["to"] = to
@@ -46,16 +54,21 @@ def _check_and_handle_possible_speed_level_change(
     matched: re.Match,
     segments: list[dict[str, str]],
 ):
-    """
-    Check and handle possible speed and level changes in the flight segments.
+    """Check and handle possible speed and level changes in the flight segments.
+
+    This function checks if the given pattern corresponds to a change in speed and/or level,
+    and updates the last flight segment accordingly.
 
     Args:
+    ----
         pattern (str): Regular expression pattern.
         matched (re.Match): Match object containing the matched groups.
         segments (list): List of flight segments.
 
-    This function checks if the given pattern corresponds to a change in speed and/or level,
-    and updates the last flight segment accordingly.
+    Returns:
+    -------
+        None
+
     """
     # Extract matched groups from the regex match
     groups = matched.groupdict()
@@ -77,17 +90,22 @@ def _check_item_is_valid_point_with_indicator(
     segments: list[dict[str, str]],
     err: dict,
 ):
-    """
-    Check if the item is a valid point with an indicator and update previous accordingly.
+    """Check if the item is a valid point with an indicator and update previous accordingly.
+
+    This function checks if the given item is a valid point with an indicator, validates its syntax
+    and updates the previous item information accordingly. It also handles possible speed and level changes.
 
     Args:
+    ----
         item (str): The item to check.
         previous (dict): Previous item information.
         segments (list): List of flight segments.
         err (dict): Dictionary to store error messages.
 
-    This function checks if the given item is a valid point with an indicator, validates its syntax,
-    and updates the previous item information accordingly. It also handles possible speed and level changes.
+    Returns:
+    -------
+        None
+
     """
     matched_pattern = None
     for pattern in (patterns.CHANGE_SPEED_LEVEL, patterns.CRUISE_CLIMB, patterns.POINT):
@@ -97,12 +115,12 @@ def _check_item_is_valid_point_with_indicator(
             break
     else:
         err["syntax_error"].append(f"Item {item} (after {previous['item']}) is not valid syntax.")
-        return
+        return None
 
     point_indicator = matched.groupdict().get("point", None)
     if point_indicator is None:
         err["syntax_error"].append(f"Item {item} must be a valid point indicator, not a location.")
-        return
+        return None
 
     if previous["type"] == "sid" and previous["item"][:-2] not in (point_indicator, point_indicator[:-1]):
         err["syntax_error"].append(f"Point {item} doesn't match with SID {previous['item']}.")
@@ -122,19 +140,24 @@ def _check_item_is_valid_point_or_location(
     segments: list[dict[str, str]],
     err: dict,
 ):
-    """
-    Check if the item is a valid significant point or location and update previous accordingly.
+    """Check if the item is a valid significant point or location and update previous accordingly.
+
+    This function checks if the given item is a valid significant point or location,
+    validates its syntax and updates the previous item information accordingly.
+    It also handles possible speed and level changes.
 
     Args:
+    ----
         item (str): The item to check.
         previous (dict): Previous item information.
         res (dict): Dictionary to store additional information.
         segments (list): List of flight segments.
         err (dict): Dictionary to store error messages.
 
-    This function checks if the given item is a valid significant point or location,
-    validates its syntax, and updates the previous item information accordingly.
-    It also handles possible speed and level changes.
+    Returns:
+    -------
+        None
+
     """
     matched_pattern = None
     for pattern in (patterns.CHANGE_SPEED_LEVEL, patterns.CRUISE_CLIMB, patterns.SIG_POINT):
@@ -144,7 +167,7 @@ def _check_item_is_valid_point_or_location(
             break
     else:
         err["syntax_error"].append(f"{item} (after {previous['item']}) must be a valid Significant point.")
-        return
+        return None
 
     location = matched.groupdict().get("location", None)
     if location is not None:
@@ -168,18 +191,23 @@ def _check_item_is_valid_route_or_dct_or_ifr_vfr(
     segments: list[dict[str, str]],
     err: dict,
 ):
-    """
-    Check if the item is a valid route, DCT, or change of flight rule (IFR/VFR).
+    """Check if the item is a valid route, DCT, or change of flight rule (IFR/VFR).
+
+    This function checks if the given item is a valid route, DCT, or change of flight rule (IFR/VFR),
+    validates its syntax and updates the previous item information accordingly.
 
     Args:
+    ----
         item (str): The item to check.
         previous (dict): Previous item information.
         res (dict): Dictionary to store additional information.
         segments (list): List of flight segments.
         err (dict): Dictionary to store error messages.
 
-    This function checks if the given item is a valid route, DCT, or change of flight rule (IFR/VFR),
-    validates its syntax, and updates the previous item information accordingly.
+    Returns:
+    -------
+        None
+
     """
     matched = re.match(patterns.SID_STAR, item)
     if matched:
@@ -205,37 +233,41 @@ def _check_item_is_valid_route_or_dct_or_ifr_vfr(
     elif item in ("IFR", "VFR") and re.match(patterns.CHANGE_FLT_RULE, f"{previous['item']} {item}"):
         if res["flight_rule"] not in ("Y", "Z"):
             err["syntax_error"].append(
-                f"Illegal change of flight rule (after {previous['item']}) initial one was not 'Y' or 'Z'."
+                f"Illegal change of flight rule (after {previous['item']}) initial one was not 'Y' or 'Z'.",
             )
         if segments[-1]["flight_rule"] == item[0]:
             err["syntax_error"].append(
-                f"{item} (after {previous['item']}) is Incorrect change of flight rule. {item} to {item}."
+                f"{item} (after {previous['item']}) is Incorrect change of flight rule. {item} to {item}.",
             )
         else:
             segments[-1]["flight_rule"] = item[0]
     else:
         err["syntax_error"].append(
-            f"{item} (after {previous['item']}) must be a Route or DCT or Change of flight rule (IFR/VFR)."
+            f"{item} (after {previous['item']}) must be a Route or DCT or Change of flight rule (IFR/VFR).",
         )
-        return
+        return None
 
     return previous
 
 
-def _parse_route(
+def _parse_route(  # noqa:C901
     data: dict[str, str],
     res: dict[str, str | list[dict[str, str]]],
     err: dict[str, list[str]],
-):
-    """
-    Checks for syntax errors in the route part of an FPL message.
+) -> None:
+    """Check for syntax errors in the route part of an FPL message.
 
     Args:
+    ----
         data (dict): The FPL data.
         res (dict): Dictionary to store results.
         err (dict): Dictionary to store error messages.
-    """
 
+    Returns:
+    -------
+        None
+
+    """
     # Extract initial speed and level from the route data
     route_items = data["route"].split()
     init_sp_lvl = re.match(patterns.SPEED_LEVEL, route_items[0])
@@ -244,6 +276,7 @@ def _parse_route(
         res["initial_level"] = init_sp_lvl.groupdict().get("level")
     else:
         err["syntax_error"].append(f"{route_items[0]} must be a valid speed & level.")
+        return
 
     # keep a look at item already checked to be able to expect the nature of next item to be checked
     previous: dict[str, str] = {"type": "", "item": ""}
@@ -279,7 +312,7 @@ def _parse_route(
             "level": res["initial_level"],
             "top_level": res["initial_level"],
             "flight_rule": "I" if res["flight_rule"] in ("I", "Y") else "V",
-        }
+        },
     ]
 
     rest_of_route_items = route_items[2:]
@@ -290,15 +323,15 @@ def _parse_route(
     if needs_change_of_flt_rule:
         if res["flight_rule"] == "Z" and "IFR" not in set_rest_of_route_items:
             err["syntax_error"].append(
-                f"Flight rule is filled as {res['flight_rule']} but doesn't change (to IFR) in the route."
+                f"Flight rule is filled as {res['flight_rule']} but doesn't change (to IFR) in the route.",
             )
         if res["flight_rule"] == "Y" and "VFR" not in set_rest_of_route_items:
             err["syntax_error"].append(
-                f"Flight rule is filled as {res['flight_rule']} but doesn't change (to VFR) in the route."
+                f"Flight rule is filled as {res['flight_rule']} but doesn't change (to VFR) in the route.",
             )
 
     # Process each item in the route
-    # previous['type'] == 'route' | 'dct' | 'point' | 'location'
+    # previous['type'] is one of route,dct,point,location
     for item in rest_of_route_items:
         # NOTE: _update_segments must only be called if item is a SIG_POINT not for DCT or ROUTE or IFR/VFR or etc.
         if previous["type"] in ("route", "sid"):
@@ -329,7 +362,7 @@ def _parse_route(
                 _update_segments(segments, previous["item"])
             else:
                 err["syntax_error"].append(
-                    f"{item} (after {previous['item']}) must be a valid Sig. Point or the word DCT."
+                    f"{item} (after {previous['item']}) must be a valid Sig. Point or the word DCT.",
                 )
 
     # Set the 'to' value for the last segment to the destination aerodrome
@@ -339,72 +372,11 @@ def _parse_route(
     res["route"] = segments
 
 
-def parse(
+def _validate_fpl_item18_other_information(
     row_data: dict[str, str],
-) -> tuple[dict[str, str | list[dict[str, str]]], dict[str, str] | None]:
-    """
-    Checks for syntax errors and prepares a new dict.
-
-    Args:
-        row_data (dict): The flight plan data.
-
-    Returns:
-        tuple: A tuple containing parsed data and errors, if any.
-    """
-
-    regex_parsed_data = dict()
-    errors = None
-    err = {"syntax_error": []}
-
-    # Validate callsign
-    aircraft_identification = re.match(patterns.AIRCRAFT_IDENTIFICATION, row_data["aircraft_identification"])
-    if not aircraft_identification:
-        err["syntax_error"].append(
-            f"Invalid aircraft identification ({row_data['aircraft_identification']})."
-        )
-    else:
-        regex_parsed_data["aircraft_identification"] = aircraft_identification.group()
-
-    # Validate flight rule/type
-    flt_rule_type = re.match(patterns.FLIGHT_RULE_TYPE, row_data["flt_rule_type"])
-    if not flt_rule_type:
-        err["syntax_error"].append(f"Invalid flight rule/type ({row_data['flt_rule_type']}).")
-    else:
-        regex_parsed_data.update(flt_rule_type.groupdict())
-
-    # Validate numbers/type/weak
-    numbers_type_weak = re.match(patterns.AC_NUMBER_TYPE_WAKE, row_data["numbers_type_weak"])
-    if not numbers_type_weak:
-        err["syntax_error"].append(f"Invalid numbers/type/weak ({row_data['numbers_type_weak']}).")
-    else:
-        regex_parsed_data.update(numbers_type_weak.groupdict())
-
-    # Validate equipments/capacities
-    equipments_capacities = re.match(patterns.EQUIPMENTS_CAPACITIES, row_data["equipments_and_capacities"])
-    if not equipments_capacities:
-        err["syntax_error"].append(
-            f"Invalid equipments/capacities ({row_data['equipments_and_capacities']})."
-        )
-    else:
-        regex_parsed_data.update(equipments_capacities.groupdict())
-
-    # Validate departure aerodrome and time
-    dep_ad_time = re.match(patterns.DEPARTURE_AD_TIME, row_data["dep_ad_time"])
-    if not dep_ad_time:
-        err["syntax_error"].append(f"Invalid departure aerodrome or time ({row_data['dep_ad_time']}).")
-    else:
-        regex_parsed_data.update(dep_ad_time.groupdict())
-
-    # Validate destination aerodrome, teet, and alternates
-    dest_teet_alt = re.match(patterns.DEST_AD_TEET_ALTS, row_data["dest_teet_alts"])
-    if not dest_teet_alt:
-        err["syntax_error"].append(
-            f"Invalid destination aerodrome or time or alternates ({row_data['dest_teet_alts']})."
-        )
-    else:
-        regex_parsed_data.update(dest_teet_alt.groupdict())
-
-    # Parse Other Information
+    regex_parsed_data: dict[str, list[str]],
+    err: dict[str, list[str]],
+) -> None:
     other_info: list[str] = row_data["others"].split()
     last_switch_index = 0
     for item in other_info[:]:
@@ -429,63 +401,140 @@ def parse(
         else:
             err["syntax_error"].append(f"{item} is not valid syntax for ITEM18 (Other information).")
 
+
+def parse(  # noqa:C901
+    row_data: dict[str, str],
+) -> tuple[dict[str, str | list[dict[str, str]]], dict[str, str] | None]:
+    """Check for syntax errors and prepare a new dictionary.
+
+    This function checks for syntax errors in the input and prepares a new dictionary based on the validated data.
+    It performs the following tasks:
+    - Validates the syntax of the input data.
+    - Constructs a new dictionary based on the validated data.
+
+    Args:
+    ----
+        row_data (dict): The flight plan AFTN message text splitted by dashes.
+
+    Returns:
+    -------
+    tuple: Tuple of two dictionaries containing the validated data and encountered errors, if any.
+
+    """
+    regex_parsed_data = {}
+    errors = None
+    err = {"syntax_error": []}
+
+    # Validate callsign
+    aircraft_identification = re.match(patterns.AIRCRAFT_IDENTIFICATION, row_data["aircraft_identification"])
+    if not aircraft_identification:
+        err["syntax_error"].append(
+            f"Invalid aircraft identification ({row_data['aircraft_identification']}).",
+        )
+    else:
+        regex_parsed_data["aircraft_identification"] = aircraft_identification.group()
+
+    # Validate flight rule/type
+    flt_rule_type = re.match(patterns.FLIGHT_RULE_TYPE, row_data["flt_rule_type"])
+    if not flt_rule_type:
+        err["syntax_error"].append(f"Invalid flight rule/type ({row_data['flt_rule_type']}).")
+    else:
+        regex_parsed_data.update(flt_rule_type.groupdict())
+
+    # Validate numbers/type/weak
+    numbers_type_weak = re.match(patterns.AC_NUMBER_TYPE_WAKE, row_data["numbers_type_weak"])
+    if not numbers_type_weak:
+        err["syntax_error"].append(f"Invalid numbers/type/weak ({row_data['numbers_type_weak']}).")
+    else:
+        regex_parsed_data.update(numbers_type_weak.groupdict())
+
+    # Validate equipments/capacities
+    equipments_capacities = re.match(patterns.EQUIPMENTS_CAPACITIES, row_data["equipments_and_capacities"])
+    if not equipments_capacities:
+        err["syntax_error"].append(
+            f"Invalid equipments/capacities ({row_data['equipments_and_capacities']}).",
+        )
+    else:
+        regex_parsed_data.update(equipments_capacities.groupdict())
+
+    # Validate departure aerodrome and time
+    dep_ad_time = re.match(patterns.DEPARTURE_AD_TIME, row_data["dep_ad_time"])
+    if not dep_ad_time:
+        err["syntax_error"].append(f"Invalid departure aerodrome or time ({row_data['dep_ad_time']}).")
+    else:
+        regex_parsed_data.update(dep_ad_time.groupdict())
+
+    # Validate destination aerodrome, teet, and alternates
+    dest_teet_alt = re.match(patterns.DEST_AD_TEET_ALTS, row_data["dest_teet_alts"])
+    if not dest_teet_alt:
+        err["syntax_error"].append(
+            f"Invalid destination aerodrome or time or alternates ({row_data['dest_teet_alts']}).",
+        )
+    else:
+        regex_parsed_data.update(dest_teet_alt.groupdict())
+
+    # Parse Other Information
+    _validate_fpl_item18_other_information(row_data, regex_parsed_data, err)
+
     regex_parsed_data = {key.lower(): value for key, value in regex_parsed_data.items()}
 
     if regex_parsed_data["departure_ad"] in ("ZZZZ", "AFIL"):
         if "dep" not in regex_parsed_data:
             err["syntax_error"].append(
-                "DEP is not defined and missing DEP/ switch in ITEM18 (Other information)."
+                "DEP is not defined and missing DEP/ switch in ITEM18 (Other information).",
             )
         elif not re.match(patterns.LOCATION, regex_parsed_data["dep"]):
             err["syntax_error"].append(
-                f"DEP/ in ITEM18({regex_parsed_data['dep']}) is not a valid Point/Coordinate/BearingDistance."
+                f"DEP/ in ITEM18({regex_parsed_data['dep']}) is not a valid Point/Coordinate/BearingDistance.",
             )
     elif "dep" in regex_parsed_data:
         err["syntax_error"].append(
-            "There must be only one of departure Ad. or DEP/ switch in ITEM18 (Other information)."
+            "There must be only one of departure Ad. or DEP/ switch in ITEM18 (Other information).",
         )
 
     if regex_parsed_data["destination_ad"] == "ZZZZ":
         if "dest" not in regex_parsed_data:
             err["syntax_error"].append(
-                "DEST is not defined and missing DEST/ switch in ITEM18 (Other information)."
+                "DEST is not defined and missing DEST/ switch in ITEM18 (Other information).",
             )
         elif not re.match(patterns.LOCATION, regex_parsed_data["dest"]):
             err["syntax_error"].append(
-                f"DEST/ in ITEM18({regex_parsed_data['dest']}) is not a valid Point/Coordinate/BearingDistance."
+                f"DEST/ in ITEM18({regex_parsed_data['dest']}) is not a valid Point/Coordinate/BearingDistance.",
             )
     elif "dest" in regex_parsed_data:
         err["syntax_error"].append(
-            "There must be only one of destination Ad. or DEST/ switch in ITEM18 (Other information)."
+            "There must be only one of destination Ad. or DEST/ switch in ITEM18 (Other information).",
         )
 
     if regex_parsed_data["alt_ad_1"] == "ZZZZ" or regex_parsed_data["alt_ad_2"] == "ZZZZ":
         if "altn" not in regex_parsed_data:
             err["syntax_error"].append(
-                "ALTN is not defined and missing ALTN/ switch in ITEM18 (Other information)."
+                "ALTN is not defined and missing ALTN/ switch in ITEM18 (Other information).",
             )
         elif not re.match(patterns.LOCATION, regex_parsed_data["dest"]):
             err["syntax_error"].append(
-                f"ALTN/ in ITEM18({regex_parsed_data['dest']}) is not a valid point or coordinate (7 or 11 characters) or bearing-distance."
+                f"ALTN/ in ITEM18({regex_parsed_data['dest']}) is not a valid point or coordinate (7 or 11 characters) or bearing-distance.",
             )
 
     if "dof" in regex_parsed_data:
         try:
-            dt.datetime.strptime(regex_parsed_data["dof"], "%y%m%d")
+            timezone.datetime.strptime(regex_parsed_data["dof"], "%y%m%d")
         except ValueError:
             err["syntax_error"].append(f"DOF ({regex_parsed_data["dof"]}) is not valid (YYMMDD).")
 
     # Ensure default date of flight is set to today if not provided
-    regex_parsed_data["dof"] = regex_parsed_data.get("dof", dt.datetime.today().strftime("%y%m%d"))
-
+    regex_parsed_data["dof"] = regex_parsed_data.get("dof", timezone.now().date().strftime("%y%m%d"))
     # Calculate departure datetime
-    eobt = dt.datetime.strptime(regex_parsed_data["dof"] + regex_parsed_data["eobt"], "%y%m%d%H%M")
+    eobt = timezone.datetime.strptime(regex_parsed_data["dof"] + regex_parsed_data["eobt"], "%y%m%d%H%M")
 
-    submit_time = dt.datetime.now()
+    submit_time = timezone.now()
 
-    if eobt - submit_time >= dt.timedelta(hours=120) or eobt - submit_time <= dt.timedelta(minutes=60):
+    if eobt - submit_time >= timezone.timedelta(hours=120) or eobt - submit_time <= timezone.timedelta(
+        minutes=60,
+    ):
         err["syntax_error"].append(
-            "Submit a flight plan not sooner than 120 hours and at least 60 minutes before the EOBT."
+            "Flight plans shall not be submitted sooner than 120 hours "
+            "nor later than 60 minutes before the estimated off-block time (EOBT).",
         )
 
     # Parse Route
