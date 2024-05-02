@@ -9,6 +9,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 
 from decouple import Csv, config
@@ -39,13 +40,13 @@ LOCAL_APPS = [
     # Local apps
     "accounts",
     "core",
+    "api",
     "apps.aerodromes",
     "apps.general",
     "apps.points",
     "apps.routes",
     # 3rd party apps that should become late so to do override local apps
     "import_export",
-    # Axes app can be in any position in the INSTALLED_APPS list.
     "axes",
     "dbbackup",
 ]
@@ -60,6 +61,8 @@ DJANGO_APPS = [
     # extra django built-in apps
     # "django.contrib.gis",
     # 3rd party apps that should become late so to do override all apps
+    "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
 ]
 
 INSTALLED_APPS = LOCAL_APPS + DJANGO_APPS
@@ -73,6 +76,23 @@ AUTHENTICATION_BACKENDS = [
     # Django ModelBackend is the default authentication backend.
     "django.contrib.auth.backends.ModelBackend",
 ]
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        # Add other authentication classes as needed
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+        # Add other permission classes as needed
+    ),
+}
+
+# Token lifetimes
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=14),
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
