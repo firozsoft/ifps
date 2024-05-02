@@ -21,7 +21,7 @@ class AbstractBaseModel(models.Model):
 class BaseModel(AbstractBaseModel):
     """Base Model."""
 
-    plain_language_name = models.CharField(max_length=255, blank=True)
+    plain_language_name = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
         abstract = True

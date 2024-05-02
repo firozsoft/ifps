@@ -21,7 +21,7 @@ class Aerodrome(BasePoint):
         unique=True,
         validators=[MinLengthValidator(4)],
     )
-    iatacode = models.CharField("IATA Code", max_length=50, blank=True)
+    iatacode = models.CharField("IATA Code", max_length=50, null=True, blank=True)
     type = models.CharField(
         "Aerodrome Type",
         max_length=8,

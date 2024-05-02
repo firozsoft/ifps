@@ -48,10 +48,20 @@ class Notam(AbstractBaseModel):
         validators=[validators.notam_item_c_validator],
         help_text="10-digit date-time in the format YYMMDDHHMM[EST] or the literal word 'PERM'",
     )
-    item_d = models.CharField(max_length=200, blank=True)
+    item_d = models.CharField(max_length=200, null=True, blank=True)
     item_e = models.TextField()
-    item_f = models.CharField(max_length=50, validators=[validators.notam_item_f_g_validator], blank=True)
-    item_g = models.CharField(max_length=50, validators=[validators.notam_item_f_g_validator], blank=True)
+    item_f = models.CharField(
+        max_length=50,
+        validators=[validators.notam_item_f_g_validator],
+        null=True,
+        blank=True,
+    )
+    item_g = models.CharField(
+        max_length=50,
+        validators=[validators.notam_item_f_g_validator],
+        null=True,
+        blank=True,
+    )
 
     relevant = models.ForeignKey("self", on_delete=models.SET_NULL, null=True, blank=True)
     start = models.DateTimeField(null=True, blank=True, editable=False)
