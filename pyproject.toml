@@ -60,6 +60,7 @@ ignore = [ # Specifies the list of linting rules to ignore.
   "D107",
   "D203",    # Ignore missing whitespace after ':'
   "D213",    # Ignore missing whitespace before ':'.
+  "DJ001",
   "E501",    # Ignore line length exceeded (pycodestyle).
   "FIX",
   "FBT",
