@@ -109,7 +109,7 @@ def submission(request: HttpRequest) -> JsonResponse:
                 f"with at least {FPL_EXPECTED_DASHES} sections separated by hyphens."
             ),
         }
-        return JsonResponse(message, status=400)
+        return JsonResponse(message, status=422)
 
     if not msg.startswith("(FPL"):
         message = {
@@ -118,7 +118,7 @@ def submission(request: HttpRequest) -> JsonResponse:
                 f"and contains at least {FPL_EXPECTED_DASHES} sections separated by hyphens."
             ),
         }
-        return JsonResponse(message, status=400)
+        return JsonResponse(message, status=422)
 
     parts = list(map(str.strip, msg.split("-")))
 
@@ -129,7 +129,7 @@ def submission(request: HttpRequest) -> JsonResponse:
                 f"with at least {FPL_EXPECTED_DASHES} sections separated by hyphens."
             ),
         }
-        return JsonResponse(message, status=400)
+        return JsonResponse(message, status=422)
 
     filled_data = {
         "aircraft_identification": parts[1],

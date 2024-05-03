@@ -63,6 +63,7 @@ DJANGO_APPS = [
     # 3rd party apps that should become late so to do override all apps
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
+    "request",
 ]
 
 INSTALLED_APPS = LOCAL_APPS + DJANGO_APPS
@@ -100,6 +101,8 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # django-request stores requests in a database for admins to see
+    "request.middleware.RequestMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # ---

@@ -1,9 +1,12 @@
+from datetime import date
+
 from django.contrib import auth
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.contrib.auth.models import Group as BaseGroup
 from django.core.mail import send_mail
 from django.db import models
+from django.utils import timezone
 
 
 class Group(BaseGroup):
@@ -135,3 +138,87 @@ class User(AbstractBaseUser, PermissionsMixin):
     def email_user(self, subject, message, from_email=None, **kwargs) -> None:
         """Send an email to this user."""
         send_mail(subject, message, from_email, [self.email], **kwargs)
+
+
+class SubscriptionPlan(models.Model):
+    class SubscriptionDuration(models.TextChoices):
+        ONE_MONTH = "1 Month"
+        THREE_MONTHS = "3 Months"
+        SIX_MONTHS = "6 Months"
+        ONE_YEAR = "1 Year"
+
+    duration = models.CharField(max_length=8, choices=SubscriptionDuration.choices)
+    price = models.DecimalField(max_digits=8, decimal_places=2)
+
+    def __str__(self):
+        return self.duration
+
+
+class UserProfile(models.Model):
+    class PaymentMethod(models.TextChoices):
+        CASH = "Cash"
+        EXTERNAL_WALLET = "Transfer to External Wallet"
+        APP_PAYMENT = "Payment Gate within the App"
+
+    user = models.OneToOneField("accounts.User", on_delete=models.CASCADE)
+    subscription_plan = models.ForeignKey(
+        "accounts.SubscriptionPlan",
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="subscribers",
+    )
+    payment_method = models.CharField(max_length=30, choices=PaymentMethod.choices)
+    billing_address = models.TextField(blank=True)
+    last_payment_date = models.DateField(null=True, blank=True)
+    subscription_start_date = models.DateField(null=True, blank=True)
+    subscription_end_date = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return self.user.__str__()
+
+    def is_subscribed(self):
+        return self.subscription_plan is not None
+
+    def get_subscription_status(self):
+        if self.subscription_plan:
+            current_date = timezone.now().date()
+            end_date = self.subscription_end_date
+
+            if end_date:
+                if end_date >= current_date:
+                    # Subscription is active
+                    return f"Active ({self.subscription_plan}) until {end_date.strftime('%Y-%m-%d')}"
+                # Subscription has expired
+                return f"Expired ({self.subscription_plan}) since {end_date.strftime('%Y-%m-%d')}"
+            # Subscription end date is not set
+            return f"Active ({self.subscription_plan}) (no end date)"
+        # User is not subscribed
+        return "Not subscribed"
+
+    def renew_subscription(
+        self,
+        subscription_plan: SubscriptionPlan,
+        payment_date: date,
+        subscription_start_date: date,
+    ):
+        self.subscription_plan = subscription_plan
+        self.last_payment_date = payment_date
+        self.subscription_start_date = subscription_start_date
+
+        # Calculate subscription end date based on the chosen plan's duration
+        duration_value, duration_unit = subscription_plan.duration.split()
+        duration_value = int(duration_value)
+
+        days_in_duration = duration_value * (30 if "month" in duration_unit.lower() else 365)
+
+        self.subscription_end_date = self.subscription_start_date + timezone.timedelta(days=days_in_duration)
+
+        # Save updated subscription details
+        self.save(
+            update_fields=[
+                "subscription_plan",
+                "last_payment_date",
+                "subscription_start_date",
+                "subscription_end_date",
+            ],
+        )
