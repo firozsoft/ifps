@@ -46,6 +46,7 @@ class UserAdmin(BaseUserAdmin):
     list_filter = ["is_staff", "is_superuser", "is_active", "groups"]
     search_fields = ["first_name", "last_name", "email"]
     ordering = ["email"]
+    readonly_fields = ["date_joined"]
     filter_horizontal = [
         "groups",
         "user_permissions",
