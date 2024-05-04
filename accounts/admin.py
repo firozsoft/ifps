@@ -1,9 +1,10 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group as BaseGroup
+from django.utils import timezone
 
 from accounts.forms import UserChangeForm, UserCreationForm
-from accounts.models import Group, User
+from accounts.models import Group, SubscriptionPlan, User, UserProfile
 
 
 class UserAdmin(BaseUserAdmin):
@@ -51,6 +52,34 @@ class UserAdmin(BaseUserAdmin):
         "groups",
         "user_permissions",
     ]
+
+
+@admin.register(SubscriptionPlan)
+class SubscriptionPlanAdmin(admin.ModelAdmin):
+    search_fields = ["duration", "price"]
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    autocomplete_fields = ["user", "subscription_plan"]
+    readonly_fields = ["subscription_end_date"]
+
+    def save_model(self, request, obj, form, change):
+        """Override the save_model method to customize behavior when saving a UserProfile instance."""
+        # Call the superclass method to perform the default save behavior
+        super().save_model(request, obj, form, change)
+
+        # Set subscription_end_date based on selected subscription_plan
+        if obj.subscription_plan:
+            # Calculate subscription end date based on the chosen plan's duration
+            duration_value, duration_unit = obj.subscription_plan.duration.split()
+            duration_value = int(duration_value)
+            days_in_duration = duration_value * (30 if "month" in duration_unit.lower() else 365)
+
+            obj.subscription_end_date = obj.subscription_start_date + timezone.timedelta(
+                days=days_in_duration,
+            )
+            obj.save()  # Save the UserProfile instance with updated subscription_end_date
 
 
 # Register the new UserAdmin

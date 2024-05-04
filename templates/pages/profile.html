@@ -16,27 +16,21 @@
         <p class="card-text">
           <strong>User:</strong> {{ user }}
         </p>
-        {% if user.userprofile.is_subscribed %}
-          <h2 class="card-title mt-4">
-            Last Subscription Plan
-          </h2>
+        {% if user.get_full_name %}
           <p class="card-text">
-            <strong>Subscription Plan Status:</strong> {{ user.userprofile.get_subscription_status }}
-          </p>
-          <p class="card-text">
-            <strong>Subscription Plan:</strong> {{ user.userprofile.subscription_plan }}
-          </p>
-          <p class="card-text">
-            <strong>Subscription Start Date:</strong> {{ user.userprofile.subscription_start_date | date:"d-m-Y" }}
-          </p>
-          <p class="card-text">
-            <strong>Subscription End Date:</strong> {{ user.userprofile.subscription_end_date | date:"d-m-Y" }}
-          </p>
-        {% else %}
-          <p class="card-text">
-            <strong>Subscription Plan:</strong> Not subscribed
+            <strong> Full Name: </strong>{{ user.get_full_name }}
           </p>
         {% endif %}
+      </div>
+    </div>
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="card-title">
+          Last Subscription Plan
+        </h2>
+        <p class="card-text">
+          <strong>Subscription Plan Status:</strong> {{ user.userprofile.get_subscription_status }}
+        </p>
         {% if user.userprofile.last_payment_date %}
           <p class="card-text">
             <strong>Last Payment Date:</strong> {{ user.userprofile.last_payment_date | date:"d-m-Y" }}
@@ -55,6 +49,9 @@
             <strong>Payment Method:</strong> Not specified
           </p>
         {% endif %}
+        <p>
+          <a href="{% url "accounts:payments_list" %}">Payments History</a>
+        </p>
       </div>
     </div>
     <div class="card">

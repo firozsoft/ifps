@@ -3,7 +3,7 @@ import io
 import zipfile
 
 from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers import serialize
 from django.http import HttpRequest, HttpResponse, JsonResponse
@@ -61,7 +61,12 @@ class FlightPlanCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
+def user_has_subscription(user):
+    return "Active" in user.userprofile.get_subscription_status()
+
+
 @login_required(login_url="accounts:login")
+@user_passes_test(user_has_subscription)
 @require_http_methods(["POST"])
 def submission(request: HttpRequest) -> JsonResponse:
     """Handle submission of FPL (Flight Plan) messages via a POST request.

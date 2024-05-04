@@ -148,11 +148,30 @@ class SubscriptionPlan(models.Model):
         SIX_MONTHS = "6 Months"
         ONE_YEAR = "1 Year"
 
-    duration = models.CharField(max_length=8, choices=SubscriptionDuration.choices)
+    duration = models.CharField(max_length=8, choices=SubscriptionDuration.choices, unique=True)
     price = models.DecimalField(max_digits=8, decimal_places=2)
 
     def __str__(self):
         return self.duration
+
+
+class Payment(models.Model):
+    user_profile = models.ForeignKey(
+        "accounts.UserProfile",
+        on_delete=models.CASCADE,
+        related_name="payments",
+    )
+    subscription_plan = models.ForeignKey(SubscriptionPlan, on_delete=models.SET_NULL, null=True)
+    payment_date = models.DateField(default=timezone.now)
+    amount = models.DecimalField(max_digits=8, decimal_places=2)
+    _subscription_plan = models.CharField(max_length=8, null=True, blank=True)
+
+    def __str__(self):
+        return f"Payment for {self.user_profile.user} - {self._subscription_plan} - {self.payment_date}"
+
+    def save(self, *args, **kwargs):
+        self._subscription_plan = str(self.subscription_plan)
+        return super().save(*args, **kwargs)
 
 
 class UserProfile(models.Model):
@@ -168,7 +187,7 @@ class UserProfile(models.Model):
         null=True,
         related_name="subscribers",
     )
-    payment_method = models.CharField(max_length=30, choices=PaymentMethod.choices)
+    payment_method = models.CharField(max_length=30, choices=PaymentMethod.choices, null=True, blank=True)
     billing_address = models.TextField(blank=True)
     last_payment_date = models.DateField(null=True, blank=True)
     subscription_start_date = models.DateField(null=True, blank=True)
@@ -196,6 +215,10 @@ class UserProfile(models.Model):
         # User is not subscribed
         return "Not subscribed"
 
+    def get_payment_history(self):
+        """Retrieve the payment history for the user."""
+        return self.payments.all().order_by("-payment_date")
+
     def renew_subscription(
         self,
         subscription_plan: SubscriptionPlan,
@@ -222,4 +245,12 @@ class UserProfile(models.Model):
                 "subscription_start_date",
                 "subscription_end_date",
             ],
+        )
+
+        # Record the payment transaction
+        Payment.objects.create(
+            user_profile=self,
+            subscription_plan=subscription_plan,
+            payment_date=timezone.now(),
+            amount=self.subscription_plan.price,
         )

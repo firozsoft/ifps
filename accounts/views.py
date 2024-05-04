@@ -1,7 +1,11 @@
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
+from django.views.generic import ListView, YearArchiveView
 from request.models import Request
+
+from accounts.models import Payment, UserProfile
 
 
 @login_required
@@ -29,3 +33,41 @@ def profile(request):
     }
 
     return render(request, "pages/profile.html", context=context)
+
+
+class PaymentsListView(LoginRequiredMixin, ListView):
+    model = Payment
+    template_name = "partials/payments.html"
+    context_object_name = "payments"
+    paginate_by = 15  # Number of payments per page
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        payments = self.get_queryset()
+        years = payments.dates("payment_date", "year", order="DESC")
+        context["years"] = years
+        return context
+
+    def get_queryset(self):
+        # Get the current user's profile
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        # Filter payments related to the user's profile
+        queryset = user_profile.get_payment_history()
+        return queryset.order_by("-payment_date")
+
+
+class PaymentYearArchiveView(LoginRequiredMixin, YearArchiveView):
+    queryset = Payment.objects.all()
+    date_field = "payment_date"
+    make_object_list = True
+    allow_future = True
+    template_name = "partials/payment_archive_year.html"
+    context_object_name = "payments"
+    paginate_by = 15  # Number of payments per page
+
+    def get_queryset(self):
+        # Get the current user's profile
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        # Filter payments related to the user's profile
+        queryset = user_profile.get_payment_history()
+        return queryset.order_by("-payment_date")

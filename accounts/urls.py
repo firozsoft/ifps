@@ -17,4 +17,10 @@ urlpatterns = [
     ),
     path("logout/", auth_views.LogoutView.as_view(next_page="accounts:login"), name="logout"),
     path("profile/", views.profile, name="profile"),
+    path("payments/", views.PaymentsListView.as_view(), name="payments_list"),
+    path(
+        "payments/archive/year/<int:year>/",
+        views.PaymentYearArchiveView.as_view(),
+        name="payment_archive_year",
+    ),
 ]
