@@ -26,7 +26,8 @@
     </p>
     <div class="fw-bold">
       <p>
-        Please wait for {{ cooloff_timedelta|format_timedelta }} before trying again.
+        You must wait {{ cooloff_timedelta|format_timedelta }} before attempting again,
+        otherwise the timer will reset.
       </p>
       <p>
         Failure Limit: {{ failure_limit }}
