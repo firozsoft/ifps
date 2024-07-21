@@ -57,7 +57,8 @@ class UserManager(BaseUserManager):
                 raise ValueError(msg)
 
         elif not isinstance(backend, str):
-            raise TypeError("backend must be a dotted import path string (got %r)." % backend)
+            msg = f"backend must be a dotted import path string (got {backend:!r})."
+            raise TypeError(msg)
         else:
             backend = auth.load_backend(backend)
         if hasattr(backend, "with_perm"):
