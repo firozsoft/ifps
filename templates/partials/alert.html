@@ -1,0 +1,31 @@
+{% if messages %}
+  <div class="my-3">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}"
+           role="alert"
+           data-mdb-color="{{ message.tags }}"
+           data-mdb-alert-init=""
+           data-mdb-alert-initialized="true">
+        <div class="d-flex justify-content-between">
+          <div class="d-block">
+            {% if message.tags == "success" %}
+              <i class="fas fa-check-circle me-1"></i>
+            {% elif message.tags == "danger" %}
+              <i class="fas fa-times-circle me-1"></i>
+            {% elif message.tags == "warning" %}
+              <i class="fas fa-exclamation-triangle me-1"></i>
+            {% elif message.tags == "info" %}
+              <i class="fas fa-info-circle me-1"></i>
+            {% endif %}
+            {{ message|safe }}
+          </div>
+          <button type="button"
+                  class="btn-close ms-2"
+                  data-mdb-dismiss="alert"
+                  aria-label="Close">
+          </button>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}

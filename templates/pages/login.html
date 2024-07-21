@@ -6,6 +6,9 @@
   Login
 {% endblock title %}
 {% block content %}
+
+  {% include "partials/alert.html" %}
+
   <div class="row mt-5 pt-5">
     <div class="col-6">
       <h1 class="text-purple-500 fw-semibold rounded-1 px-2">
@@ -30,7 +33,7 @@
     <div class="col-6">
       <div class="card border-0 bg-body-secondary shadow-sm">
         <div class="card-body">
-          <h2 class="card-title text-center fw-bold mb-4">
+          <h2 class="card-title text-center fw-light mb-4">
             <i class="bi-person-bounding-box"></i>
             Login
           </h2>
@@ -46,45 +49,37 @@
               {{ form.non_field_errors }}
             </div>
             <!-- Username input -->
+            <div class="text-danger-emphasis">
+              {{ form.username.errors }}
+            </div>
             <div data-mdb-input-init class="form-outline mb-4">
               <input type="email"
                      id="username"
                      name="username"
                      class="form-control
-                            {% if from.username.errors %}
-                              is-invalid
-                            {% endif %}
-                            {% if form.non_field_errors %}
+                            {% if form.username.errors %}
                               is-invalid
                             {% endif %}"
                      autofocus />
               <label class="form-label" for="username">
                 {{ form.username.label }}
               </label>
-              <small class="form-helper">{{ form.username.help_text }}</small>
-              <div class="text-danger-emphasis">
-                {{ form.username.errors }}
-              </div>
             </div>
             <!-- Password input -->
+            <div class="text-danger-emphasis">
+              {{ form.password.errors }}
+            </div>
             <div data-mdb-input-init class="form-outline mb-4">
               <input type="password"
                      id="password"
                      name="password"
                      class="form-control
-                            {% if from.password.errors %}
-                              is-invalid
-                            {% endif %}
-                            {% if form.non_field_errors %}
+                            {% if form.password.errors %}
                               is-invalid
                             {% endif %}" />
               <label class="form-label" for="password">
                 {{ form.password.label }}
               </label>
-              <small class="form-helper">{{ form.password.help_text }}</small>
-              <div class="text-danger-emphasis">
-                {{ form.password.errors }}
-              </div>
             </div>
             <!-- 2 column grid layout for inline styling -->
             <div class="row mb-4">
@@ -97,9 +92,11 @@
               </div>
               <div class="col">
                 <!-- Simple link -->
-                <a class="btn btn-warning btn-block" href="#!">
+                <a class="btn btn-outline-warning btn-block"
+                   href="{% url 'accounts:password_reset' %}">
                   <i class="bi-lock-fill"></i>
-                Forgot password?</a>
+                  Forgot password?
+                </a>
               </div>
             </div>
           </form>

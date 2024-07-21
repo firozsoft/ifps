@@ -304,6 +304,22 @@ AXES_HANDLER = "axes.handlers.database.AxesDatabaseHandler"
 
 # AXES_ENABLED = False  # Disable Django-axes #noqa:ERA001
 
+# email configs
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = config("EMAIL_USER")
+EMAIL_HOST_PASSWORD = config("EMAIL_PASSWORD")
+
+MESSAGE_TAGS = {
+    messages.DEBUG: "info",
+    messages.INFO: "info",
+    messages.SUCCESS: "success",
+    messages.WARNING: "warning",
+    messages.ERROR: "danger",
+}
+
 if DEBUG:
     ALLOWED_HOSTS = ["*"]
     INSTALLED_APPS.extend(
