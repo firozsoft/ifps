@@ -1,64 +1,12 @@
-import copy
-import io
-import zipfile
-
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.serializers import serialize
-from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.utils import timezone
+from django.http import HttpRequest, JsonResponse
 from django.views.decorators.http import require_http_methods
-from django.views.generic.edit import CreateView
 
-from apps.general.forms import FlightPlanForm
-from apps.general.models.fpl import FlightPlan
 from core.analyzers import parser
 from core.analyzers.integrity_analyzer import integrity_checks
-from core.utils.helpers import (
-    get_app_exportable_models,
-    model_to_excel_bytesio,
-)
 
-FPL_EXPECTED_DASHES = 9
-
-
-class FlightPlanCreateView(LoginRequiredMixin, CreateView):
-    model = FlightPlan
-    form_class = FlightPlanForm
-    template_name = "pages/fpl.html"
-
-    def form_valid(self, form):
-        row_data = copy.deepcopy(form.changed_data)
-        row_data["flt_rule_type"] = row_data["flight_rule"] + row_data["type_of_flight"]
-        row_data["numbers_type_weak"] = (
-            row_data["number_of_aircraft"]
-            + row_data["type_of_aircraft"]
-            + row_data["weakturbulence_category"]
-        )
-        row_data["dep_ad_time"] = row_data["departure_aerodrome"] + row_data["departure_time"]
-        row_data["route"] = row_data["cruising_speed"] + row_data["cruising_level"] + " " + row_data["route"]
-        row_data["dest_teet_alts"] = (
-            row_data["destination_aerodrome"]
-            + row_data["teet"]
-            + " "
-            + row_data["alternate_aerodrome"]
-            + " "
-            + row_data["secind_alternate_aerodrome"]
-        )
-        row_data["others"] = "DOF/" + row_data["date_of_flight"] + row_data["other_information"]
-
-        fpl, err = parser.parse(row_data)
-        if err:
-            form.add_error(err)
-            return self.form_invalid(form)
-
-        err, notams = integrity_checks(fpl)
-        if err:
-            form.add_error(err)
-            return self.form_invalid(form)
-
-        return super().form_valid(form)
+FPL_EXPECTED_DASHES = 8
 
 
 def user_has_subscription(user):
@@ -145,7 +93,6 @@ def submission(request: HttpRequest) -> JsonResponse:
         "route": parts[6],
         "dest_teet_alts": parts[7],
         "others": parts[8].replace(")", ""),
-        # 'extra': parts[9]
     }
 
     fpl, err = parser.parse(filled_data)
@@ -172,44 +119,3 @@ def submission(request: HttpRequest) -> JsonResponse:
         message["NOTAM(s)"] = notams
 
     return JsonResponse(message, status=status_code)
-
-
-@staff_member_required
-def export_models(_: HttpRequest, app_label="") -> HttpResponse:
-    """Export all models to Excel files and return a ZIP archive."""
-    model_names = get_app_exportable_models(f"apps.{app_label}")
-
-    timestamp = timezone.now().strftime("%Y-%m-%d-%H-%M")
-
-    # Create a BytesIO object to store the ZIP archive
-    zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-        for model_name in model_names:
-            excel_buffer = model_to_excel_bytesio(model_name)
-            zip_file.writestr(f"{model_name}.xlsx", excel_buffer.getvalue())
-
-    # Create an HttpResponse with the ZIP archive content
-    response = HttpResponse(zip_buffer.getvalue(), content_type="application/zip")
-
-    # Set the filename for the response
-    response["Content-Disposition"] = f'attachment; filename="ifps-export-{timestamp}.zip"'
-
-    return response
-
-
-@staff_member_required
-def export_model(_: HttpRequest, model_name: str) -> HttpResponse:
-    """Export data from a model to an Excel file."""
-    excel_buffer = model_to_excel_bytesio(model_name)
-
-    # Set the appropriate HTTP headers for the response
-    response = HttpResponse(
-        excel_buffer.getvalue(),
-        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    )
-
-    # Set the filename for the response (optional)
-    timestamp = timezone.now().strftime("%Y-%m-%d-%H-%M")
-    response["Content-Disposition"] = f'attachment; filename="{model_name}-{timestamp}.xlsx"'
-
-    return response

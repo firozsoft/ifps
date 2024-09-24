@@ -6,7 +6,8 @@ from import_export import fields, resources, results, widgets
 from apps.general.models.aircraft import Aircraft
 from apps.general.models.base import FIR
 from apps.general.models.notam import Notam
-from core.utils.helpers import SEPARATOR
+
+SEPARATOR = "|"
 
 
 class SimpleError(results.Error):
