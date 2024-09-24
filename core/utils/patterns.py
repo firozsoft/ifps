@@ -120,8 +120,8 @@ AC_NUMBER_TYPE_WAKE = r"^(?P<number_of_aircraft>\d{0,2})(?P<type_of_aircraft>[A-
 # * Example:  ADE3RV/HB2U2V2G1
 
 # Note 2.— Additional surveillance equipment or capabilities will be listed in Item 18 following the indicator SUR/, as required by the appropriate ATS authority
-EQUIPMENTS = r"^(?P<equipments>(N|S)|(A|B|C|D|E1|E2|E3|F|G|H|I|J[1-7]|K|L|M[1-3]|O|P[1-9]|R|T|U|V|W|X|Y|Z)+)$"
-CAPACITIES = r"^(?P<capacities>((N|S)|((A|C|E|H|I|L|P|S|X)?(B1|B2)?(U1|U2)?(V1|V2)?(D1|G1)?){1,20}))$"
+EQUIPMENTS = r"^(?P<equipments>N|(S|A|B|C|D|E1|E2|E3|F|G|H|I|J[1-7]|K|L|M[1-3]|O|P[1-9]|R|T|U|V|W|X|Y|Z)+)$"
+CAPACITIES = r"^(?P<capacities>N|((A|C|E|H|I|L|P|S|X)?(B1|B2)?(U1|U2)?(V1|V2)?(D1|G1)?){1,20})$"
 
 EQUIPMENTS_CAPACITIES = r"^{equipments}\/{capacities}$".format(
     equipments=EQUIPMENTS.replace(r"^", "").replace(r"$", ""),
@@ -193,6 +193,8 @@ LOCATION = r"^(?P<location>({brd})|({coordinate}))$".format(
 # * 1- ATS route (2 to 7 characters) ! 7 characters only for SID/STAR
 ROUTE = r"^(?P<route>[A-Z]{1,3}\d{1,3})$"
 SID_STAR = r"^(?P<sid_star>({pnt})\d[A-Z])$".format(pnt=POINT.replace(r"^", "").replace(r"$", ""))
+SID_POINT = r"^([A-Z]{3,5})\d[A-Z] \1$"
+POINT_STAR = r"^([A-Z]{3,5}) \1\d[A-Z]$"
 
 # * 2- Significant point (2 to 11 characters)
 # ? All point matching those regexes above
@@ -239,166 +241,48 @@ DEST_AD_TEET_ALTS = r"^(?P<dest_teet_alt>({ad0})(?P<teet>\d\d\d\d)(\s{ad1})?(\s{
     ad2=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<alt_ad_2>"),
 )
 
-# ? ITEM 18: OTHER INFORMATION
-OTHER_INFO_SWITCHES = {
-    "STS",
-    "PBN",
-    "NAV",
-    "COM",
-    "DAT",
-    "SUR",
-    "DOF",
-    "REG",
-    "EET",
-    "SEL",
-    "TYP",
-    "CODE",
-    "DLE",
-    "OPR",
-    "ORGN",
-    "PER",
-    "DEP",
-    "DEST",
-    "ALTN",
-    "RALT",
-    "TALT",
-    "RIF",
-    "RMK",
-}
-
-
-def _other_switches(switch: str) -> set[str]:
-    return OTHER_INFO_SWITCHES - {switch}
-
-
 RNAV_SPC = r"^(?P<rnav_specification>(A1|B[1-6]|C[1-4]|D[1-4]){1,4})$"
 
 RNP_SPC = r"^(?P<rnp_specification>(L1|O[1-4]|S[1-2]|T[1-2]){1,4})$"
 
-# fmt: off
-STS = (
-    r"^STS\/(?P<STS>((ALTRV|ATFMX|FFR|FLTCK|HAZMAT|HEAD|HOSP|HUM|MARSA|MEDEVAC|NONRVSM|SAR|STATE)\s?)+)(?!("
-    + r"|".join(_other_switches("STS"))
-    + r"))$"
+STS = r"^STS\/(?P<STS>((ALTRV|ATFMX|FFR|FLTCK|HAZMAT|HEAD|HOSP|HUM|MARSA|MEDEVAC|NONRVSM|SAR|STATE)\s?)+)$"
+
+PBN = r"^PBN\/(?P<PBN>({rnv})({rnp}))$".format(
+    rnv=RNAV_SPC.replace(r"^", "").replace(r"$", ""),
+    rnp=RNP_SPC.replace(r"^", "").replace(r"$", ""),
 )
 
-# fmt: off
-PBN = (
-    r"^PBN\/(?P<PBN>({rnv})({rnp}))(?!(".format(
-        rnv=RNAV_SPC.replace(r"^", "").replace(r"$", ""),
-        rnp=RNP_SPC.replace(r"^", "").replace(r"$", ""),
-        )
-    + r"|".join(_other_switches("PBN"))
-    + r"))$"
-)
+NAV = r"^NAV\/(?P<NAV>((SBAS|GBAS|ABAS|DGNSS|RTK|WARTK|PPP|RNP\d)\s?)+)$"
 
-# fmt: off
-NAV = (
-    r"^NAV\/(?P<NAV>((SBAS|GBAS|ABAS|DGNSS|RTK|WARTK|PPP)\s?)+)(?!("
-    + r"|".join(_other_switches("NAV"))
-    + r"))$"
-)
+COM = r"^COM\/(?P<COM>[A-Z\d ]+)$"
 
-# fmt: off
-COM = (
-    r"^COM\/(?P<COM>[A-Z\d]+)(?!("
-    + r"|".join(_other_switches("COM"))
-    + r"))$"
-)
+DAT = r"^DAT\/(?P<DAT>[A-Z\d ]+)$"
 
-# fmt: off
-DAT = (
-    r"^DAT\/(?P<DAT>[A-Z\d]+)(?!("
-    + r"|".join(_other_switches("DAT"))
-    + r"))$"
-)
+SUR = r"^SUR\/(?P<SUR>[A-Z\d ]+)$"
 
-# fmt: off
-SUR = (
-    r"^SUR\/(?P<SUR>(RSP\d{3})(\sRSP\d{3})?)(?!("
-    + r"|".join(_other_switches("SUR"))
-    + r"))$"
-)
+DOF = r"^DOF\/(?P<DOF>\d{2}((0\d)|1[0-2])(([0-2]\d)|3[0-1]))$"
 
-# fmt: off
-DOF = (
-    r"^DOF\/(?P<DOF>\d{2}((0\d)|1[0-2])(([0-2]\d)|3[0-1]))(?!("
-    + r"|".join(_other_switches("DOF"))
-    + r"))$"
-)
+REG = r"^REG\/(?P<REG>[A-Z\d]+)$"
 
-# fmt: off
-REG = (
-    r"^REG\/(?P<REG>[A-Z\d]+)(?!("
-    + r"|".join(_other_switches("REG"))
-    + r"))$"
-)
+EET = r"^EET\/(?P<EET>([A-Z]{4}\d{4})(\s[A-Z]{4}\d{4})*)$"
 
-# fmt: off
-EET = (
-    r"^EET\/(?P<EET>([A-Z]{4}\d{4})(\s[A-Z]{4}\d{4})*)(?!("
-    + r"|".join(_other_switches("EET"))
-    + r"))$"
-)
+SEL = r"^SEL\/(?P<SEL>[A-Z]+)$"
 
-# fmt: off
-SEL = (
-    r"^SEL\/(?P<SEL>[A-Z]+)(?!("
-    + r"|".join(_other_switches("SEL"))
-    + r"))$"
-)
+TYP = r"^TYP\/(?P<TYP>(\d)?[A-Z\d]+)$"
 
-# fmt: off
-TYP = (
-    r"^TYP\/(?P<TYP>(\d)?[A-Z\d]+)(?!("
-    + r"|".join(_other_switches("TYP"))
-    + r"))$"
-)
+CODE = r"^CODE\/(?P<CODE>([0-9A-F]{6})(?<!F00000))$"
 
-# fmt: off
-CODE = (
-    r"^CODE\/(?P<CODE>(F[A-F\d]{5})(?<!F00000))(?!("
-    + r"|".join(_other_switches("CODE"))
-    + r"))$"
-)
+DLE = r"^DLE\/(?P<DLE>{point}\d\d[0-5]\d)$".format(point=POINT.replace(r"^", "").replace(r"$", ""))
 
-# fmt: off
-DLE = (
-    r"^DLE\/(?P<DLE>{point}\d\d[0-5]\d)(?!(".format(point=POINT.replace(r"^", "").replace(r"$", ""))
-    + r"|".join(_other_switches("DLE"))
-    + r"))$"
-)
+OPR = r"^OPR\/(?P<OPR>[A-Z\d]+)$"
 
-# fmt: off
-OPR = (
-    r"^OPR\/(?P<OPR>[A-Z\d]+)(?!("
-     + r"|".join(_other_switches("OPR"))
-     + r"))$"
-)
+ORGN = r"^ORGN\/(?P<ORGN>[A-Z]{8})$"
 
-# fmt: off
-ORGN = (
-    r"^ORGN\/(?P<ORGN>[A-Z]{8})(?!("
-     + r"|".join(_other_switches("ORGN"))
-     + r"))$"
-)
+PER = r"^PER\/(?P<PER>[A-Z])$"
 
-# fmt: off
-PER = (
-    r"^PER\/(?P<PER>[A-Z])(?!("
-    + r"|".join(_other_switches("PER"))
-    + r"))$"
-)
-
-# fmt: off
-DEP = (
-    r"^DEP\/(?P<DEP>(({ad})|({sigp}))".format(
-        ad=AERODROME.replace(r"^", "").replace(r"$", ""),
-        sigp=SIG_POINT.replace(r"^", "").replace(r"$", ""),
-    )
-    + r"(?!("
-    + r"|".join(_other_switches("DEP"))
-    + r")))$"
+DEP = r"^DEP\/(?P<DEP>(({ad})|({sigp}))$".format(
+    ad=AERODROME.replace(r"^", "").replace(r"$", ""),
+    sigp=SIG_POINT.replace(r"^", "").replace(r"$", ""),
 )
 
 DEST = DEP.replace("DEP", "DEST", 2)
@@ -415,21 +299,10 @@ TALT = DEP.replace("DEP", "TALT", 2)
 # The revised route is subject to reclearance in flight.
 #   Examples: 1- RIF/DTA HEC KLAX  2- RIF/ESP G94 CLA YPPH
 
-# fmt: off
-RIF = (
-    r"RIF\/(?P<RIF>\w+\s(?P<revised_dest_ad>[A-Z]{4}))(?!("
-    + r"|".join(_other_switches("RIF"))
-    + r"))$"
-)
+RIF = r"RIF\/(?P<RIF>\w+\s(?P<revised_dest_ad>[A-Z]{4}))$"
 
-# fmt: off
-RMK = (
-    r"^RMK\/(?P<RMK>\w+)(?!("
-    + r"|".join(_other_switches("RMK"))
-    + r"))$"
-)
+RMK = r"^RMK\/(?P<RMK>[\w ]+)$"
 
-# fmt: off
 OTHER_INFO_SWITCHES_MAPPING = {
     "STS": STS,
     "PBN": PBN,
