@@ -35,8 +35,6 @@ SITE_ID = 1
 
 # Application definition
 LOCAL_APPS = [
-    # 3rd party apps that should become first so to be override
-    "auditlog",
     # Local apps
     "accounts",
     "core",
@@ -106,7 +104,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # ---
-    "auditlog.middleware.AuditlogMiddleware",
     # AxesMiddleware should be the last middleware in the MIDDLEWARE list.
     "axes.middleware.AxesMiddleware",
 ]
@@ -242,8 +239,6 @@ FIR_INDICATOR = "OIIX"
 IMPORT_EXPORT_IMPORT_PERMISSION_CODE = ["add", "view"]
 IMPORT_EXPORT_CHUNK_SIZE = None
 IMPORT_EXPORT_FORMATS = [XLSX, CSV, JSON]
-
-AUDITLOG_INCLUDE_ALL_MODELS = True
 
 # Security flags for deployment
 if not DEBUG:
