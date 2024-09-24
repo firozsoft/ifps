@@ -62,7 +62,7 @@ class FlightPlanCreateView(LoginRequiredMixin, CreateView):
 
 
 def user_has_subscription(user):
-    return "Active" in user.userprofile.get_subscription_status()
+    return user.is_superuser or "Active" in user.userprofile.get_subscription_status()
 
 
 @login_required(login_url="accounts:login")
