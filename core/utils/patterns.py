@@ -254,11 +254,11 @@ PBN = r"^PBN\/(?P<PBN>({rnv})({rnp}))$".format(
 
 NAV = r"^NAV\/(?P<NAV>((SBAS|GBAS|ABAS|DGNSS|RTK|WARTK|PPP|RNP\d)\s?)+)$"
 
-COM = r"^COM\/(?P<COM>[A-Z\d ]+)$"
+COM = r"^COM\/(?P<COM>[A-Z\d\s]+)$"
 
-DAT = r"^DAT\/(?P<DAT>[A-Z\d ]+)$"
+DAT = r"^DAT\/(?P<DAT>[A-Z\d\s]+)$"
 
-SUR = r"^SUR\/(?P<SUR>[A-Z\d ]+)$"
+SUR = r"^SUR\/(?P<SUR>[A-Z\d\s]+)$"
 
 DOF = r"^DOF\/(?P<DOF>\d{2}((0\d)|1[0-2])(([0-2]\d)|3[0-1]))$"
 
@@ -301,7 +301,7 @@ TALT = DEP.replace("DEP", "TALT", 2)
 
 RIF = r"RIF\/(?P<RIF>\w+\s(?P<revised_dest_ad>[A-Z]{4}))$"
 
-RMK = r"^RMK\/(?P<RMK>[\w ]+)$"
+RMK = r"^RMK\/(?P<RMK>[\w\s]+)$"
 
 OTHER_INFO_SWITCHES_MAPPING = {
     "STS": STS,
