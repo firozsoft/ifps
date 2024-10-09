@@ -29,8 +29,8 @@ type_of_aircraft_validator = RegexValidator(
     code="invalid_type_of_aircraft",
 )
 
-equipments_and_capacities_validators = RegexValidator(
-    regex=patterns.EQUIPMENTS_CAPACITIES,
+equipments_and_capabilities_validators = RegexValidator(
+    regex=patterns.EQUIPMENTS_CAPABILITIES,
     message="Equipment specification does not conform to ICAO Doc 4444.",
     code="invalid_equipments",
 )

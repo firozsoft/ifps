@@ -46,9 +46,9 @@ class FlightPlan(models.Model):
         max_length=1,
         choices=WeakturbulenceCategory.choices,
     )
-    equipments_and_capacities = models.CharField(
+    equipments_and_capabilities = models.CharField(
         max_length=250,
-        validators=[validators.equipments_and_capacities_validators],
+        validators=[validators.equipments_and_capabilities_validators],
     )
     departure_aerodrome = models.CharField(
         max_length=4,

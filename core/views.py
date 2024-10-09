@@ -88,7 +88,7 @@ def submission(request: HttpRequest) -> JsonResponse:
         "aircraft_identification": parts[1],
         "flt_rule_type": parts[2],
         "numbers_type_weak": parts[3],
-        "equipments_and_capacities": parts[4],
+        "equipments_and_capabilities": parts[4],
         "dep_ad_time": parts[5],
         "route": parts[6],
         "dest_teet_alts": parts[7],

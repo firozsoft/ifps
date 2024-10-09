@@ -448,14 +448,17 @@ def parse(  # noqa:C901
     else:
         regex_parsed_data.update(numbers_type_weak.groupdict())
 
-    # Validate equipments/capacities
-    equipments_capacities = re.match(patterns.EQUIPMENTS_CAPACITIES, row_data["equipments_and_capacities"])
-    if not equipments_capacities:
+    # Validate equipments/capabilities
+    equipments_capabilities = re.match(
+        patterns.EQUIPMENTS_CAPABILITIES,
+        row_data["equipments_and_capabilities"],
+    )
+    if not equipments_capabilities:
         err["syntax_error"].append(
-            f"Invalid equipments/capacities ({row_data['equipments_and_capacities']}).",
+            f"Invalid equipments/capabilities ({row_data['equipments_and_capabilities']}).",
         )
     else:
-        regex_parsed_data.update(equipments_capacities.groupdict())
+        regex_parsed_data.update(equipments_capabilities.groupdict())
 
     # Validate departure aerodrome and time
     dep_ad_time = re.match(patterns.DEPARTURE_AD_TIME, row_data["dep_ad_time"])
@@ -540,7 +543,7 @@ def parse(  # noqa:C901
     # Parse Route
     _parse_route(row_data, regex_parsed_data, err)
 
-    # TODO: check the insertion of "W" or any alternative in item10(equipments/capacities) for RVSM/NonRVSM
+    # TODO: check the insertion of "W" or any alternative in item10(equipments/capabilities) for RVSM/NonRVSM
 
     errors = {f"{inx}": err for inx, err in enumerate(err["syntax_error"])} if err["syntax_error"] else {}
     return regex_parsed_data, errors
