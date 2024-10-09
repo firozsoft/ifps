@@ -169,15 +169,14 @@ def _check_item_is_valid_point_or_location(
         err["syntax_error"].append(f"{item} (after {previous['item']}) must be a valid Significant point.")
         return None
 
-    location = matched.groupdict().get("location", None)
-    if location is not None:
-        previous = {"type": "location", "item": location}
-        segments[-1]["nonessential"] = True
+    point = matched.groupdict().get("point", None)
+    if point is not None:
+        previous = {"type": "point", "item": point}
     else:
-        point = matched.groupdict().get("point", None)
-        if point is not None:
-            previous = {"type": "point", "item": point}
-
+        location = matched.groupdict().get("location", None)
+        if location is not None:
+            previous = {"type": "location", "item": location}
+            segments[-1]["nonessential"] = True
     # Handle possible speed and level changes
     _check_and_handle_possible_speed_level_change(matched_pattern, matched, segments)
 
