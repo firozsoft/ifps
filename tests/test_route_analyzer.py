@@ -418,7 +418,6 @@ class RouteAnalyzerTestCase(TestCase):
         route_analyzer(data, err)
 
         self.assertIn(error_messages.ROUTE_DOES_NOT_EXIST.format("P57"), err["integrity_error"])
-        self.assertIn(error_messages.PATH_NOT_FOUND.format("SYZ", "ISN", "P57"), err["integrity_error"])
 
     @mock.patch("core.analyzers.route_analyzer.validate_fpl_route_section")
     def test_fail_due_domestic_flight_nonexisting_point(self, mock_validate_fpl_route_section):
@@ -430,15 +429,7 @@ class RouteAnalyzerTestCase(TestCase):
 
         route_analyzer(data, err)
 
-        self.assertDictEqual(
-            err,
-            {
-                "integrity_error": [
-                    error_messages.POINT_DOES_NOT_EXIST.format("TRN"),
-                    error_messages.PATH_NOT_FOUND.format("SYZ", "TRN", "P574"),
-                ],
-            },
-        )
+        self.assertDictEqual(err, {"integrity_error": [error_messages.POINT_DOES_NOT_EXIST.format("TRN")]})
 
     @mock.patch("core.analyzers.route_analyzer.validate_fpl_route_section")
     def test_fail_due_domestic_flight_wrong_route(self, mock_validate_fpl_route_section):

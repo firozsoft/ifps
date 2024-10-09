@@ -198,7 +198,7 @@ def route_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: dict[
     fpl_route_sections = [
         route_section
         for route_section in route_portion_to_be_checked
-        if "nonessential" not in route_section or (route_section["via"] not in ("", "DCT"))
+        if "nonessential" not in route_section and (route_section["via"] not in ("", "DCT"))
     ]
 
     existing_routes = {tp[0] for tp in all_existing_sections}
@@ -206,6 +206,10 @@ def route_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: dict[
         if route_section["via"] not in existing_routes:
             route_section["nonessential"] = True
             err["integrity_error"].append(errors.ROUTE_DOES_NOT_EXIST.format(route_section["via"]))
+
+    fpl_route_sections = [
+        route_section for route_section in route_portion_to_be_checked if "nonessential" not in route_section
+    ]
 
     # * Step 2.2. Check route section adherence
     # 1. A section from filled flightplan may encompasses more than one database route-section. (2 below)
