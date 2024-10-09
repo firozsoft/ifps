@@ -1,7 +1,7 @@
 from django.db.models import QuerySet
 
 from apps.general.models.notam import Notam
-from core.analyzers import aerodromes_analyzer, notam_analyzer, route_analyzer
+from core.analyzers import aerodromes_analyzer, notam_analyzer, route_analyzer, route_schemes_analyzer
 
 
 def integrity_checks(
@@ -29,7 +29,10 @@ def integrity_checks(
     aerodromes = aerodromes_analyzer.aerodromes_analyzer(fpl, err)
 
     # Perform route analysis
-    points, sections, firs = route_analyzer.route_analyzer(fpl, err)
+    points, sections, firs, route = route_analyzer.route_analyzer(fpl, err)
+
+    # Check route-scheme (TOS) adherence
+    route_schemes_analyzer.route_schemes_analyzer(fpl, route, err)
 
     notams = Notam.objects.none()
     if not err["integrity_error"]:

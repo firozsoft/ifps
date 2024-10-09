@@ -229,6 +229,4 @@ def route_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: dict[
             db_section = all_existing_sections[section]
             validate_fpl_route_section(fpl_route_section, db_section, fpl, err)
 
-    # * Step 2.3. Check route-scheme (TOS) adherence
-
-    return all_existing_points, all_existing_sections, firs
+    return all_existing_points, all_existing_sections, firs, fpl_route_sections
