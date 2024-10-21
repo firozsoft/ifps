@@ -434,7 +434,7 @@ def parse(  # noqa:C901
         regex_parsed_data["aircraft_identification"] = aircraft_identification.group()
 
     # Validate flight rule/type
-    flt_rule_type = re.match(patterns.FLIGHT_RULE_TYPE, row_data["flt_rule_type"])
+    flt_rule_type = re.match(patterns.FLIGHT_RULE_AND_TYPE, row_data["flt_rule_type"])
     if not flt_rule_type:
         err["syntax_error"].append(f"Invalid flight rule/type ({row_data['flt_rule_type']}).")
     else:

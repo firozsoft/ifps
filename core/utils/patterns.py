@@ -33,7 +33,7 @@ AIRCRAFT_IDENTIFICATION = r"^(?P<aircraft_identification>[A-Z\d]{2,7})$"
 # TODO: Specify status of a flight following the indicator STS in Item 18, or when necessary to denote other reasons for specific handling by ATS, indicate the reason following the indicator RMK in Item 18.
 FLIGHT_RULE = r"^(?P<flight_rule>[IVYZ])$"
 TYPE_OF_FLIGHT = r"^(?P<type_of_flight>[SNGMX]?)$"
-FLIGHT_RULE_TYPE = r"^(?P<flight_rule>[IVYZ])(?P<type_of_flight>[SNGMX]?)$"
+FLIGHT_RULE_AND_TYPE = r"^(?P<flight_rule>[IVYZ])(?P<type_of_flight>[SNGMX]?)$"
 
 
 # ? ITEM 9: NUMBER AND TYPE OF AIRCRAFT AND WAKE TURBULENCE CATEGORY
