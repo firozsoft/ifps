@@ -249,7 +249,8 @@ RNAV_SPC = r"^(?P<rnav_specification>(?:A1|B[1-6]|C[1-4]|D[1-4]){1,4})$"
 RNP_SPC = r"^(?P<rnp_specification>(?:L1|O[1-4]|S[1-2]|T[1-2]){1,4})$"
 
 STS = (
-    r"^STS\/(?P<STS>(?:(?:ALTRV|ATFMX|FFR|FLTCK|HAZMAT|HEAD|HOSP|HUM|MARSA|MEDEVAC|NONRVSM|SAR|STATE)\s?)+)$"
+    r"^STS\/(?P<STS>(?:ALTRV|ATFMX|FFR|FLTCK|HAZMAT|HEAD|HOSP|HUM|MARSA|MEDEVAC|NONRVSM|SAR|STATE)"
+    r"(\s(?:ALTRV|ATFMX|FFR|FLTCK|HAZMAT|HEAD|HOSP|HUM|MARSA|MEDEVAC|NONRVSM|SAR|STATE))*)$"
 )
 
 PBN = r"^PBN\/(?P<PBN>{rnv}{rnp})$".format(
@@ -257,7 +258,10 @@ PBN = r"^PBN\/(?P<PBN>{rnv}{rnp})$".format(
     rnp=RNP_SPC.replace(r"^", "").replace(r"$", ""),
 )
 
-NAV = r"^NAV\/(?P<NAV>(?:(?:SBAS|GBAS|ABAS|DGNSS|RTK|WARTK|PPP|RNP\d)\s?)+)$"
+NAV = (
+    r"^NAV\/(?P<NAV>(?:SBAS|GBAS|ABAS|DGNSS|RTK|WARTK|PPP|RNP\d)"
+    r"(\s(?:SBAS|GBAS|ABAS|DGNSS|RTK|WARTK|PPP|RNP\d))*)$"
+)
 
 COM = r"^COM\/(?P<COM>[A-Z\d\s]+)$"
 
