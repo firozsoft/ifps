@@ -122,8 +122,8 @@ AC_NUMBER_TYPE_WAKE = r"^(?P<number_of_aircraft>\d{0,2})(?P<type_of_aircraft>[A-
 # * Example:  ADE3RV/HB2U2V2G1
 
 # Note 2.— Additional surveillance equipment or capabilities will be listed in Item 18 following the indicator SUR/, as required by the appropriate ATS authority
-EQUIPMENTS = r"^(?P<equipments>N|(S|A|B|C|D|E1|E2|E3|F|G|H|I|J[1-7]|K|L|M[1-3]|O|P[1-9]|R|T|U|V|W|X|Y|Z)+)$"
-CAPABILITIES = r"^(?P<capabilities>N|((A|C|E|H|I|L|P|S|X)?(B1|B2)?(U1|U2)?(V1|V2)?(D1|G1)?){1,20})$"
+EQUIPMENTS = r"^(?P<equipments>N|(?:S|A|B|C|D|E1|E2|E3|F|G|H|I|J[1-7]|K|L|M[1-3]|O|P[1-9]|R|T|U|V|W|X|Y|Z)+)$"
+CAPABILITIES = r"^(?P<capabilities>N|(?:(?:A|C|E|H|I|L|P|S|X)?(B1|B2)?(U1|U2)?(V1|V2)?(D1|G1)?){1,20})$"
 
 EQUIPMENTS_CAPABILITIES = r"^{equipments}\/{capabilities}$".format(
     equipments=EQUIPMENTS.replace(r"^", "").replace(r"$", ""),
@@ -135,7 +135,7 @@ EQUIPMENTS_CAPABILITIES = r"^{equipments}\/{capabilities}$".format(
 # Insert all clock times in 4 figures UTC
 # Insert all estimated elapsed times in 4 figures (hours and minutes)
 # TODO: ZZZZ/AFIL and SPECIFY, in Item 18, the name and location of the aerodrome preceded by DEP/
-DEPARTURE_AD_TIME = r"^({ad}|AFIL|ZZZZ)(?P<eobt>((?:[01]\d|2[0-3])[0-5]\d)$".format(
+DEPARTURE_AD_TIME = r"^(?:{ad}|AFIL|ZZZZ)(?P<eobt>(?:[01]\d|2[0-3])[0-5]\d)$".format(
     ad=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<departure_ad>"),
 )
 
@@ -176,27 +176,27 @@ SPEED_LEVEL = r"^{spd}{lvl}$".format(
 # ? USE ONLY the conventions in (1) to (5) below and SEPARATE each sub-item by a space.
 
 # ? Degrees only (7 characters) or degrees and minutes (11 characters)
-COORDINATE = r"^(?P<coordinate>(?:(?:[0-8]\d|90)[NS])((?:(?:0\d{2}|1[0-7]\d|180)[EW]))|(?:(?:[0-8]\d|90)(?:[0-5]\d)[NS])((?:(?:0\d{2}|1[0-7]\d|180)(?:[0-5]\d)[EW])))$"
+COORDINATE = r"^(?P<coordinate>(?:[0-8]\d|90)(?:[0-5]\d)?[NS](?:0\d\d|1[0-7]\d|180)(?:[0-5]\d)?[EW])$"
 
 # ? The coded designator (2 to 5 characters) assigned to the point (e.g. LN, MAY, HADDY)
-POINT = r"^(?!DCT|IFR|VFR)(?P<point>[A-Z]{2,5})$"
+POINT = r"^(?!(?:DCT|IFR|VFR)$)(?P<point>[A-Z]{2,5})$"
 
 # ? Bearing and distance from a reference point (point which has a designator)
-BEARING_DIST = r"^(?P<bearing_dist>({pnt})(([0-2]\d\d)|(3[0-5]\d))[0-2]\d\d)$".format(
+BEARING_DIST = r"^(?P<bearing_dist>{pnt}(?:[0-2]\d\d|3[0-5]\d)[0-3]\d\d)$".format(
     pnt=POINT.replace(r"^", "").replace(r"$", "").replace("<point>", "<ref_point>"),
 )
 
 # ? Points that don't have assigned indicator - referred to as special point
-LOCATION = r"^(?P<location>({brd})|({coordinate}))$".format(
+LOCATION = r"^(?P<location>{brd}|{coordinate})$".format(
     brd=BEARING_DIST.replace(r"^", "").replace(r"$", ""),
     coordinate=COORDINATE.replace(r"^", "").replace(r"$", ""),
 )
 
 # * 1- ATS route (2 to 7 characters) ! 7 characters only for SID/STAR
 ROUTE = r"^(?P<route>[A-Z]{1,3}\d{1,3})$"
-SID_STAR = r"^(?P<sid_star>({pnt})\d[A-Z])$".format(pnt=POINT.replace(r"^", "").replace(r"$", ""))
-SID_POINT = r"^([A-Z]{3,5})\d[A-Z] \1$"
-POINT_STAR = r"^([A-Z]{3,5}) \1\d[A-Z]$"
+SID_STAR = r"^(?P<sid_star>{pnt}\d[A-Z])$".format(pnt=POINT.replace(r"^", "").replace(r"$", ""))
+SID_POINT = r"^(?P<sid>([A-Z]{3,5})\d[A-Z]) \2$"
+POINT_STAR = r"^([A-Z]{3,5}) (?P<star>\1\d[A-Z])$"
 
 # * 2- Significant point (2 to 11 characters)
 # ? All point matching those regexes above
@@ -214,7 +214,7 @@ CHANGE_SPEED_LEVEL = r"^(?P<change_speed_level>{sigp}\/{splvl})$".format(
 
 # * 4- Change of flight rules (maximum 3 characters)
 # (Point (as in 2- above) Or ChangeOfSpeedLevel(as in 3- above)) + 1 space + IFR/VFR
-CHANGE_FLT_RULE = r"^(?P<change_flt_rule>({sigp}(\/{splvl})?)\s+(VFR|IFR))$".format(
+CHANGE_FLT_RULE = r"^(?P<change_flt_rule>{sigp}(?:\/{splvl})?\s(?:VFR|IFR))$".format(
     sigp=SIG_POINT.replace(r"^", "").replace(r"$", ""),
     splvl=SPEED_LEVEL.replace(r"^", "").replace(r"$", ""),
 )
@@ -223,7 +223,7 @@ CHANGE_FLT_RULE = r"^(?P<change_flt_rule>({sigp}(\/{splvl})?)\s+(VFR|IFR))$".for
 # letter C followed by an oblique stroke (/), a point as in 2 above followed by an oblique stroke,
 # the speed, lower level, upper level or the word PLUS C/SIG_POINT/SPEED_LEVEL(LEVEL|PLUS)
 # Examples:  C/48N050W/M082F290F350, C/48N050W/M082F290PLUS, C/LN011032/M220F580F620
-CRUISE_CLIMB = r"^(?P<cruise_climb>C\/{sigp}\/{splvl}({lvl}|PLUS))$".format(
+CRUISE_CLIMB = r"^(?P<cruise_climb>C\/{sigp}\/{splvl}(?:{lvl}|PLUS))$".format(
     sigp=SIG_POINT.replace(r"^", "").replace(r"$", ""),
     splvl=SPEED_LEVEL.replace(r"^", "").replace(r"$", ""),
     lvl=LEVEL.replace(r"^", "").replace(r"$", "").replace("level", "top_level"),
@@ -238,24 +238,26 @@ CRUISE_CLIMB = r"^(?P<cruise_climb>C\/{sigp}\/{splvl}({lvl}|PLUS))$".format(
 # the ICAO four-letter location indicator(s) of not more than two destination alternate aerodromes, or
 # ZZZZ and SPECIFY in Item 18 the name and location of the destination alternate aerodrome(s), preceded by ALTN/
 TEET = r"^(?P<teet>\d\d[0-5]\d)$"
-DEST_AD_TEET_ALTS = r"^(?P<dest_teet_alt>({ad0})(?P<teet>\d\d[0-5]\d)(\s{ad1})?(\s{ad2})?)$".format(
+DEST_AD_TEET_ALTS = r"^(?P<dest_teet_alt>{ad0}(?P<teet>\d\d[0-5]\d)\s{ad1}(?:\s{ad2})?)$".format(
     ad0=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<destination_ad>"),
     ad1=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<alt_ad_1>"),
     ad2=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<alt_ad_2>"),
 )
 
-RNAV_SPC = r"^(?P<rnav_specification>(A1|B[1-6]|C[1-4]|D[1-4]){1,4})$"
+RNAV_SPC = r"^(?P<rnav_specification>(?:A1|B[1-6]|C[1-4]|D[1-4]){1,4})$"
 
-RNP_SPC = r"^(?P<rnp_specification>(L1|O[1-4]|S[1-2]|T[1-2]){1,4})$"
+RNP_SPC = r"^(?P<rnp_specification>(?:L1|O[1-4]|S[1-2]|T[1-2]){1,4})$"
 
-STS = r"^STS\/(?P<STS>((ALTRV|ATFMX|FFR|FLTCK|HAZMAT|HEAD|HOSP|HUM|MARSA|MEDEVAC|NONRVSM|SAR|STATE)\s?)+)$"
+STS = (
+    r"^STS\/(?P<STS>(?:(?:ALTRV|ATFMX|FFR|FLTCK|HAZMAT|HEAD|HOSP|HUM|MARSA|MEDEVAC|NONRVSM|SAR|STATE)\s?)+)$"
+)
 
-PBN = r"^PBN\/(?P<PBN>({rnv})({rnp}))$".format(
+PBN = r"^PBN\/(?P<PBN>{rnv}{rnp})$".format(
     rnv=RNAV_SPC.replace(r"^", "").replace(r"$", ""),
     rnp=RNP_SPC.replace(r"^", "").replace(r"$", ""),
 )
 
-NAV = r"^NAV\/(?P<NAV>((SBAS|GBAS|ABAS|DGNSS|RTK|WARTK|PPP|RNP\d)\s?)+)$"
+NAV = r"^NAV\/(?P<NAV>(?:(?:SBAS|GBAS|ABAS|DGNSS|RTK|WARTK|PPP|RNP\d)\s?)+)$"
 
 COM = r"^COM\/(?P<COM>[A-Z\d\s]+)$"
 
@@ -267,11 +269,11 @@ DOF = r"^DOF\/(?P<DOF>\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01]))$"
 
 REG = r"^REG\/(?P<REG>[A-Z\d]+)$"
 
-EET = r"^EET\/(?P<EET>([A-HK-WYZ][A-Z]{3}\d{2}[0-5]\d)(\s[A-HK-WYZ][A-Z]{3}\d{2}[0-5]\d)*)$"
+EET = r"^EET\/(?P<EET>[A-HK-WYZ][A-Z]{3}\d{2}[0-5]\d(?:\s[A-HK-WYZ][A-Z]{3}\d{2}[0-5]\d)*)$"
 
 SEL = r"^SEL\/(?P<SEL>[A-Z]+)$"
 
-TYP = r"^TYP\/(?P<TYP>(?:\d?[A-Z\d]{2,4})(?:\s\d?[A-Z\d]{2,4})*)$"
+TYP = r"^TYP\/(?P<TYP>(?:[2-9]\d?)?[A-Z\d]{2,4}(?:\s(?:[2-9]\d?)?[A-Z\d]{2,4})?)$"
 
 CODE = r"^CODE\/(?P<CODE>[0-9A-F]{6})$"
 
