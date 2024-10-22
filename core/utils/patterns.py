@@ -9,7 +9,7 @@ This mudole contains RegexPatterns matching the items of flight plan as prescrib
 
 # The r"^(?![IJXQ])(?P<aerodrome>[A-Z]{4})$" without the look-around
 AERODROME = r"^(?P<aerodrome>[A-HK-WYZ][A-Z]{3})$"
-FIR = AERODROME.replace("<aerodrome>", "<fir>")
+FIR = AERODROME.replace(r"<aerodrome>", r"<fir>")
 AFTN_ADDRESS = r"^[A-HK-WYZ][A-Z]{8}$"
 
 # ? ITEM 7: AIRCRAFT IDENTIFICATION (MAXIMUM 7 CHARACTERS)
@@ -136,7 +136,7 @@ EQUIPMENTS_CAPABILITIES = rf"^{EQUIPMENTS[1:-1]}\/{CAPABILITIES[1:-1]}$"
 # Insert all estimated elapsed times in 4 figures (hours and minutes)
 # TODO: ZZZZ/AFIL and SPECIFY, in Item 18, the name and location of the aerodrome preceded by DEP/
 EOBT = r"^(?P<eobt>(?:[01]\d|2[0-3])[0-5]\d)$"
-DEPARTURE_AD = AERODROME.replace("<aerodrome>", "<departure_ad>")
+DEPARTURE_AD = AERODROME.replace(r"<aerodrome>", r"<departure_ad>")
 DEPARTURE_AD_TIME = rf"^(?:{DEPARTURE_AD[1:-1]}|AFIL|ZZZZ){EOBT[1:-1]}$"
 
 
@@ -180,7 +180,7 @@ POINT = r"^(?P<point>[A-Z]{2,5}(?<!DCT|VFR|IFR))$"
 
 # ? Bearing and distance from a reference point (point which has a designator)
 BEARING_DIST = r"^(?P<bearing_dist>{pnt}(?:[0-2]\d\d|3[0-5]\d)[0-3]\d\d)$".format(
-    pnt=POINT[1:-1].replace("<point>", "<ref_point>"),
+    pnt=POINT[1:-1].replace(r"<point>", r"<ref_point>"),
 )
 
 # ? Points that don't have assigned indicator - referred to as special point
@@ -210,7 +210,7 @@ CHANGE_FLT_RULE = rf"^(?P<change_flt_rule>{SIG_POINT[1:-1]}(?:\/{SPEED_LEVEL[1:-
 # Examples:  C/48N050W/M082F290F350, C/48N050W/M082F290PLUS, C/LN011032/M220F580F620
 CRUISE_CLIMB = (
     rf"^(?P<cruise_climb>C\/{SIG_POINT[1:-1]}\/{SPEED_LEVEL[1:-1]}"
-    rf"(?:{LEVEL[1:-1].replace('level', 'top_level')}|PLUS))$"
+    rf"(?:{LEVEL[1:-1].replace(r'level', r'top_level')}|PLUS))$"
 )
 
 # ? ITEM 16: DESTINATION AERODROME AND TOTAL ESTIMATED ELAPSED TIME, DESTINATION ALTERNATE AERODROME(S)
@@ -223,9 +223,9 @@ CRUISE_CLIMB = (
 # ZZZZ and SPECIFY in Item 18 the name and location of the destination alternate aerodrome(s), preceded by ALTN/
 TEET = r"^(?P<teet>\d\d[0-5]\d)$"
 DEST_AD_TEET_ALTS = r"^(?P<dest_teet_alt>{ad0}(?P<teet>\d\d[0-5]\d)\s{ad1}(?:\s{ad2})?)$".format(
-    ad0=AERODROME[1:-1].replace("<aerodrome>", "<destination_ad>"),
-    ad1=AERODROME[1:-1].replace("<aerodrome>", "<alt_ad_1>"),
-    ad2=AERODROME[1:-1].replace("<aerodrome>", "<alt_ad_2>"),
+    ad0=AERODROME[1:-1].replace(r"<aerodrome>", r"<destination_ad>"),
+    ad1=AERODROME[1:-1].replace(r"<aerodrome>", r"<alt_ad_1>"),
+    ad2=AERODROME[1:-1].replace(r"<aerodrome>", r"<alt_ad_2>"),
 )
 
 RNAV_SPC = r"^(?P<rnav_specification>(?:A1|B[1-6]|C[1-4]|D[1-4]){1,4})$"
@@ -272,13 +272,13 @@ PER = r"^PER\/(?P<PER>[A-Z])$"
 
 DEP = rf"^DEP\/(?P<DEP>{AERODROME[1:-1]}|{SIG_POINT[1:-1]})$"
 
-DEST = DEP.replace("DEP", "DEST", 2)
+DEST = DEP.replace(r"DEP", r"DEST", 2)
 
-ALTN = DEP.replace("DEP", "ALTN", 2)
+ALTN = DEP.replace(r"DEP", r"ALTN", 2)
 
-RALT = DEP.replace("DEP", "RALT", 2)
+RALT = DEP.replace(r"DEP", r"RALT", 2)
 
-TALT = DEP.replace("DEP", "TALT", 2)
+TALT = DEP.replace(r"DEP", r"TALT", 2)
 
 # TODO: RIF data needs to be parsed just like route item
 # RIF/ _> The route details to the revised destination aerodrome,
@@ -286,7 +286,7 @@ TALT = DEP.replace("DEP", "TALT", 2)
 # The revised route is subject to reclearance in flight.
 #   Examples: 1- RIF/DTA HEC KLAX  2- RIF/ESP G94 CLA YPPH
 
-RIF = r"RIF\/(?P<RIF>\w+\s(?P<revised_dest_ad>[A-Z]{4}))$"
+RIF = rf"RIF\/(?P<RIF>\w+\s{AERODROME[1:-1]})$"
 
 RMK = r"^RMK\/(?P<RMK>[\w\s]+)$"
 
