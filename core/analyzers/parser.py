@@ -1,3 +1,4 @@
+# ruff:noqa: DTZ005,DTZ007,C901
 """Methods to parse and validate flight message text.
 
 Checks includes validation of message syntax, flight planning rules regarding the use of specific items
@@ -15,9 +16,8 @@ analysis and checks regarding each section of a flight plan.
 """
 
 import copy
+import datetime as dt
 import re
-
-from django.utils import timezone
 
 from core.utils import patterns
 
@@ -274,7 +274,7 @@ def _parse_route(  # noqa:C901
         res["initial_speed"] = init_sp_lvl.groupdict().get("speed")
         res["initial_level"] = init_sp_lvl.groupdict().get("level")
     else:
-        err["syntax_error"].append(f"{route_items[0]} must be a valid speed & level.")
+        err["syntax_error"].append(f"`{route_items[0]}` must be a valid speed & level.")
         return
 
     # keep a look at item already checked to be able to expect the nature of next item to be checked
@@ -298,7 +298,7 @@ def _parse_route(  # noqa:C901
         previous = {"type": "location", "item": item.groupdict().get("location")}
 
     else:
-        err["syntax_error"].append(f"{route_items[1]} must be a valid ATS Route or DCT or an ATS Point")
+        err["syntax_error"].append(f"`{route_items[1]}` must be a valid ATS Route or DCT or an ATS Point")
         return
 
     # route segments
@@ -322,11 +322,11 @@ def _parse_route(  # noqa:C901
     if needs_change_of_flt_rule:
         if res["flight_rule"] == "Z" and "IFR" not in set_rest_of_route_items:
             err["syntax_error"].append(
-                f"Flight rule is filled as {res['flight_rule']} but doesn't change (to IFR) in the route.",
+                f"Flight rule is filled as `{res['flight_rule']}` but doesn't change (to IFR) in the route.",
             )
         if res["flight_rule"] == "Y" and "VFR" not in set_rest_of_route_items:
             err["syntax_error"].append(
-                f"Flight rule is filled as {res['flight_rule']} but doesn't change (to VFR) in the route.",
+                f"Flight rule is filled as `{res['flight_rule']}` but doesn't change (to VFR) in the route.",
             )
 
     # Process each item in the route
@@ -371,37 +371,83 @@ def _parse_route(  # noqa:C901
     res["route"] = segments
 
 
-def _validate_fpl_item18_other_information(
-    row_data: dict[str, str],
-    regex_parsed_data: dict[str, list[str]],
-    err: dict[str, list[str]],
-) -> None:
-    other_info: list[str] = row_data["others"].split()
-    last_switch_index = 0
-    for item in other_info[:]:
-        if "/" not in item:
-            other_info[last_switch_index] += " " + item
-            other_info.remove(item)
-        else:
-            last_switch_index = other_info.index(item)
+def _validate_simple_fields(row_data: dict, parsed_data: dict, err: dict) -> None:
+    # Validate callsign
+    aircraft_identification = re.match(patterns.AIRCRAFT_IDENTIFICATION, row_data["aircraft_identification"])
+    if not aircraft_identification:
+        err["syntax_error"].append(
+            f"Invalid aircraft identification `{row_data['aircraft_identification']}`.",
+        )
+    else:
+        parsed_data["aircraft_identification"] = aircraft_identification.group()
 
-    for item in other_info[:]:
-        for key, pattern in patterns.OTHER_INFO_SWITCHES_MAPPING.items():
-            if item.startswith(f"{key}/"):
-                matched = re.match(pattern, item)
-                if matched is not None:
-                    if key not in regex_parsed_data:
-                        regex_parsed_data.update(matched.groupdict())
-                    else:
-                        regex_parsed_data[key] = [regex_parsed_data[key], matched.group()]
-                else:
-                    err["syntax_error"].append(f"Invalid {item} in ITEM18 (Other information).")
-                break
-        else:
-            err["syntax_error"].append(f"{item} is not valid syntax for ITEM18 (Other information).")
+    # Validate flight rule/type
+    flt_rule_type = re.match(patterns.FLIGHT_RULE_AND_TYPE, row_data["flt_rule_type"])
+    if not flt_rule_type:
+        err["syntax_error"].append(f"Invalid flight rule or type `{row_data['flt_rule_type']}`.")
+    else:
+        parsed_data.update(flt_rule_type.groupdict())
+
+    # Validate numbers/type/weak
+    numbers_type_weak = re.match(patterns.AC_NUMBER_TYPE_WAKE, row_data["numbers_type_weak"])
+    if not numbers_type_weak:
+        err["syntax_error"].append(
+            f"Invalid aircraft number(s), type or weakturbulence category `{row_data['numbers_type_weak']}`.",
+        )
+    else:
+        parsed_data.update(numbers_type_weak.groupdict())
+
+    # Validate equipments/capabilities
+    equipments_capabilities = re.match(
+        patterns.EQUIPMENTS_CAPABILITIES,
+        row_data["equipments_and_capabilities"],
+    )
+    if not equipments_capabilities:
+        err["syntax_error"].append(
+            f"Invalid equipments or capabilities `{row_data['equipments_and_capabilities']}`.",
+        )
+    else:
+        parsed_data.update(equipments_capabilities.groupdict())
+
+    # Validate departure aerodrome and time
+    dep_ad_time = re.match(patterns.DEPARTURE_AD_TIME, row_data["dep_ad_time"])
+    if not dep_ad_time:
+        err["syntax_error"].append(f"Invalid departure aerodrome or time `{row_data['dep_ad_time']}`.")
+    else:
+        parsed_data.update(dep_ad_time.groupdict())
+
+    # Validate destination aerodrome, teet, and alternates
+    dest_teet_alt = re.match(patterns.DEST_AD_TEET_ALTS, row_data["dest_teet_alts"])
+    if not dest_teet_alt:
+        err["syntax_error"].append(
+            f"Invalid destination aerodrome or time or alternates `{row_data['dest_teet_alts']}`.",
+        )
+    else:
+        parsed_data.update(dest_teet_alt.groupdict())
 
 
-def parse(  # noqa:C901
+def _validate_fpl_item18_other_information(row_data: dict, parsed_data: dict, err: dict) -> None:
+    mut_value = row_data["others"][:]
+    for key, pattern in patterns.OTHER_INFO_SWITCHES_MAPPING.items():
+        cleaned_pattern = pattern.replace(r"^", r"\b").replace(r"$", r"\b")
+        matches = list(re.finditer(cleaned_pattern, mut_value))
+        if not matches:
+            continue
+        if len(matches) > 1:
+            err["syntax_error"].append(f"Switch `{key}` already exists (ITEM18).")
+            continue
+
+        switch_and_value = matches[0].groupdict()
+        parsed_data.update(switch_and_value)
+        mut_value = mut_value.replace("/".join(*switch_and_value.items()), "")
+
+    if mut_value.strip():
+        err["syntax_error"].append(
+            f"`{mut_value}` is ambiguous and cannot be recognized as valid other information (ITEM18).",
+        )
+
+
+def parse(
     row_data: dict[str, str],
 ) -> tuple[dict[str, str | list[dict[str, str]]], dict[str, str] | None]:
     """Check for syntax errors and prepare a new dictionary.
@@ -420,129 +466,79 @@ def parse(  # noqa:C901
     tuple: Tuple of two dictionaries containing the validated data and encountered errors, if any.
 
     """
-    regex_parsed_data = {}
-    errors = None
+    parsed_data = {}
     err = {"syntax_error": []}
 
-    # Validate callsign
-    aircraft_identification = re.match(patterns.AIRCRAFT_IDENTIFICATION, row_data["aircraft_identification"])
-    if not aircraft_identification:
-        err["syntax_error"].append(
-            f"Invalid aircraft identification ({row_data['aircraft_identification']}).",
-        )
-    else:
-        regex_parsed_data["aircraft_identification"] = aircraft_identification.group()
-
-    # Validate flight rule/type
-    flt_rule_type = re.match(patterns.FLIGHT_RULE_AND_TYPE, row_data["flt_rule_type"])
-    if not flt_rule_type:
-        err["syntax_error"].append(f"Invalid flight rule/type ({row_data['flt_rule_type']}).")
-    else:
-        regex_parsed_data.update(flt_rule_type.groupdict())
-
-    # Validate numbers/type/weak
-    numbers_type_weak = re.match(patterns.AC_NUMBER_TYPE_WAKE, row_data["numbers_type_weak"])
-    if not numbers_type_weak:
-        err["syntax_error"].append(f"Invalid numbers/type/weak ({row_data['numbers_type_weak']}).")
-    else:
-        regex_parsed_data.update(numbers_type_weak.groupdict())
-
-    # Validate equipments/capabilities
-    equipments_capabilities = re.match(
-        patterns.EQUIPMENTS_CAPABILITIES,
-        row_data["equipments_and_capabilities"],
-    )
-    if not equipments_capabilities:
-        err["syntax_error"].append(
-            f"Invalid equipments/capabilities ({row_data['equipments_and_capabilities']}).",
-        )
-    else:
-        regex_parsed_data.update(equipments_capabilities.groupdict())
-
-    # Validate departure aerodrome and time
-    dep_ad_time = re.match(patterns.DEPARTURE_AD_TIME, row_data["dep_ad_time"])
-    if not dep_ad_time:
-        err["syntax_error"].append(f"Invalid departure aerodrome or time ({row_data['dep_ad_time']}).")
-    else:
-        regex_parsed_data.update(dep_ad_time.groupdict())
-
-    # Validate destination aerodrome, teet, and alternates
-    dest_teet_alt = re.match(patterns.DEST_AD_TEET_ALTS, row_data["dest_teet_alts"])
-    if not dest_teet_alt:
-        err["syntax_error"].append(
-            f"Invalid destination aerodrome or time or alternates ({row_data['dest_teet_alts']}).",
-        )
-    else:
-        regex_parsed_data.update(dest_teet_alt.groupdict())
+    # Parse fields that are simple to parse
+    _validate_simple_fields(row_data, parsed_data, err)
 
     # Parse Other Information
-    _validate_fpl_item18_other_information(row_data, regex_parsed_data, err)
+    _validate_fpl_item18_other_information(row_data, parsed_data, err)
 
-    regex_parsed_data = {key.lower(): value for key, value in regex_parsed_data.items()}
+    parsed_data = {key.lower(): value for key, value in parsed_data.items()}
 
-    if regex_parsed_data["departure_ad"] in ("ZZZZ", "AFIL"):
-        if "dep" not in regex_parsed_data:
+    if parsed_data["departure_ad"] in ("ZZZZ", "AFIL"):
+        if "dep" not in parsed_data:
             err["syntax_error"].append(
                 "DEP is not defined and missing DEP/ switch in ITEM18 (Other information).",
             )
-        elif not re.match(patterns.LOCATION, regex_parsed_data["dep"]):
+        elif not re.match(patterns.LOCATION, parsed_data["dep"]):
             err["syntax_error"].append(
-                f"DEP/ in ITEM18({regex_parsed_data['dep']}) is not a valid Point/Coordinate/BearingDistance.",
+                f"DEP/ in ITEM18`{parsed_data['dep']}` is not a valid Point, "
+                "Coordinate or BearingDistance.",
             )
-    elif "dep" in regex_parsed_data:
+    elif "dep" in parsed_data:
         err["syntax_error"].append(
             "There must be only one of departure Ad. or DEP/ switch in ITEM18 (Other information).",
         )
 
-    if regex_parsed_data["destination_ad"] == "ZZZZ":
-        if "dest" not in regex_parsed_data:
+    if parsed_data["destination_ad"] == "ZZZZ":
+        if "dest" not in parsed_data:
             err["syntax_error"].append(
                 "DEST is not defined and missing DEST/ switch in ITEM18 (Other information).",
             )
-        elif not re.match(patterns.LOCATION, regex_parsed_data["dest"]):
+        elif not re.match(patterns.LOCATION, parsed_data["dest"]):
             err["syntax_error"].append(
-                f"DEST/ in ITEM18({regex_parsed_data['dest']}) is not a valid Point/Coordinate/BearingDistance.",
+                f"DEST/ in ITEM18 `{parsed_data['dest']}` is not a valid Point, "
+                "Coordinate or BearingDistance.",
             )
-    elif "dest" in regex_parsed_data:
+    elif "dest" in parsed_data:
         err["syntax_error"].append(
             "There must be only one of destination Ad. or DEST/ switch in ITEM18 (Other information).",
         )
 
-    if regex_parsed_data["alt_ad_1"] == "ZZZZ" or regex_parsed_data["alt_ad_2"] == "ZZZZ":
-        if "altn" not in regex_parsed_data:
+    if parsed_data["alt_ad_1"] == "ZZZZ" or parsed_data["alt_ad_2"] == "ZZZZ":
+        if "altn" not in parsed_data:
             err["syntax_error"].append(
                 "ALTN is not defined and missing ALTN/ switch in ITEM18 (Other information).",
             )
-        elif not re.match(patterns.LOCATION, regex_parsed_data["dest"]):
+        elif not re.match(patterns.LOCATION, parsed_data["dest"]):
             err["syntax_error"].append(
-                f"ALTN/ in ITEM18({regex_parsed_data['dest']}) is not a valid point or coordinate (7 or 11 characters) or bearing-distance.",
+                f"ALTN/ in ITEM18 `{parsed_data['dest']}` is not a valid point or coordinate "
+                "(7 or 11 characters) or bearing-distance.",
             )
 
-    if "dof" in regex_parsed_data:
+    if "dof" in parsed_data:
         try:
-            timezone.datetime.strptime(regex_parsed_data["dof"], "%y%m%d")
+            dt.datetime.strptime(parsed_data["dof"], "%y%m%d")
         except ValueError:
-            err["syntax_error"].append(f"DOF ({regex_parsed_data["dof"]}) is not valid (YYMMDD).")
+            err["syntax_error"].append(f"DOF `{parsed_data["dof"]}` is not valid (YYMMDD).")
 
     # Ensure default date of flight is set to today if not provided
-    regex_parsed_data["dof"] = regex_parsed_data.get("dof", timezone.now().date().strftime("%y%m%d"))
+    parsed_data["dof"] = parsed_data.get("dof", dt.datetime.now().date().strftime("%y%m%d"))
     # Calculate departure datetime
-    eobt = timezone.datetime.strptime(regex_parsed_data["dof"] + regex_parsed_data["eobt"], "%y%m%d%H%M")
-
-    submit_time = timezone.now()
-
-    if eobt - submit_time >= timezone.timedelta(hours=120) or eobt - submit_time <= timezone.timedelta(
-        minutes=60,
-    ):
+    eobt = dt.datetime.strptime(parsed_data["dof"] + parsed_data["eobt"], "%y%m%d%H%M")
+    submit_time = dt.datetime.now()
+    if not (dt.timedelta(minutes=60) < eobt - submit_time < dt.timedelta(hours=120)):
         err["syntax_error"].append(
             "Flight plans shall not be submitted sooner than 120 hours "
             "nor later than 60 minutes before the estimated off-block time (EOBT).",
         )
 
     # Parse Route
-    _parse_route(row_data, regex_parsed_data, err)
+    _parse_route(row_data, parsed_data, err)
 
     # TODO: check the insertion of "W" or any alternative in item10(equipments/capabilities) for RVSM/NonRVSM
 
     errors = {f"{inx}": err for inx, err in enumerate(err["syntax_error"])} if err["syntax_error"] else {}
-    return regex_parsed_data, errors
+    return parsed_data, errors

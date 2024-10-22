@@ -72,6 +72,8 @@ ignore = [ # Specifies the list of linting rules to ignore.
   "PT",
   "RUF",
   "TD",
+  "DTZ005",
+  "DTZ007",
 ]
 
 [tool.ruff.lint.per-file-ignores]
