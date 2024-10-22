@@ -7,9 +7,9 @@ limited to the code written in this mudole and not the hole logic to be develope
 This mudole contains RegexPatterns matching the items of flight plan as prescribed in PANS-ATM Appendix 2
 """
 
-# The r"^(?![IJXQ])(?P<aerodrome>[A-Z]{4})$" pattern is shorter but due to pydantic problem is not usable
+# The r"^(?![IJXQ])(?P<aerodrome>[A-Z]{4})$" without the look-around
 AERODROME = r"^(?P<aerodrome>[A-HK-WYZ][A-Z]{3})$"
-FIR = r"^(?P<fir>[A-HK-WYZ][A-Z]{3})$"
+FIR = AERODROME.replace("<aerodrome>", "<fir>")
 AFTN_ADDRESS = r"^[A-HK-WYZ][A-Z]{8}$"
 
 # ? ITEM 7: AIRCRAFT IDENTIFICATION (MAXIMUM 7 CHARACTERS)
@@ -32,8 +32,8 @@ AIRCRAFT_IDENTIFICATION = r"^(?P<aircraft_identification>[A-Z\d]{2,7})$"
 # X  if other than any of the defined categories above.
 # TODO: Specify status of a flight following the indicator STS in Item 18, or when necessary to denote other reasons for specific handling by ATS, indicate the reason following the indicator RMK in Item 18.
 FLIGHT_RULE = r"^(?P<flight_rule>[IVYZ])$"
-TYPE_OF_FLIGHT = r"^(?P<type_of_flight>[SNGMX]?)$"
-FLIGHT_RULE_AND_TYPE = r"^(?P<flight_rule>[IVYZ])(?P<type_of_flight>[SNGMX]?)$"
+TYPE_OF_FLIGHT = r"^(?P<type_of_flight>[SNGMX])$"
+FLIGHT_RULE_AND_TYPE = rf"^{FLIGHT_RULE[1:-1]}({TYPE_OF_FLIGHT[1:-1]})?$"
 
 
 # ? ITEM 9: NUMBER AND TYPE OF AIRCRAFT AND WAKE TURBULENCE CATEGORY
@@ -42,9 +42,12 @@ FLIGHT_RULE_AND_TYPE = r"^(?P<flight_rule>[IVYZ])(?P<type_of_flight>[SNGMX]?)$"
 # * Type of aircraft (2 to 4 characters)
 # TODO: The appropriate designator as specified in Doc 8643, Aircraft Type Designators, or if no such designator has been assigned, or in case of formation flights comprising more than one type, ZZZZ, and SPECIFY in Item 18, the (numbers and) type(s) of aircraft preceded by TYP/
 # * Wake turbulence category (1 character)
+NUMBER_OF_AIRCRAFT = r"^(?P<number_of_aircraft>\d{0,2})$"
 TYPE_OF_AIRCRAFT = r"^(?P<type>[A-Z\d]{2,4})$"
 WAKETURBULENCE_CATEGORY = r"^(?P<weakturbulence_category>[HMLJ])$"
-AC_NUMBER_TYPE_WAKE = r"^(?P<number_of_aircraft>\d{0,2})(?P<type_of_aircraft>[A-Z\d]{2,4})\/(?P<weakturbulence_category>[HMLJ])$"
+AC_NUMBER_TYPE_WAKE = (
+    rf"^{NUMBER_OF_AIRCRAFT[1:-1]}{TYPE_OF_AIRCRAFT[1:-1]}\/{WAKETURBULENCE_CATEGORY[1:-1]}$"
+)
 
 
 # ? ITEM 10: EQUIPMENT AND CAPABILITIES
@@ -125,19 +128,16 @@ AC_NUMBER_TYPE_WAKE = r"^(?P<number_of_aircraft>\d{0,2})(?P<type_of_aircraft>[A-
 EQUIPMENTS = r"^(?P<equipments>N|(?:S|A|B|C|D|E1|E2|E3|F|G|H|I|J[1-7]|K|L|M[1-3]|O|P[1-9]|R|T|U|V|W|X|Y|Z)+)$"
 CAPABILITIES = r"^(?P<capabilities>N|(?:(?:A|C|E|H|I|L|P|S|X)?(B1|B2)?(U1|U2)?(V1|V2)?(D1|G1)?){1,20})$"
 
-EQUIPMENTS_CAPABILITIES = r"^{equipments}\/{capabilities}$".format(
-    equipments=EQUIPMENTS.replace(r"^", "").replace(r"$", ""),
-    capabilities=CAPABILITIES.replace(r"^", "").replace(r"$", ""),
-)
+EQUIPMENTS_CAPABILITIES = rf"^{EQUIPMENTS[1:-1]}\/{CAPABILITIES[1:-1]}$"
 
 
 # ? ITEM 13: DEPARTURE AERODROME AND TIME (8 CHARACTERS)
 # Insert all clock times in 4 figures UTC
 # Insert all estimated elapsed times in 4 figures (hours and minutes)
 # TODO: ZZZZ/AFIL and SPECIFY, in Item 18, the name and location of the aerodrome preceded by DEP/
-DEPARTURE_AD_TIME = r"^(?:{ad}|AFIL|ZZZZ)(?P<eobt>(?:[01]\d|2[0-3])[0-5]\d)$".format(
-    ad=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<departure_ad>"),
-)
+EOBT = r"^(?P<eobt>(?:[01]\d|2[0-3])[0-5]\d)$"
+DEPARTURE_AD = AERODROME.replace("<aerodrome>", "<departure_ad>")
+DEPARTURE_AD_TIME = rf"^(?:{DEPARTURE_AD[1:-1]}|AFIL|ZZZZ){EOBT[1:-1]}$"
 
 
 # ? ITEM 15: ROUTE
@@ -158,10 +158,7 @@ SPEED = r"^(?P<speed>K(?:0|1)\d{3}|N0\d{3}|M(?:0\d\d|10\d))$"
 # for uncontrolled VFR flights, the letters VFR.
 LEVEL = r"^(?P<level>F\d\d[0,5]|S\d{3}0|A\d\d[0,5]|M\d{4}|VFR)$"
 
-SPEED_LEVEL = r"^{spd}{lvl}$".format(
-    spd=SPEED.replace(r"^", "").replace(r"$", ""),
-    lvl=LEVEL.replace(r"^", "").replace(r"$", ""),
-)
+SPEED_LEVEL = rf"^{SPEED[1:-1]}{LEVEL[1:-1]}$"
 
 
 # * (c) Route (including changes of speed, level and/or flight rules)
@@ -179,54 +176,41 @@ SPEED_LEVEL = r"^{spd}{lvl}$".format(
 COORDINATE = r"^(?P<coordinate>(?:[0-8]\d|90)(?:[0-5]\d)?[NS](?:0\d\d|1[0-7]\d|180)(?:[0-5]\d)?[EW])$"
 
 # ? The coded designator (2 to 5 characters) assigned to the point (e.g. LN, MAY, HADDY)
-POINT = r"^(?!(?:DCT|IFR|VFR)$)(?P<point>[A-Z]{2,5})$"
+POINT = r"^(?P<point>[A-Z]{2,5}(?<!DCT|VFR|IFR))$"
 
 # ? Bearing and distance from a reference point (point which has a designator)
 BEARING_DIST = r"^(?P<bearing_dist>{pnt}(?:[0-2]\d\d|3[0-5]\d)[0-3]\d\d)$".format(
-    pnt=POINT.replace(r"^", "").replace(r"$", "").replace("<point>", "<ref_point>"),
+    pnt=POINT[1:-1].replace("<point>", "<ref_point>"),
 )
 
 # ? Points that don't have assigned indicator - referred to as special point
-LOCATION = r"^(?P<location>{brd}|{coordinate})$".format(
-    brd=BEARING_DIST.replace(r"^", "").replace(r"$", ""),
-    coordinate=COORDINATE.replace(r"^", "").replace(r"$", ""),
-)
+LOCATION = rf"^(?P<location>{BEARING_DIST[1:-1]}|{COORDINATE[1:-1]})$"
 
 # * 1- ATS route (2 to 7 characters) ! 7 characters only for SID/STAR
 ROUTE = r"^(?P<route>[A-Z]{1,3}\d{1,3})$"
-SID_STAR = r"^(?P<sid_star>{pnt}\d[A-Z])$".format(pnt=POINT.replace(r"^", "").replace(r"$", ""))
-SID_POINT = r"^(?P<sid>([A-Z]{3,5})\d[A-Z]) \2$"
-POINT_STAR = r"^([A-Z]{3,5}) (?P<star>\1\d[A-Z])$"
+SID_STAR = rf"^(?P<sid_star>{POINT[1:-1]}\d[A-Z])$"
+SID_POINT = rf"^(?P<sid>{POINT[1:-1]}\d[A-Z]) \2$"
+POINT_STAR = rf"^{POINT[1:-1]} (?P<star>\1\d[A-Z])$"
 
 # * 2- Significant point (2 to 11 characters)
 # ? All point matching those regexes above
-SIG_POINT = r"^(?P<sig_point>{pnt}|{loc})$".format(
-    pnt=POINT.replace(r"^", "").replace(r"$", ""),
-    loc=LOCATION.replace(r"^", "").replace(r"$", ""),
-)
+SIG_POINT = rf"^(?P<sig_point>{POINT[1:-1]}|{LOCATION[1:-1]})$"
 
 # * 3- Change of speed or level (maximum 21 characters)
 # Examples:   LN/N0284A045, MAY/N0305Fl80, HADDY/N0420F330, 4602N07805W/N0500F350, 46N078W/M082F330, DUB180040/N0350M0840
-CHANGE_SPEED_LEVEL = r"^(?P<change_speed_level>{sigp}\/{splvl})$".format(
-    sigp=SIG_POINT.replace(r"^", "").replace(r"$", ""),
-    splvl=SPEED_LEVEL.replace(r"^", "").replace(r"$", ""),
-)
+CHANGE_SPEED_LEVEL = rf"^(?P<change_speed_level>{SIG_POINT[1:-1]}\/{SPEED_LEVEL[1:-1]})$"
 
 # * 4- Change of flight rules (maximum 3 characters)
 # (Point (as in 2- above) Or ChangeOfSpeedLevel(as in 3- above)) + 1 space + IFR/VFR
-CHANGE_FLT_RULE = r"^(?P<change_flt_rule>{sigp}(?:\/{splvl})?\s(?:VFR|IFR))$".format(
-    sigp=SIG_POINT.replace(r"^", "").replace(r"$", ""),
-    splvl=SPEED_LEVEL.replace(r"^", "").replace(r"$", ""),
-)
+CHANGE_FLT_RULE = rf"^(?P<change_flt_rule>{SIG_POINT[1:-1]}(?:\/{SPEED_LEVEL[1:-1]})?\s(?:VFR|IFR))$"
 
 # * 5- Cruise climb (maximum 28 characters)
 # letter C followed by an oblique stroke (/), a point as in 2 above followed by an oblique stroke,
 # the speed, lower level, upper level or the word PLUS C/SIG_POINT/SPEED_LEVEL(LEVEL|PLUS)
 # Examples:  C/48N050W/M082F290F350, C/48N050W/M082F290PLUS, C/LN011032/M220F580F620
-CRUISE_CLIMB = r"^(?P<cruise_climb>C\/{sigp}\/{splvl}(?:{lvl}|PLUS))$".format(
-    sigp=SIG_POINT.replace(r"^", "").replace(r"$", ""),
-    splvl=SPEED_LEVEL.replace(r"^", "").replace(r"$", ""),
-    lvl=LEVEL.replace(r"^", "").replace(r"$", "").replace("level", "top_level"),
+CRUISE_CLIMB = (
+    rf"^(?P<cruise_climb>C\/{SIG_POINT[1:-1]}\/{SPEED_LEVEL[1:-1]}"
+    rf"(?:{LEVEL[1:-1].replace('level', 'top_level')}|PLUS))$"
 )
 
 # ? ITEM 16: DESTINATION AERODROME AND TOTAL ESTIMATED ELAPSED TIME, DESTINATION ALTERNATE AERODROME(S)
@@ -239,9 +223,9 @@ CRUISE_CLIMB = r"^(?P<cruise_climb>C\/{sigp}\/{splvl}(?:{lvl}|PLUS))$".format(
 # ZZZZ and SPECIFY in Item 18 the name and location of the destination alternate aerodrome(s), preceded by ALTN/
 TEET = r"^(?P<teet>\d\d[0-5]\d)$"
 DEST_AD_TEET_ALTS = r"^(?P<dest_teet_alt>{ad0}(?P<teet>\d\d[0-5]\d)\s{ad1}(?:\s{ad2})?)$".format(
-    ad0=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<destination_ad>"),
-    ad1=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<alt_ad_1>"),
-    ad2=AERODROME.replace(r"^", "").replace(r"$", "").replace("<aerodrome>", "<alt_ad_2>"),
+    ad0=AERODROME[1:-1].replace("<aerodrome>", "<destination_ad>"),
+    ad1=AERODROME[1:-1].replace("<aerodrome>", "<alt_ad_1>"),
+    ad2=AERODROME[1:-1].replace("<aerodrome>", "<alt_ad_2>"),
 )
 
 RNAV_SPC = r"^(?P<rnav_specification>(?:A1|B[1-6]|C[1-4]|D[1-4]){1,4})$"
@@ -253,10 +237,7 @@ STS = (
     r"(\s(?:ALTRV|ATFMX|FFR|FLTCK|HAZMAT|HEAD|HOSP|HUM|MARSA|MEDEVAC|NONRVSM|SAR|STATE))*)$"
 )
 
-PBN = r"^PBN\/(?P<PBN>{rnv}{rnp})$".format(
-    rnv=RNAV_SPC.replace(r"^", "").replace(r"$", ""),
-    rnp=RNP_SPC.replace(r"^", "").replace(r"$", ""),
-)
+PBN = rf"^PBN\/(?P<PBN>{RNAV_SPC[1:-1]}{RNP_SPC[1:-1]})$"
 
 NAV = (
     r"^NAV\/(?P<NAV>(?:SBAS|GBAS|ABAS|DGNSS|RTK|WARTK|PPP|RNP\d)"
@@ -281,7 +262,7 @@ TYP = r"^TYP\/(?P<TYP>(?:[2-9]\d?)?[A-Z\d]{2,4}(?:\s(?:[2-9]\d?)?[A-Z\d]{2,4})?)
 
 CODE = r"^CODE\/(?P<CODE>[0-9A-F]{6})$"
 
-DLE = r"^DLE\/(?P<DLE>{point}\d\d[0-5]\d)$".format(point=POINT.replace(r"^", "").replace(r"$", ""))
+DLE = rf"^DLE\/(?P<DLE>{POINT[1:-1]}\d\d[0-5]\d)$"
 
 OPR = r"^OPR\/(?P<OPR>[A-Z\d]+)$"
 
@@ -289,10 +270,7 @@ ORGN = r"^ORGN\/(?P<ORGN>[A-Z]{8})$"
 
 PER = r"^PER\/(?P<PER>[A-Z])$"
 
-DEP = r"^DEP\/(?P<DEP>{ad}|{sigp})$".format(
-    ad=AERODROME.replace(r"^", "").replace(r"$", ""),
-    sigp=SIG_POINT.replace(r"^", "").replace(r"$", ""),
-)
+DEP = rf"^DEP\/(?P<DEP>{AERODROME[1:-1]}|{SIG_POINT[1:-1]})$"
 
 DEST = DEP.replace("DEP", "DEST", 2)
 
