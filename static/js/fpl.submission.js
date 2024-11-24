@@ -7,120 +7,92 @@ const Alert = (status, message) => `
   </div>
 `;
 
-// DOM element to display response alerts
+// DOM elements
 const responseContainer = document.getElementById('response-container');
-
-// DOM element for the spinner element
 const spinner = document.getElementById('spinner-container');
-
-// DOM element for the form
 const fplSubmissionForm = document.getElementById('fpl-submission-form');
-
-// DOM element for the form's submit button
 const submitButton = document.getElementById('submit-button');
-
-// DOM element for the form's reset button
 const resetButton = document.getElementById('reset-button');
 
-// Attach an event handler to the form's submit event
+// Event listener for form submission
 fplSubmissionForm.addEventListener('submit', async function (event) {
-  // Prevent the default form submission behavior
   event.preventDefault();
 
-  // Disable the submit button to prevent multiple submissions
-  submitButton.disabled = true;
-  // Disable the reset button to prevent multiple submissions
-  resetButton.disabled = true;
+  // Disable buttons and show spinner
+  toggleFormState(true);
 
-  // Show spinner
-  spinner.classList.remove("d-none");
-  // Hide the responseContainer
-  responseContainer.classList.add("d-none");
-
-  // Create a new FormData object to collect form data
   const formData = new FormData(fplSubmissionForm);
-
-  // Convert FormData object to a plain object for easier handling
-  const formDataObject = {};
-  formData.forEach((value, key) => {
-    formDataObject[ key ] = value;
-  });
+  const formDataObject = Object.fromEntries(formData.entries());
 
   try {
-    // Submit the form data using fetch
     const response = await fetch(fplSubmissionForm.action, {
       method: 'POST',
-      body: formData
+      body: formData,
     });
-
-    // Parse the response body as JSON
     const data = await response.json();
-
-    // Handle successful response
     renderResponse(data);
   } catch (error) {
-    // Handle fetch error or server error
-    console.error('Fetch error or server error:', error);
+    console.error('Fetch error or server error:', String(error));
     renderResponse({ 'Error(s)': 'An error occurred while processing the request.' });
   } finally {
-    // Re-enable the submit button after fetch completes (whether it succeeds or fails)
-    submitButton.disabled = false;
-    // Re-enable the reset button after fetch completes (whether it succeeds or fails)
-    resetButton.disabled = false;
-    // Hide the spinner
-    spinner.classList.add("d-none");
-    // Show the responseContainer
-    responseContainer.classList.remove("d-none");
+    // Re-enable buttons and hide spinner
+    toggleFormState(false);
   }
 });
 
-// Function to render response data in HTML elements
+// Function to toggle form state (disable/enable buttons and spinner visibility)
+function toggleFormState (isDisabled) {
+  submitButton.disabled = isDisabled;
+  resetButton.disabled = isDisabled;
+  spinner.classList.toggle('d-none', !isDisabled);
+  responseContainer.classList.toggle('d-none', isDisabled);
+}
+
+// Function to render response data
 function renderResponse (data) {
-  if (!data) {
-    return;
-  }
+  if (!data) return;
 
-  // Clear previous content in the response container
-  responseContainer.innerHTML = '';
+  let content = ''; // String to accumulate HTML
+  let status = 'success';
 
-  let status = 'success'; // Default status
-
-  // Determine the status based on the response data properties
-  if (data.hasOwnProperty('Error(s)')) {
+  // Determine response status
+  if (data[ 'Error(s)' ]) {
     status = 'danger';
-  } else if (data.hasOwnProperty('NOTAM(s)')) {
+  } else if (data[ 'NOTAM(s)' ]) {
     status = 'warning';
   }
 
-  // Check the status to determine how to render the response
+  // Handle success or other statuses
   if (status === 'success') {
-    // Render a single success alert
-    const successAlert = Alert(status, data.Success);
-    responseContainer.innerHTML = successAlert;
+    content = Alert(status, data.Success || 'Operation completed successfully.');
   } else {
-    // Render multiple error/warning alerts if data contains any errors/warnings
-
-    // Iterate over the properties of the data object
-    Object.entries(data).forEach(([ key, value ]) => {
-      // Determine the status based on the key
-      const alertStatus = key === 'Error(s)' ? 'danger' : 'warning';
-
-      if (key === 'NOTAM(s)') {
-        responseContainer.innerHTML += `<hr class="text-black-50" />`;
-      }
-      responseContainer.innerHTML += `<h3>${ key }</h3>`;
-
-      if (typeof value === 'object' && value !== null) {
-        // If the value is an object (nested object), iterate over its values
-        for (const nestedValue of Object.values(value)) {
-          const alert = Alert(alertStatus, nestedValue);
-          responseContainer.innerHTML += alert; // Append alert
-        }
-      } else {
-        // If the value is not an object, directly render an alert for the value
-        const alert = Alert(alertStatus, value);
-        responseContainer.innerHTML += alert; // Append alert
-      }
-    });
+    content = renderAlerts(data);
   }
+
+  responseContainer.innerHTML = content;
+}
+
+// Function to render alerts for error or warning statuses
+function renderAlerts (data) {
+  let content = '';
+
+  Object.entries(data).forEach(([ key, value ]) => {
+    const alertStatus = key === 'Error(s)' ? 'danger' : 'warning';
+
+    if (key === 'NOTAM(s)') {
+      content += '<hr class="text-black-50" />';
+    }
+    content += `<h3>${ key }</h3>`;
+
+    // Handle nested objects or plain values
+    if (typeof value === 'object' && value !== null) {
+      for (const nestedValue of Object.values(value)) {
+        content += Alert(alertStatus, nestedValue);
+      }
+    } else {
+      content += Alert(alertStatus, value);
+    }
+  });
+
+  return content;
 }
