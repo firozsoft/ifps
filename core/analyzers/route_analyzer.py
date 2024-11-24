@@ -153,7 +153,7 @@ def route_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: dict[
 
     if is_nondomestic and not eet_is_correct(fpl, err):
         # without correct EET it's impossible to detect route section withing our FIR
-        return {}, {}, {}
+        return {}, {}, {}, {}
 
     # * Step 1.1. Normalize the route
     points_mentioned_in_route = retrieve_point_name_from_fpl_route_section(
@@ -176,7 +176,7 @@ def route_analyzer(fpl: dict[str, bool | str | list[dict[str, str]]], err: dict[
     )
 
     if not route_portion_to_be_checked:
-        return {}, {}, {}
+        return {}, {}, {}, {}
 
     # * Step 1.2. Check existence of points within our FIR
     fpl_points_in_route_portion_within_our_fir = retrieve_point_name_from_fpl_route_section(

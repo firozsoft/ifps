@@ -38,7 +38,7 @@ class ParserTestCase(TestCase):
                 "flight_rule": "I",
                 "type_of_flight": "N",
                 "number_of_aircraft": "",
-                "type": "EA30",
+                "type_of_aircraft": "EA30",
                 "weakturbulence_category": "H",
                 "equipments": "S",
                 "capabilities": "C",

@@ -32,7 +32,7 @@ def integrity_checks(
     points, sections, firs, route = route_analyzer.route_analyzer(fpl, err)
 
     # Check route-scheme (TOS) adherence
-    route_schemes_analyzer.route_schemes_analyzer(fpl, route, err)
+    route_schemes_analyzer.route_scheme_analyzer(fpl, route, err)
 
     notams = Notam.objects.none()
     if not err["integrity_error"]:

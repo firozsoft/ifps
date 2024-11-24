@@ -43,7 +43,7 @@ FLIGHT_RULE_AND_TYPE = rf"^{FLIGHT_RULE[1:-1]}({TYPE_OF_FLIGHT[1:-1]})?$"
 # TODO: The appropriate designator as specified in Doc 8643, Aircraft Type Designators, or if no such designator has been assigned, or in case of formation flights comprising more than one type, ZZZZ, and SPECIFY in Item 18, the (numbers and) type(s) of aircraft preceded by TYP/
 # * Wake turbulence category (1 character)
 NUMBER_OF_AIRCRAFT = r"^(?P<number_of_aircraft>\d{0,2})$"
-TYPE_OF_AIRCRAFT = r"^(?P<type>[A-Z\d]{2,4})$"
+TYPE_OF_AIRCRAFT = r"^(?P<type_of_aircraft>[A-Z\d]{2,4})$"
 WAKETURBULENCE_CATEGORY = r"^(?P<weakturbulence_category>[HMLJ])$"
 AC_NUMBER_TYPE_WAKE = (
     rf"^{NUMBER_OF_AIRCRAFT[1:-1]}{TYPE_OF_AIRCRAFT[1:-1]}\/{WAKETURBULENCE_CATEGORY[1:-1]}$"
