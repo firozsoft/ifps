@@ -22,7 +22,6 @@ fplSubmissionForm.addEventListener('submit', async function (event) {
   toggleFormState(true);
 
   const formData = new FormData(fplSubmissionForm);
-  const formDataObject = Object.fromEntries(formData.entries());
 
   try {
     const response = await fetch(fplSubmissionForm.action, {

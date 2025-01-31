@@ -119,3 +119,4 @@ def submission(request: HttpRequest) -> JsonResponse:
         message["NOTAM(s)"] = notams
 
     return JsonResponse(message, status=status_code)
+    # return render(request, "pages/index.html", message)  # noqa:ERA001
